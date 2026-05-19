@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบบัญชี Pro — สำนักงานบัญชีไทย</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f0f4f8;color:#1e293b;font-size:14px;height:100vh;overflow:hidden;display:flex}
+:root{--primary:#1a3a5c;--accent:#0ea5e9;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg:#f0f4f8;--card:#ffffff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0}
+
+/* LOADING OVERLAY */
+#loading-overlay{position:fixed;inset:0;background:#1a3a5c;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
+#loading-overlay.hidden{opacity:0;pointer-events:none}
+.loading-logo{font-size:48px;margin-bottom:16px;animation:pulse 1.5s infinite}
+.loading-title{color:#fff;font-size:22px;font-weight:700;margin-bottom:8px}
+.loading-sub{color:rgba(255,255,255,.6);font-size:14px;margin-bottom:24px}
+.loading-bar-wrap{width:240px;height:4px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden}
+.loading-bar{height:100%;background:#0ea5e9;border-radius:99px;animation:loadbar 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@keyframes loadbar{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;z-index:9998;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+#toast.success{background:#10b981}
+#toast.error{background:#ef4444}
+#toast.info{background:#0ea5e9}
+
+/* SIDEBAR */
+#sidebar{width:220px;background:var(--primary);color:#fff;display:flex;flex-direction:column;transition:width .2s;overflow:hidden;flex-shrink:0}
+#sidebar.collapsed{width:60px}
+.sidebar-header{padding:1rem;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px}
+.sidebar-title{font-size:14px;font-weight:700;white-space:nowrap}
+#sidebar.collapsed .sidebar-title,#sidebar.collapsed .sidebar-company,#sidebar.collapsed .sidebar-footer,#sidebar.collapsed .nav-label{opacity:0;pointer-events:none;width:0;overflow:hidden}
+.sidebar-company{padding:.5rem 1rem;font-size:11px;color:rgba(255,255,255,.6);border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-company strong{color:#fff;font-size:12px;display:block}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;margin-right:4px;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+nav{flex:1;padding:.5rem 0;overflow-y:auto}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;background:none;border:none;color:#fff;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;text-align:left;border-left:3px solid transparent;transition:background .15s}
+.nav-btn:hover{background:rgba(255,255,255,.08)}
+.nav-btn.active{background:rgba(255,255,255,.15);border-left-color:var(--accent);font-weight:700}
+.nav-icon{font-size:16px;flex-shrink:0}
+.nav-label{white-space:nowrap}
+.sidebar-footer{padding:1rem;font-size:11px;color:rgba(255,255,255,.4);border-top:1px solid rgba(255,255,255,.1)}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:#fff;border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between}
+#topbar-title{font-weight:700;color:var(--primary);font-size:15px}
+.topbar-right{display:flex;gap:8px;align-items:center}
+#content{flex:1;overflow-y:auto;padding:1.5rem}
+.page{display:none}
+.page.active{display:block}
+
+/* COMPONENTS */
+.card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:1.25rem;margin-bottom:1rem}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1.5rem}
+.stat-card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:1rem 1.25rem}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:700}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.section-title{font-size:18px;font-weight:700;color:var(--primary);margin-bottom:1rem;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600}
+.badge-blue{background:#eff6ff;color:#1d4ed8}
+.badge-green{background:#f0fdf4;color:#166534}
+.badge-red{background:#fef2f2;color:#991b1b}
+.badge-amber{background:#fffbeb;color:#92400e}
+.badge-gray{background:#f8fafc;color:#475569}
+.btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:opacity .15s}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-danger{background:var(--danger)}
+.btn-success{background:var(--success)}
+.btn-gray{background:var(--muted)}
+.btn-sm{padding:4px 10px;font-size:12px;border-radius:6px}
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{margin-bottom:12px}
+.form-label{font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600;display:block}
+.form-control{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:'Sarabun',sans-serif;color:var(--text);background:#fff}
+.form-control:focus{outline:none;border-color:var(--accent)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f1f5f9}
+th{padding:8px 10px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right}
+th:first-child{text-align:left}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);text-align:right}
+td:first-child{text-align:left}
+tbody tr:nth-child(even){background:#fafafa}
+tbody tr:hover{background:#f0f9ff}
+.tab-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.tab-btn{padding:8px 18px;border-radius:8px;border:1px solid var(--border);font-weight:600;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif;background:#fff;color:var(--text);transition:all .15s}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.row-detail{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.acc-item{display:flex;gap:16px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.acc-code{font-family:monospace;color:var(--accent);font-weight:700;min-width:50px}
+.info-box{padding:1rem;background:#f0f9ff;border-radius:8px;text-align:center;margin-bottom:1.5rem}
+.info-box h2{font-size:18px;font-weight:700;color:var(--primary)}
+.info-box p{color:var(--muted);font-size:13px;margin-top:4px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+@media print{#sidebar,#topbar .topbar-right{display:none}#main{display:block}#content{overflow:visible;padding:0}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="loading-logo">🏦</div>
+  <div class="loading-title">ระบบบัญชี Pro</div>
+  <div class="loading-sub">กำลังเชื่อมต่อฐานข้อมูล Firebase...</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-header">
+    <button onclick="toggleSidebar()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0;line-height:1">☰</button>
+    <div class="sidebar-title">ระบบบัญชี Pro</div>
+  </div>
+  <div class="sidebar-company">
+    <strong id="sb-name">บริษัท ตัวอย่าง จำกัด</strong>
+    <span><span class="sync-dot"></span>เชื่อมต่อ Firebase แล้ว</span>
+  </div>
+  <nav id="nav"></nav>
+  <div class="sidebar-footer" id="sb-footer">ปีบัญชี 2567 • VAT 7%</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div id="topbar-title">📊 ภาพรวม</div>
+    <div class="topbar-right">
+      <span class="badge badge-blue" id="tb-year">ปีบัญชี 2567</span>
+      <span class="badge badge-green">🔥 Firebase Live</span>
+      <button class="btn btn-gray btn-sm" onclick="window.print()">🖨️ พิมพ์</button>
+    </div>
+  </div>
+  <div id="content">
+    <div id="p-dashboard" class="page active"></div>
+    <div id="p-journal" class="page"></div>
+    <div id="p-invoice" class="page"></div>
+    <div id="p-vat" class="page"></div>
+    <div id="p-payroll" class="page"></div>
+    <div id="p-financial" class="page"></div>
+    <div id="p-taxforms" class="page"></div>
+    <div id="p-customers" class="page"></div>
+    <div id="p-accounts" class="page"></div>
+  </div>
+</div>
+
+<!-- Firebase SDK (CDN - compat version ใช้ง่ายสุด) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ============ FIREBASE INIT ============
+const firebaseConfig = {
+  apiKey: "AIzaSyCttc2r7PnKnI8dZDGGPuvJWqvib0UMjLc",
+  authDomain: "thai-accounting-d3e6b.firebaseapp.com",
+  projectId: "thai-accounting-d3e6b",
+  storageBucket: "thai-accounting-d3e6b.firebasestorage.app",
+  messagingSenderId: "227660326618",
+  appId: "1:227660326618:web:dfc27778e1eadb519fe7e3",
+  measurementId: "G-CDYZ1H3GPM"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ============ STATE (Local cache จาก Firestore) ============
+const state = {
+  company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110",tel:"02-123-4567",accountingYear:"2567",vatRate:7},
+  journals:[], customers:[], invoices:[], vatPurchase:[], employees:[], chartOfAccounts:[],
+};
+
+// ============ DEFAULT DATA (seed ถ้า collection ว่าง) ============
+const DEFAULTS = {
+  journals:[
+    {date:"2567-01-05",ref:"JV001",desc:"รับชำระค่าบริการจากลูกค้า",debit:"ลูกหนี้การค้า",credit:"รายได้ค่าบริการ",amount:100000,vat:7000,vatType:"ขาย"},
+    {date:"2567-01-10",ref:"JV002",desc:"ซื้อวัสดุสำนักงาน",debit:"ค่าใช้จ่ายวัสดุสำนักงาน",credit:"เงินสด",amount:5000,vat:350,vatType:"ซื้อ"},
+    {date:"2567-01-15",ref:"JV003",desc:"จ่ายเงินเดือนพนักงาน",debit:"ค่าใช้จ่ายเงินเดือน",credit:"เงินสด",amount:80000,vat:0,vatType:""},
+  ],
+  customers:[
+    {name:"บริษัท ABC จำกัด",taxId:"0105555001234",address:"10 ถ.พระราม 9 กรุงเทพฯ",tel:"02-456-7890",credit:30,balance:100000},
+    {name:"ห้างหุ้นส่วน XYZ",taxId:"0103556002345",address:"20 ถ.รัชดาภิเษก กรุงเทพฯ",tel:"02-789-0123",credit:45,balance:50000},
+  ],
+  invoices:[
+    {no:"INV2567-001",date:"2567-01-05",customer:"บริษัท ABC จำกัด",desc:"ค่าบริการที่ปรึกษา",amount:100000,vat:7000,total:107000,status:"ชำระแล้ว"},
+    {no:"INV2567-002",date:"2567-02-01",customer:"ห้างหุ้นส่วน XYZ",desc:"ค่าปรึกษาด้านภาษี",amount:50000,vat:3500,total:53500,status:"รอชำระ"},
+    {no:"INV2567-003",date:"2567-02-28",customer:"บริษัท เทค โซลูชั่น จำกัด",desc:"บริการวางระบบบัญชี",amount:80000,vat:5600,total:85600,status:"รอชำระ"},
+  ],
+  vatPurchase:[
+    {date:"2567-01-10",supplier:"บริษัท ซัพพลาย จำกัด",taxId:"0105553004567",invoiceNo:"INV-0001",desc:"วัสดุสำนักงาน",amount:5000,vat:350},
+    {date:"2567-02-15",supplier:"ร้านค้าวัสดุ ABC",taxId:"",invoiceNo:"INV-0025",desc:"กระดาษ A4",amount:2000,vat:140},
+  ],
+  employees:[
+    {name:"นางสาว สมหญิง ดีใจ",position:"ผู้จัดการบัญชี",salary:45000,tax:2500,sso:750},
+    {name:"นาย สมชาย รักงาน",position:"นักบัญชี",salary:30000,tax:1500,sso:750},
+    {name:"นางสาว สุดา ขยันดี",position:"เจ้าหน้าที่บัญชี",salary:25000,tax:500,sso:750},
+  ],
+  chartOfAccounts:[
+    {code:"1100",name:"เงินสดและเงินฝากธนาคาร",type:"สินทรัพย์"},
+    {code:"1200",name:"ลูกหนี้การค้า",type:"สินทรัพย์"},
+    {code:"1300",name:"สินค้าคงคลัง",type:"สินทรัพย์"},
+    {code:"1400",name:"ที่ดิน อาคาร อุปกรณ์",type:"สินทรัพย์"},
+    {code:"2100",name:"เจ้าหนี้การค้า",type:"หนี้สิน"},
+    {code:"2200",name:"เงินกู้ยืม",type:"หนี้สิน"},
+    {code:"3100",name:"ทุนจดทะเบียน",type:"ส่วนของเจ้าของ"},
+    {code:"3200",name:"กำไรสะสม",type:"ส่วนของเจ้าของ"},
+    {code:"4100",name:"รายได้ค่าบริการ",type:"รายได้"},
+    {code:"4200",name:"รายได้ค่าปรึกษา",type:"รายได้"},
+    {code:"5100",name:"ค่าใช้จ่ายเงินเดือน",type:"ค่าใช้จ่าย"},
+    {code:"5200",name:"ค่าเช่า",type:"ค่าใช้จ่าย"},
+    {code:"5300",name:"ค่าใช้จ่ายวัสดุสำนักงาน",type:"ค่าใช้จ่าย"},
+  ],
+};
+
+// ============ FIRESTORE HELPERS ============
+async function loadCollection(name) {
+  const snap = await db.collection(name).orderBy('createdAt','asc').get();
+  return snap.docs.map(d => ({id: d.id, ...d.data()}));
+}
+
+async function addDoc(colName, data) {
+  const ref = await db.collection(colName).add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+  return ref.id;
+}
+
+async function updateDoc(colName, id, data) {
+  await db.collection(colName).doc(id).update(data);
+}
+
+async function deleteDoc(colName, id) {
+  await db.collection(colName).doc(id).delete();
+}
+
+async function seedIfEmpty(colName, items) {
+  const snap = await db.collection(colName).limit(1).get();
+  if (snap.empty) {
+    const batch = db.batch();
+    items.forEach(item => {
+      const ref = db.collection(colName).doc();
+      batch.set(ref, {...item, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+    });
+    await batch.commit();
+  }
+}
+
+// ============ INIT — โหลดข้อมูลทั้งหมดจาก Firestore ============
+async function initApp() {
+  try {
+    // Seed ข้อมูลตัวอย่างถ้ายังไม่มี
+    await Promise.all(Object.entries(DEFAULTS).map(([k,v]) => seedIfEmpty(k, v)));
+
+    // โหลดข้อมูลทั้งหมด
+    const [journals, customers, invoices, vatPurchase, employees, chartOfAccounts] = await Promise.all([
+      loadCollection('journals'),
+      loadCollection('customers'),
+      loadCollection('invoices'),
+      loadCollection('vatPurchase'),
+      loadCollection('employees'),
+      loadCollection('chartOfAccounts'),
+    ]);
+    state.journals = journals;
+    state.customers = customers;
+    state.invoices = invoices;
+    state.vatPurchase = vatPurchase;
+    state.employees = employees;
+    state.chartOfAccounts = chartOfAccounts;
+
+    // โหลด company settings
+    const compDoc = await db.collection('settings').doc('company').get();
+    if (compDoc.exists) Object.assign(state.company, compDoc.data());
+
+    document.getElementById('loading-overlay').classList.add('hidden');
+    buildNav();
+    renderPage('dashboard');
+    showToast('เชื่อมต่อ Firebase สำเร็จ ✓', 'success');
+
+    // Real-time listeners
+    setupListeners();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('loading-overlay').classList.add('hidden');
+    showToast('ไม่สามารถเชื่อมต่อ Firebase ได้: ' + e.message, 'error');
+    buildNav();
+    renderPage('dashboard');
+  }
+}
+
+function setupListeners() {
+  // Real-time sync สำหรับแต่ละ collection
+  ['journals','customers','invoices','vatPurchase','employees'].forEach(col => {
+    db.collection(col).orderBy('createdAt','asc').onSnapshot(snap => {
+      state[col] = snap.docs.map(d => ({id: d.id, ...d.data()}));
+      if (currentPage === 'dashboard') renderPage('dashboard');
+    });
+  });
+}
+
+// ============ UTILS ============
+const fmt = n => new Intl.NumberFormat('th-TH').format(Math.round(n||0));
+const fmtM = n => new Intl.NumberFormat('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0);
+const badge = (txt, cls) => `<span class="badge badge-${cls}">${txt}</span>`;
+
+function table(headers, rows, emptyMsg='ไม่มีข้อมูล') {
+  if (!rows.length) return `<div class="empty-state"><div class="empty-icon">📂</div><div>${emptyMsg}</div></div>`;
+  const ths = headers.map((h,i) => `<th${i>0?' style="text-align:right"':''}>${h}</th>`).join('');
+  const trs = rows.map((row,ri) =>
+    `<tr>${row.map((c,ci) => `<td${ci>0?' style="text-align:right"':''}>${c??''}</td>`).join('')}</tr>`
+  ).join('');
+  return `<div class="tbl-wrap"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
+}
+
+function statCard(label, value, color, sub='') {
+  return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value" style="color:${color}">${value}</div>${sub?`<div class="stat-sub">${sub}</div>`:''}</div>`;
+}
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 3000);
+}
+
+// ============ MENU & NAV ============
+const MENU = [
+  {key:'dashboard',label:'ภาพรวม',icon:'📊'},
+  {key:'journal',label:'สมุดรายวัน',icon:'📒'},
+  {key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾'},
+  {key:'vat',label:'ภาษี VAT',icon:'📋'},
+  {key:'payroll',label:'เงินเดือน',icon:'👥'},
+  {key:'financial',label:'งบการเงิน',icon:'📈'},
+  {key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️'},
+  {key:'customers',label:'ลูกค้า',icon:'🏢'},
+  {key:'accounts',label:'ผังบัญชี',icon:'📖'},
+];
+
+let currentPage = 'dashboard';
+let sidebarOpen = true;
+let vatTab = 'sale', finTab = 'income', taxTab = 'pp30';
+
+function buildNav() {
+  document.getElementById('nav').innerHTML = MENU.map(m =>
+    `<button class="nav-btn${currentPage===m.key?' active':''}" onclick="navigate('${m.key}')">
+      <span class="nav-icon">${m.icon}</span>
+      <span class="nav-label">${m.label}</span>
+    </button>`
+  ).join('');
+}
+
+function navigate(key) {
+  currentPage = key;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-'+key).classList.add('active');
+  const m = MENU.find(x => x.key===key);
+  document.getElementById('topbar-title').textContent = m.icon+' '+m.label;
+  buildNav();
+  renderPage(key);
+}
+
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('collapsed', !sidebarOpen);
+}
+
+// ============ RENDER PAGES ============
+function renderPage(key) {
+  const el = document.getElementById('p-'+key);
+  switch(key) {
+    case 'dashboard': el.innerHTML = renderDashboard(); break;
+    case 'journal':   el.innerHTML = renderJournal(); break;
+    case 'invoice':   el.innerHTML = renderInvoice(); break;
+    case 'vat':       el.innerHTML = renderVat(); break;
+    case 'payroll':   el.innerHTML = renderPayroll(); break;
+    case 'financial': el.innerHTML = renderFinancial(); break;
+    case 'taxforms':  el.innerHTML = renderTaxForms(); break;
+    case 'customers': el.innerHTML = renderCustomers(); break;
+    case 'accounts':  el.innerHTML = renderAccounts(); break;
+  }
+}
+
+// ---- DASHBOARD ----
+function renderDashboard() {
+  const totalRevenue = state.invoices.reduce((a,b)=>a+(b.amount||0),0);
+  const vatSale = state.invoices.reduce((a,b)=>a+(b.vat||0),0);
+  const vatBuy = state.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+  const netVat = vatSale - vatBuy;
+  const unpaid = state.invoices.filter(i=>i.status!=='ชำระแล้ว');
+  const payroll = state.employees.reduce((a,b)=>a+(b.salary||0),0);
+
+  const recentInv = [...state.invoices].slice(-3).reverse().map(inv =>
+    `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <div><div style="font-weight:600">${inv.no||''}</div><div style="color:var(--muted);font-size:11px">${inv.customer||''}</div></div>
+      <div style="text-align:right"><div style="font-weight:600;color:var(--success)">฿${fmt(inv.total)}</div>${badge(inv.status,inv.status==='ชำระแล้ว'?'green':'amber')}</div>
+    </div>`
+  ).join('') || '<div style="color:var(--muted);font-size:13px;padding:1rem 0">ยังไม่มีใบแจ้งหนี้</div>';
+
+  return `
+    <div class="section-title">📊 ภาพรวมกิจการ — ปีบัญชี ${state.company.accountingYear}</div>
+    <div class="stat-grid">
+      ${statCard('รายได้รวม (ก่อน VAT)','฿'+fmt(totalRevenue),'#10b981')}
+      ${statCard('VAT ขาย','฿'+fmt(vatSale),'#0ea5e9')}
+      ${statCard('VAT ซื้อ','฿'+fmt(vatBuy),'#f59e0b')}
+      ${statCard('ภาษีสุทธิ (ต้องนำส่ง)','฿'+fmt(netVat),'#ef4444','ภ.พ.30')}
+      ${statCard('ค้างชำระ',unpaid.length+' รายการ','#f59e0b','฿'+fmt(unpaid.reduce((a,b)=>a+(b.total||0),0)))}
+      ${statCard('เงินเดือน/เดือน','฿'+fmt(payroll),'#1a3a5c',state.employees.length+' คน')}
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:10px;color:var(--primary)">ใบแจ้งหนี้ล่าสุด</div>
+        ${recentInv}
+      </div>
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:10px;color:var(--primary)">สถานะฐานข้อมูล Firebase</div>
+        ${[
+          ['📒 รายการในสมุดรายวัน', state.journals.length+' รายการ'],
+          ['🧾 ใบแจ้งหนี้ทั้งหมด', state.invoices.length+' ใบ'],
+          ['🏢 ลูกค้าทั้งหมด', state.customers.length+' ราย'],
+          ['📋 ภาษีซื้อ', state.vatPurchase.length+' รายการ'],
+          ['👥 พนักงาน', state.employees.length+' คน'],
+        ].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--muted)">${k}</span><span style="font-weight:700">${v}</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ---- JOURNAL ----
+function renderJournal() {
+  const rows = state.journals.map((j,i) => [
+    j.date||'', j.ref||'', j.desc||'', j.debit||'', j.credit||'',
+    '฿'+fmt(j.amount), j.vat?'฿'+fmt(j.vat):'-', j.vatType||'-',
+    `<button class="btn btn-danger btn-sm" onclick="deleteJournal('${j.id}')">ลบ</button>`
+  ]);
+  return `
+    <div class="section-title">📒 สมุดรายวัน (Journal)</div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px;color:var(--primary)">บันทึกรายการใหม่</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">วันที่</label><input type="date" class="form-control" id="jDate"></div>
+        <div class="form-group"><label class="form-label">เลขที่อ้างอิง</label><input class="form-control" id="jRef" placeholder="JV007"></div>
+        <div class="form-group"><label class="form-label">รายการ</label><input class="form-control" id="jDesc"></div>
+        <div class="form-group"><label class="form-label">บัญชีเดบิต</label><input class="form-control" id="jDebit"></div>
+        <div class="form-group"><label class="form-label">บัญชีเครดิต</label><input class="form-control" id="jCredit"></div>
+        <div class="form-group"><label class="form-label">จำนวนเงิน (฿)</label><input type="number" class="form-control" id="jAmount"></div>
+        <div class="form-group"><label class="form-label">VAT (฿)</label><input type="number" class="form-control" id="jVat"></div>
+        <div class="form-group"><label class="form-label">ประเภท VAT</label>
+          <select class="form-control" id="jVatType">
+            <option value="">ไม่มี</option><option value="ซื้อ">VAT ซื้อ</option><option value="ขาย">VAT ขาย</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" id="jBtn" onclick="addJournal()">+ บันทึกรายการ</button>
+    </div>
+    ${table(['วันที่','เลขที่','รายการ','เดบิต','เครดิต','จำนวนเงิน','VAT','ประเภท',''],rows,'ยังไม่มีรายการในสมุดรายวัน')}`;
+}
+
+async function addJournal() {
+  const btn = document.getElementById('jBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>กำลังบันทึก...';
+  const data = {
+    date: document.getElementById('jDate').value,
+    ref: document.getElementById('jRef').value,
+    desc: document.getElementById('jDesc').value,
+    debit: document.getElementById('jDebit').value,
+    credit: document.getElementById('jCredit').value,
+    amount: parseFloat(document.getElementById('jAmount').value)||0,
+    vat: parseFloat(document.getElementById('jVat').value)||0,
+    vatType: document.getElementById('jVatType').value,
+  };
+  if(!data.date||!data.amount){ showToast('กรุณากรอกวันที่และจำนวนเงิน','error'); btn.disabled=false; btn.textContent='+ บันทึกรายการ'; return; }
+  try {
+    await addDoc('journals', data);
+    state.journals = await loadCollection('journals');
+    renderPage('journal');
+    showToast('บันทึกรายการสำเร็จ ✓','success');
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); btn.disabled=false; btn.textContent='+ บันทึกรายการ'; }
+}
+
+async function deleteJournal(id) {
+  if(!confirm('ลบรายการนี้?')) return;
+  await deleteDoc('journals', id);
+  state.journals = await loadCollection('journals');
+  renderPage('journal');
+  showToast('ลบรายการแล้ว','info');
+}
+
+// ---- INVOICE ----
+function renderInvoice() {
+  const vr = state.company.vatRate;
+  const custOpts = state.customers.map(c=>`<option>${c.name}</option>`).join('');
+  const rows = state.invoices.map(inv => [
+    inv.no||'', inv.date||'', inv.customer||'', inv.desc||'',
+    '฿'+fmt(inv.amount), '฿'+fmt(inv.vat), '฿'+fmt(inv.total),
+    badge(inv.status, inv.status==='ชำระแล้ว'?'green':'amber'),
+    inv.status!=='ชำระแล้ว'
+      ? `<button class="btn btn-success btn-sm" onclick="payInvoice('${inv.id}')">รับชำระ</button>`
+      : `<button class="btn btn-danger btn-sm" onclick="deleteInvoice('${inv.id}')">ลบ</button>`
+  ]);
+  return `
+    <div class="section-title">🧾 ใบแจ้งหนี้ / ใบกำกับภาษี</div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px;color:var(--primary)">สร้างใบแจ้งหนี้ใหม่</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">เลขที่ใบแจ้งหนี้</label><input class="form-control" id="iNo" placeholder="INV2567-004"></div>
+        <div class="form-group"><label class="form-label">วันที่</label><input type="date" class="form-control" id="iDate"></div>
+        <div class="form-group"><label class="form-label">ลูกค้า</label>
+          <select class="form-control" id="iCust"><option value="">-- เลือกลูกค้า --</option>${custOpts}</select>
+        </div>
+        <div class="form-group"><label class="form-label">รายการ</label><input class="form-control" id="iDesc"></div>
+        <div class="form-group"><label class="form-label">ยอดก่อน VAT (฿)</label><input type="number" class="form-control" id="iAmount" oninput="calcVatPreview()"></div>
+        <div style="display:flex;align-items:flex-end;gap:8px;padding-bottom:12px">
+          <div style="padding:8px 10px;background:#f1f5f9;border-radius:8px;font-size:13px;color:var(--muted)" id="iVatPreview">VAT ${vr}% = ฿0</div>
+          <div style="padding:8px 10px;background:#ecfdf5;border-radius:8px;font-size:13px;font-weight:700;color:var(--success)" id="iTotalPreview">รวม = ฿0</div>
+        </div>
+      </div>
+      <button class="btn" id="iBtn" onclick="addInvoice()">+ สร้างใบแจ้งหนี้</button>
+    </div>
+    ${table(['เลขที่','วันที่','ลูกค้า','รายการ','ก่อน VAT','VAT','รวม','สถานะ',''],rows,'ยังไม่มีใบแจ้งหนี้')}`;
+}
+
+function calcVatPreview() {
+  const amt = parseFloat(document.getElementById('iAmount').value)||0;
+  const vr = state.company.vatRate;
+  document.getElementById('iVatPreview').textContent = `VAT ${vr}% = ฿${fmt(Math.round(amt*vr/100))}`;
+  document.getElementById('iTotalPreview').textContent = `รวม = ฿${fmt(Math.round(amt*(1+vr/100)))}`;
+}
+
+async function addInvoice() {
+  const btn = document.getElementById('iBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>กำลังบันทึก...';
+  const amt = parseFloat(document.getElementById('iAmount').value)||0;
+  const vr = state.company.vatRate;
+  const data = {
+    no: document.getElementById('iNo').value,
+    date: document.getElementById('iDate').value,
+    customer: document.getElementById('iCust').value,
+    desc: document.getElementById('iDesc').value,
+    amount: amt,
+    vat: Math.round(amt*vr/100),
+    total: Math.round(amt*(1+vr/100)),
+    status: 'รอชำระ',
+  };
+  if(!data.no||!data.amount){ showToast('กรุณากรอกเลขที่และจำนวนเงิน','error'); btn.disabled=false; btn.textContent='+ สร้างใบแจ้งหนี้'; return; }
+  try {
+    await addDoc('invoices', data);
+    state.invoices = await loadCollection('invoices');
+    renderPage('invoice');
+    showToast('สร้างใบแจ้งหนี้สำเร็จ ✓','success');
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); btn.disabled=false; btn.textContent='+ สร้างใบแจ้งหนี้'; }
+}
+
+async function payInvoice(id) {
+  await updateDoc('invoices', id, {status:'ชำระแล้ว'});
+  state.invoices = await loadCollection('invoices');
+  renderPage('invoice');
+  showToast('รับชำระเงินสำเร็จ ✓','success');
+}
+
+async function deleteInvoice(id) {
+  if(!confirm('ลบใบแจ้งหนี้นี้?')) return;
+  await deleteDoc('invoices', id);
+  state.invoices = await loadCollection('invoices');
+  renderPage('invoice');
+  showToast('ลบใบแจ้งหนี้แล้ว','info');
+}
+
+// ---- VAT ----
+function renderVat() {
+  const vatSale = state.invoices.reduce((a,b)=>a+(b.vat||0),0);
+  const vatBuy = state.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+  const netVat = vatSale-vatBuy;
+  const vr = state.company.vatRate;
+
+  const saleContent = table(['#','วันที่','ลูกค้า','เลขที่ใบกำกับ','มูลค่า','VAT 7%'],
+    state.invoices.map((inv,i)=>[i+1,inv.date,inv.customer,inv.no,'฿'+fmt(inv.amount),'฿'+fmt(inv.vat)]));
+
+  const buyRows = state.vatPurchase.map((v,i)=>[i+1,v.date,v.supplier,v.taxId||'-',v.invoiceNo,'฿'+fmt(v.amount),'฿'+fmt(v.vat),
+    `<button class="btn btn-danger btn-sm" onclick="deleteVatPurchase('${v.id}')">ลบ</button>`]);
+
+  const buyContent = `
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px;color:var(--primary)">บันทึกภาษีซื้อ</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">วันที่</label><input type="date" class="form-control" id="vpDate"></div>
+        <div class="form-group"><label class="form-label">ชื่อผู้ขาย</label><input class="form-control" id="vpSupplier"></div>
+        <div class="form-group"><label class="form-label">เลขประจำตัวผู้เสียภาษี</label><input class="form-control" id="vpTaxId"></div>
+        <div class="form-group"><label class="form-label">เลขที่ใบกำกับภาษี</label><input class="form-control" id="vpInvNo"></div>
+        <div class="form-group"><label class="form-label">รายการ</label><input class="form-control" id="vpDesc"></div>
+        <div class="form-group"><label class="form-label">มูลค่า (฿)</label><input type="number" class="form-control" id="vpAmount" oninput="autoVat()"></div>
+        <div class="form-group"><label class="form-label">VAT (฿)</label><input type="number" class="form-control" id="vpVat"></div>
+      </div>
+      <button class="btn" id="vpBtn" onclick="addVatPurchase()">+ เพิ่มภาษีซื้อ</button>
+    </div>
+    ${table(['#','วันที่','ผู้ขาย','เลขประจำตัวฯ','เลขที่ใบกำกับ','มูลค่า','VAT',''],buyRows)}`;
+
+  return `
+    <div class="section-title">📋 ภาษีมูลค่าเพิ่ม (VAT) — ภ.พ.30</div>
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+      ${statCard('ภาษีขาย (Output Tax)','฿'+fmt(vatSale),'#10b981')}
+      ${statCard('ภาษีซื้อ (Input Tax)','฿'+fmt(vatBuy),'#f59e0b')}
+      ${statCard('ภาษีสุทธิ','฿'+fmt(netVat),netVat>0?'#ef4444':'#10b981',netVat>0?'ต้องชำระ':'ขอคืน')}
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn${vatTab==='sale'?' active':''}" onclick="switchVatTab('sale')">ภาษีขาย</button>
+      <button class="tab-btn${vatTab==='purchase'?' active':''}" onclick="switchVatTab('purchase')">ภาษีซื้อ</button>
+    </div>
+    <div>${vatTab==='sale'?saleContent:buyContent}</div>
+    <div class="card" style="background:#f0fdf4;margin-top:1rem">
+      <div style="font-weight:700;color:var(--primary);margin-bottom:8px">แบบ ภ.พ.30 — สรุปยอดนำส่ง</div>
+      ${[['มูลค่าฐานภาษีขาย',state.invoices.reduce((a,b)=>a+(b.amount||0),0)],
+         ['ภาษีขาย',vatSale],
+         ['มูลค่าฐานภาษีซื้อ',state.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)],
+         ['ภาษีซื้อ',vatBuy],
+         ['ภาษีสุทธิที่ต้องนำส่ง',netVat]]
+        .map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #d1fae5;font-size:14px${i===4?';font-weight:700':''}">
+          <span style="color:var(--muted)">${k}</span><span style="font-weight:700;color:${i===4?'var(--danger)':'var(--primary)'}">฿${fmtM(v)}</span></div>`).join('')}
+    </div>`;
+}
+
+function switchVatTab(tab){ vatTab=tab; renderPage('vat'); }
+function autoVat(){ const a=parseFloat(document.getElementById('vpAmount').value)||0; document.getElementById('vpVat').value=Math.round(a*state.company.vatRate/100); }
+
+async function addVatPurchase() {
+  const btn = document.getElementById('vpBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>กำลังบันทึก...';
+  const data = {
+    date:document.getElementById('vpDate').value,
+    supplier:document.getElementById('vpSupplier').value,
+    taxId:document.getElementById('vpTaxId').value,
+    invoiceNo:document.getElementById('vpInvNo').value,
+    desc:document.getElementById('vpDesc').value,
+    amount:parseFloat(document.getElementById('vpAmount').value)||0,
+    vat:parseFloat(document.getElementById('vpVat').value)||0,
+  };
+  if(!data.date||!data.amount){ showToast('กรุณากรอกวันที่และมูลค่า','error'); btn.disabled=false; btn.textContent='+ เพิ่มภาษีซื้อ'; return; }
+  try {
+    await addDoc('vatPurchase', data);
+    state.vatPurchase = await loadCollection('vatPurchase');
+    renderPage('vat');
+    showToast('เพิ่มภาษีซื้อสำเร็จ ✓','success');
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); btn.disabled=false; btn.textContent='+ เพิ่มภาษีซื้อ'; }
+}
+
+async function deleteVatPurchase(id){
+  if(!confirm('ลบรายการนี้?')) return;
+  await deleteDoc('vatPurchase',id);
+  state.vatPurchase=await loadCollection('vatPurchase');
+  renderPage('vat');
+  showToast('ลบรายการแล้ว','info');
+}
+
+// ---- PAYROLL ----
+function renderPayroll() {
+  const totalSalary = state.employees.reduce((a,b)=>a+(b.salary||0),0);
+  const totalTax = state.employees.reduce((a,b)=>a+(b.tax||0),0);
+  const totalSSO = state.employees.reduce((a,b)=>a+(b.sso||0),0);
+  const rows = state.employees.map(e=>[
+    e.name, e.position,
+    '฿'+fmt(e.salary), '฿'+fmt(e.tax), '฿'+fmt(e.sso),
+    '฿'+fmt((e.salary||0)-(e.tax||0)-(e.sso||0)),
+    `<button class="btn btn-danger btn-sm" onclick="deleteEmployee('${e.id}')">ลบ</button>`
+  ]);
+  return `
+    <div class="section-title">👥 เงินเดือน & ประกันสังคม</div>
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      ${statCard('พนักงาน',state.employees.length+' คน','#1a3a5c')}
+      ${statCard('เงินเดือนรวม','฿'+fmt(totalSalary),'#0ea5e9')}
+      ${statCard('ภาษีหัก ณ ที่จ่าย','฿'+fmt(totalTax),'#f59e0b')}
+      ${statCard('ประกันสังคม','฿'+fmt(totalSSO),'#ef4444')}
+    </div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px;color:var(--primary)">เพิ่มพนักงานใหม่</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ชื่อ-สกุล</label><input class="form-control" id="eName"></div>
+        <div class="form-group"><label class="form-label">ตำแหน่ง</label><input class="form-control" id="ePos"></div>
+        <div class="form-group"><label class="form-label">เงินเดือน (฿)</label><input type="number" class="form-control" id="eSalary" oninput="calcEmpTax()"></div>
+        <div class="form-group"><label class="form-label">ภาษีหัก ณ ที่จ่าย (฿)</label><input type="number" class="form-control" id="eTax"></div>
+        <div class="form-group"><label class="form-label">ประกันสังคม (฿)</label><input type="number" class="form-control" id="eSSO" value="750"></div>
+      </div>
+      <button class="btn" id="eBtn" onclick="addEmployee()">+ เพิ่มพนักงาน</button>
+    </div>
+    ${table(['ชื่อ-สกุล','ตำแหน่ง','เงินเดือน','ภาษีหัก ณ ที่จ่าย','ประกันสังคม','สุทธิ',''],rows)}
+    <div class="card" style="background:#fffbeb;margin-top:1rem">
+      <div style="font-weight:700;color:var(--primary);margin-bottom:8px">สรุป ภ.ง.ด.1 / ประกันสังคม</div>
+      <div class="form-grid-2">
+        ${[['เงินเดือนรวม',fmtM(totalSalary)],['ภาษีหัก ณ ที่จ่าย (ภ.ง.ด.1)',fmtM(totalTax)],
+           ['ประกันสังคมลูกจ้าง',fmtM(totalSSO)],['ประกันสังคมนายจ้าง (5%)',fmtM(totalSSO)],
+           ['รวมนำส่งสรรพากร',fmtM(totalTax)],['รวมนำส่งประกันสังคม',fmtM(totalSSO*2)]]
+          .map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #fde68a;font-size:14px"><span style="color:var(--muted)">${k}</span><span style="font-weight:700">฿${v}</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function calcEmpTax(){
+  const s=parseFloat(document.getElementById('eSalary').value)||0;
+  document.getElementById('eTax').value=Math.max(0,Math.round((s*12-150000)*0.05/12));
+}
+
+async function addEmployee(){
+  const btn=document.getElementById('eBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>กำลังบันทึก...';
+  const data={name:document.getElementById('eName').value,position:document.getElementById('ePos').value,
+    salary:parseFloat(document.getElementById('eSalary').value)||0,
+    tax:parseFloat(document.getElementById('eTax').value)||0,
+    sso:parseFloat(document.getElementById('eSSO').value)||750};
+  if(!data.name||!data.salary){showToast('กรุณากรอกชื่อและเงินเดือน','error');btn.disabled=false;btn.textContent='+ เพิ่มพนักงาน';return;}
+  try{
+    await addDoc('employees',data);
+    state.employees=await loadCollection('employees');
+    renderPage('payroll');
+    showToast('เพิ่มพนักงานสำเร็จ ✓','success');
+  }catch(e){showToast('เกิดข้อผิดพลาด: '+e.message,'error');btn.disabled=false;btn.textContent='+ เพิ่มพนักงาน';}
+}
+
+async function deleteEmployee(id){
+  if(!confirm('ลบพนักงานนี้?'))return;
+  await deleteDoc('employees',id);
+  state.employees=await loadCollection('employees');
+  renderPage('payroll');
+  showToast('ลบพนักงานแล้ว','info');
+}
+
+// ---- FINANCIAL ----
+function renderFinancial() {
+  const revenue=state.invoices.reduce((a,b)=>a+(b.amount||0),0);
+  const salaryExp=state.employees.reduce((a,b)=>a+(b.salary||0),0)*2;
+  const officeExp=state.vatPurchase.reduce((a,b)=>a+(b.amount||0),0);
+  const rentExp=40000;
+  const totalExp=salaryExp+officeExp+rentExp;
+  const netProfit=revenue-totalExp;
+
+  let content='';
+  if(finTab==='income'){
+    const rows=[
+      {l:'รายได้จากการดำเนินงาน',v:null,i:0,b:false},
+      {l:'  รายได้ค่าบริการ',v:100000,i:1,b:false},
+      {l:'  รายได้ค่าปรึกษา',v:revenue-100000,i:1,b:false},
+      {l:'รวมรายได้',v:revenue,i:0,b:true,c:'#10b981'},
+      {l:'ค่าใช้จ่ายในการดำเนินงาน',v:null,i:0,b:false},
+      {l:'  เงินเดือน',v:salaryExp,i:1,b:false,neg:true},
+      {l:'  วัสดุสำนักงาน',v:officeExp,i:1,b:false,neg:true},
+      {l:'  ค่าเช่า',v:rentExp,i:1,b:false,neg:true},
+      {l:'รวมค่าใช้จ่าย',v:totalExp,i:0,b:true,c:'#ef4444',neg:true},
+      {l:'กำไร (ขาดทุน) สุทธิ',v:netProfit,i:0,b:true,c:netProfit>0?'#10b981':'#ef4444',sz:16},
+    ];
+    content=`<div class="card"><div style="text-align:center;margin-bottom:1rem">
+      <div style="font-weight:700;font-size:16px;color:var(--primary)">${state.company.name}</div>
+      <div style="color:var(--muted);font-size:13px">งบกำไรขาดทุน สำหรับปีสิ้นสุด 31 ธันวาคม ${state.company.accountingYear}</div></div>
+      ${rows.map(r=>`<div style="display:flex;justify-content:space-between;padding:6px 0;padding-left:${r.i*20}px;border-bottom:1px solid var(--border);font-weight:${r.b?700:400};font-size:${r.sz||14}px;color:${r.c||'var(--text)'}">
+        <span>${r.l.trim()}</span>${r.v!==null?`<span>${r.neg?'-':''}฿${fmtM(r.v)}</span>`:''}</div>`).join('')}</div>`;
+  } else if(finTab==='balance'){
+    const unpaidTotal=state.invoices.filter(i=>i.status!=='ชำระแล้ว').reduce((a,b)=>a+(b.total||0),0);
+    const vatNet=state.invoices.reduce((a,b)=>a+(b.vat||0),0)-state.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+    content=`<div class="two-col">
+      <div class="card"><div style="font-weight:700;color:var(--primary);margin-bottom:10px">สินทรัพย์ (Assets)</div>
+        ${[['เงินสดและเงินฝากธนาคาร',500000],['ลูกหนี้การค้า',unpaidTotal],['สินทรัพย์หมุนเวียนอื่น',50000],['ที่ดิน อาคาร อุปกรณ์',200000]]
+          .map(([k,v])=>`<div class="row-detail"><span style="color:var(--muted)">${k}</span><span style="font-weight:600">฿${fmtM(v)}</span></div>`).join('')}
+        <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700;color:var(--success)">
+          <span>รวมสินทรัพย์</span><span>฿${fmtM(750000+unpaidTotal)}</span></div></div>
+      <div class="card"><div style="font-weight:700;color:var(--primary);margin-bottom:10px">หนี้สิน & ส่วนของเจ้าของ</div>
+        ${[['เจ้าหนี้การค้า',30000],['ภาษี VAT ค้างจ่าย',vatNet],['เงินกู้ยืมระยะสั้น',100000],['ทุนจดทะเบียน',1000000],['กำไรสะสม',netProfit]]
+          .map(([k,v])=>`<div class="row-detail"><span style="color:var(--muted)">${k}</span><span style="font-weight:600">฿${fmtM(v)}</span></div>`).join('')}
+      </div></div>`;
+  } else {
+    const cashIn=state.invoices.filter(i=>i.status==='ชำระแล้ว').reduce((a,b)=>a+(b.total||0),0);
+    const net=cashIn-salaryExp-officeExp-rentExp;
+    content=`<div class="card"><div style="text-align:center;margin-bottom:1rem">
+      <div style="font-weight:700;font-size:16px;color:var(--primary)">${state.company.name}</div>
+      <div style="color:var(--muted);font-size:13px">งบกระแสเงินสด สำหรับปี ${state.company.accountingYear}</div></div>
+      ${[{l:'กิจกรรมดำเนินงาน',v:null,b:true},{l:'  รับจากลูกค้า',v:cashIn},{l:'  จ่ายเงินเดือน',v:salaryExp,neg:true},{l:'  จ่ายค่าใช้จ่ายอื่น',v:officeExp+rentExp,neg:true},
+         {l:'กระแสเงินสดสุทธิ-ดำเนินงาน',v:net,b:true,c:'#10b981'},{l:'กิจกรรมลงทุน',v:null,b:true},{l:'  ซื้อสินทรัพย์ถาวร',v:0},
+         {l:'กระแสเงินสดสุทธิทั้งสิ้น',v:net,b:true,c:'var(--primary)',sz:16}]
+        .map(r=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-weight:${r.b?700:400};font-size:${r.sz||14}px;color:${r.c||'var(--text)'}">
+          <span>${r.l.trim()}</span>${r.v!==null?`<span>${r.neg?'-':''}฿${fmtM(r.v)}</span>`:''}</div>`).join('')}</div>`;
+  }
+  return `<div class="section-title">📈 งบการเงิน</div>
+    <div class="tab-bar">
+      <button class="tab-btn${finTab==='income'?' active':''}" onclick="switchFinTab('income')">งบกำไรขาดทุน</button>
+      <button class="tab-btn${finTab==='balance'?' active':''}" onclick="switchFinTab('balance')">งบดุล</button>
+      <button class="tab-btn${finTab==='cashflow'?' active':''}" onclick="switchFinTab('cashflow')">งบกระแสเงินสด</button>
+    </div>${content}`;
+}
+function switchFinTab(t){finTab=t;renderPage('financial');}
+
+// ---- TAX FORMS ----
+function renderTaxForms(){
+  const vatSale=state.invoices.reduce((a,b)=>a+(b.vat||0),0);
+  const vatBuy=state.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+  const totalTax=state.employees.reduce((a,b)=>a+(b.tax||0),0);
+  const revenue=state.invoices.reduce((a,b)=>a+(b.amount||0),0);
+  const salaryExp=state.employees.reduce((a,b)=>a+(b.salary||0),0)*2;
+  const otherExp=state.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)+40000;
+  const netProfit=revenue-salaryExp-otherExp;
+  const corpTax=Math.max(0,Math.round(netProfit*0.20));
+  let content='';
+  if(taxTab==='pp30'){
+    content=`<div class="card">
+      <div class="info-box"><h2>แบบ ภ.พ.30</h2><p>แบบแสดงรายการภาษีมูลค่าเพิ่ม</p><p>กรมสรรพากร — ยื่นภายในวันที่ 15 ของเดือนถัดไป</p></div>
+      <div class="form-grid-2" style="margin-bottom:1rem">
+        <div><div style="font-size:12px;color:var(--muted)">ชื่อผู้ประกอบการ</div><div style="font-weight:600">${state.company.name}</div></div>
+        <div><div style="font-size:12px;color:var(--muted)">เลขประจำตัวผู้เสียภาษี</div><div style="font-weight:600;font-family:monospace">${state.company.taxId}</div></div>
+      </div>
+      ${[['1. มูลค่าฐานภาษีขาย',fmtM(state.invoices.reduce((a,b)=>a+(b.amount||0),0)),'var(--primary)'],
+         ['2. ภาษีขาย (Output Tax)',fmtM(vatSale),'var(--primary)'],
+         ['3. มูลค่าฐานภาษีซื้อ',fmtM(state.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)),'var(--primary)'],
+         ['4. ภาษีซื้อ (Input Tax)',fmtM(vatBuy),'var(--primary)'],
+         ['5. ภาษีมูลค่าเพิ่มสุทธิ (2-4)',fmtM(vatSale-vatBuy),'var(--danger)']]
+        .map(([k,v,c])=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px"><span>${k}</span><span style="font-weight:700;color:${c}">฿${v}</span></div>`).join('')}
+      <div style="margin-top:1rem;padding:1rem;background:#fef2f2;border-radius:8px;text-align:center">
+        <div style="color:var(--muted);font-size:13px">ภาษีที่ต้องนำส่ง</div>
+        <div style="font-size:28px;font-weight:700;color:var(--danger)">฿${fmtM(vatSale-vatBuy)}</div>
+      </div></div>`;
+  } else if(taxTab==='pnd1'){
+    content=`<div class="card">
+      <div class="info-box"><h2>แบบ ภ.ง.ด.1</h2><p>แบบยื่นรายการภาษีเงินได้หัก ณ ที่จ่าย (เงินเดือน)</p><p>ยื่นภายในวันที่ 7 ของเดือนถัดไป</p></div>
+      ${table(['ลำดับ','ชื่อ-สกุล','เลขบัตรประชาชน','เงินได้','ภาษีหัก ณ ที่จ่าย'],
+        state.employees.map((e,i)=>[i+1,e.name,'x-xxxx-xxxxx-xx-x','฿'+fmt(e.salary),'฿'+fmt(e.tax)]))}
+      <div style="display:flex;justify-content:space-between;padding:10px;background:#fffbeb;border-radius:8px;font-weight:700;margin-top:1rem">
+        <span>รวมภาษีหัก ณ ที่จ่ายทั้งสิ้น</span><span style="color:var(--danger)">฿${fmtM(totalTax)}</span></div></div>`;
+  } else if(taxTab==='pnd50'){
+    content=`<div class="card">
+      <div class="info-box"><h2>แบบ ภ.ง.ด.50</h2><p>แบบแสดงรายการภาษีเงินได้บริษัท (ประจำปี)</p><p>ยื่นภายใน 150 วัน นับจากวันสิ้นรอบบัญชี</p></div>
+      <div class="form-grid-2" style="margin-bottom:1rem">
+        <div><div style="font-size:12px;color:var(--muted)">ชื่อบริษัท</div><div style="font-weight:600">${state.company.name}</div></div>
+        <div><div style="font-size:12px;color:var(--muted)">เลขประจำตัวผู้เสียภาษี</div><div style="font-weight:600;font-family:monospace">${state.company.taxId}</div></div>
+      </div>
+      ${[['รายได้รวม',fmtM(revenue),'var(--text)',false],['ค่าใช้จ่ายรวม',fmtM(salaryExp+otherExp),'var(--text)',true],
+         ['กำไรสุทธิทางภาษี',fmtM(netProfit),'var(--primary)',false],['อัตราภาษีนิติบุคคล','20%','var(--primary)',false],
+         ['ภาษีเงินได้นิติบุคคล',fmtM(corpTax),'var(--danger)',false]]
+        .map(([k,v,c,neg])=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px"><span>${k}</span><span style="font-weight:700;color:${c}">${neg?'-':''}฿${v}</span></div>`).join('')}</div>`;
+  } else {
+    const hRev=revenue/2,hProfit=hRev*0.3,hTax=Math.round(hProfit*0.20);
+    content=`<div class="card">
+      <div class="info-box"><h2>แบบ ภ.ง.ด.51</h2><p>แบบแสดงรายการภาษีเงินได้บริษัท (ครึ่งปี)</p><p>ยื่นภายใน 2 เดือน นับจากวันสิ้นรอบ 6 เดือน</p></div>
+      ${[['รายได้รอบ 6 เดือนแรก',fmtM(hRev),'var(--text)'],['กำไรสุทธิประมาณการ',fmtM(hProfit),'var(--primary)'],
+         ['ภาษีครึ่งปี (20%)',fmtM(hTax),'var(--danger)']]
+        .map(([k,v,c])=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px"><span>${k}</span><span style="font-weight:700;color:${c}">฿${v}</span></div>`).join('')}</div>`;
+  }
+  return `<div class="section-title">🏛️ แบบฟอร์มยื่นภาษีสรรพากร</div>
+    <div class="tab-bar">
+      <button class="tab-btn${taxTab==='pp30'?' active':''}" onclick="switchTaxTab('pp30')">ภ.พ.30 (VAT)</button>
+      <button class="tab-btn${taxTab==='pnd1'?' active':''}" onclick="switchTaxTab('pnd1')">ภ.ง.ด.1 (เงินเดือน)</button>
+      <button class="tab-btn${taxTab==='pnd50'?' active':''}" onclick="switchTaxTab('pnd50')">ภ.ง.ด.50 (นิติบุคคล)</button>
+      <button class="tab-btn${taxTab==='pnd51'?' active':''}" onclick="switchTaxTab('pnd51')">ภ.ง.ด.51 (ครึ่งปี)</button>
+    </div>${content}`;
+}
+function switchTaxTab(t){taxTab=t;renderPage('taxforms');}
+
+// ---- CUSTOMERS ----
+function renderCustomers(){
+  const rows=state.customers.map(c=>[
+    c.name, c.taxId||'-', c.tel||'-', (c.credit||30)+' วัน',
+    (c.balance||0)>0?`<span style="color:var(--danger);font-weight:700">฿${fmt(c.balance)}</span>`:badge('ชำระแล้ว','green'),
+    `<button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">ลบ</button>`
+  ]);
+  return `<div class="section-title">🏢 ลูกค้า / เจ้าหนี้</div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px;color:var(--primary)">เพิ่มลูกค้าใหม่</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">ชื่อบริษัท/ร้านค้า</label><input class="form-control" id="cName"></div>
+        <div class="form-group"><label class="form-label">เลขประจำตัวผู้เสียภาษี</label><input class="form-control" id="cTaxId"></div>
+        <div class="form-group"><label class="form-label">โทรศัพท์</label><input class="form-control" id="cTel"></div>
+        <div class="form-group"><label class="form-label">ที่อยู่</label><input class="form-control" id="cAddr"></div>
+        <div class="form-group"><label class="form-label">เครดิต (วัน)</label><input type="number" class="form-control" id="cCredit" value="30"></div>
+        <div class="form-group"><label class="form-label">ยอดค้างชำระ (฿)</label><input type="number" class="form-control" id="cBalance" value="0"></div>
+      </div>
+      <button class="btn" id="cBtn" onclick="addCustomer()">+ เพิ่มลูกค้า</button>
+    </div>
+    ${table(['ชื่อบริษัท','เลขประจำตัวฯ','โทรศัพท์','เครดิต','ยอดค้างชำระ',''],rows)}`;
+}
+
+async function addCustomer(){
+  const btn=document.getElementById('cBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>กำลังบันทึก...';
+  const data={name:document.getElementById('cName').value,taxId:document.getElementById('cTaxId').value,
+    tel:document.getElementById('cTel').value,address:document.getElementById('cAddr').value,
+    credit:parseInt(document.getElementById('cCredit').value)||30,
+    balance:parseFloat(document.getElementById('cBalance').value)||0};
+  if(!data.name){showToast('กรุณากรอกชื่อบริษัท','error');btn.disabled=false;btn.textContent='+ เพิ่มลูกค้า';return;}
+  try{
+    await addDoc('customers',data);
+    state.customers=await loadCollection('customers');
+    renderPage('customers');
+    showToast('เพิ่มลูกค้าสำเร็จ ✓','success');
+  }catch(e){showToast('เกิดข้อผิดพลาด: '+e.message,'error');btn.disabled=false;btn.textContent='+ เพิ่มลูกค้า';}
+}
+
+async function deleteCustomer(id){
+  if(!confirm('ลบลูกค้านี้?'))return;
+  await deleteDoc('customers',id);
+  state.customers=await loadCollection('customers');
+  renderPage('customers');
+  showToast('ลบลูกค้าแล้ว','info');
+}
+
+// ---- ACCOUNTS ----
+function renderAccounts(){
+  const groups=['สินทรัพย์','หนี้สิน','ส่วนของเจ้าของ','รายได้','ค่าใช้จ่าย'];
+  const colors={สินทรัพย์:'blue',หนี้สิน:'red','ส่วนของเจ้าของ':'green',รายได้:'green','ค่าใช้จ่าย':'amber'};
+  return `<div class="section-title">📖 ผังบัญชี (Chart of Accounts)</div>
+    ${groups.map(g=>{
+      const accs=state.chartOfAccounts.filter(a=>a.type===g);
+      return `<div class="card"><div style="font-weight:700;margin-bottom:10px;color:var(--primary);display:flex;align-items:center;gap:8px">
+        ${g} ${badge(accs.length+' บัญชี',colors[g])}</div>
+        ${accs.map(a=>`<div class="acc-item"><span class="acc-code">${a.code}</span><span>${a.name}</span></div>`).join('')}</div>`;
+    }).join('')}`;
+}
+
+// ============ START ============
+initApp();
+</script>
+</body>
+</html>
