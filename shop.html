@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ร้านค้าออนไลน์</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--pri:#1a3a5c;--acc:#0ea5e9;--ok:#10b981;--warn:#f59e0b;--err:#ef4444;--bg:#f8fafc;--bd:#e2e8f0;--mu:#64748b;--tx:#1e293b}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;min-height:100vh}
+
+/* ─── LOADER ─── */
+#ld{position:fixed;inset:0;background:var(--pri);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
+#ld.out{opacity:0;pointer-events:none}
+.ld-ring{width:52px;height:52px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-bottom:14px}
+.ld-tx{color:#fff;font-size:16px;font-weight:600}
+.ld-sub{color:rgba(255,255,255,.5);font-size:12px;margin-top:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── TOAST ─── */
+#toasts{position:fixed;top:74px;right:16px;z-index:9998;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.tst{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.18);animation:tin .3s cubic-bezier(.36,1.3,.64,1);max-width:280px;pointer-events:auto}
+@keyframes tin{from{transform:translateX(110%);opacity:0}to{transform:none;opacity:1}}
+.tst.ok{background:var(--ok)}.tst.err{background:var(--err)}.tst.info{background:var(--acc)}
+
+/* ─── MODAL ─── */
+#msk{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:8000;display:none;align-items:flex-end;justify-content:center}
+#msk.open{display:flex}
+@media(min-width:640px){#msk{align-items:center}}
+#mbox{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:580px;max-height:95vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.2);animation:slideup .28s ease}
+@media(min-width:640px){#mbox{border-radius:20px;animation:popin .25s cubic-bezier(.36,1.3,.64,1)}}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+@keyframes popin{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+.mhd{padding:1.1rem 1.4rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;border-radius:20px 20px 0 0}
+.mhd h3{font-size:16px;font-weight:700;color:var(--pri)}
+.mcl{background:none;border:none;font-size:24px;cursor:pointer;color:var(--mu);line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .13s}
+.mcl:hover{background:#fef2f2;color:var(--err)}
+.mbd{padding:1.4rem}
+
+/* ─── HEADER ─── */
+#hdr{background:var(--pri);color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.2)}
+.hi{max-width:1200px;margin:0 auto;padding:.85rem 1.2rem;display:flex;align-items:center;gap:10px}
+.hlogo{font-size:24px;flex-shrink:0}
+.htx{flex:1;min-width:0}
+.hname{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hsub{font-size:11px;opacity:.55}
+.hbts{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.cbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:10px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;display:flex;align-items:center;gap:6px;transition:background .13s;white-space:nowrap}
+.cbtn:hover{background:rgba(255,255,255,.24)}
+.ccnt{background:var(--err);color:#fff;border-radius:50%;min-width:18px;height:18px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px}
+
+/* ─── HERO ─── */
+#hero{background:linear-gradient(135deg,#0c2444 0%,var(--pri) 50%,#0369a1 100%);color:#fff;padding:3rem 1.2rem 4rem;text-align:center;position:relative;overflow:hidden}
+#hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hri{max-width:680px;margin:0 auto;position:relative}
+.htag{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:4px 14px;font-size:12px;font-weight:600;margin-bottom:1rem;letter-spacing:.04em}
+#hero h1{font-size:clamp(22px,5vw,40px);font-weight:800;line-height:1.2;margin-bottom:.8rem}
+#hero p{font-size:15px;opacity:.75;margin-bottom:1.5rem}
+.hsrch{display:flex;gap:8px;max-width:460px;margin:0 auto}
+.hsrch input{flex:1;padding:11px 16px;border-radius:10px;border:none;font-size:14px;font-family:'Sarabun',sans-serif;background:rgba(255,255,255,.95);color:var(--tx);outline:none}
+.hsrch input:focus{background:#fff;box-shadow:0 0 0 3px rgba(14,165,233,.4)}
+.hsrch button{background:var(--acc);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif}
+
+/* ─── WRAP ─── */
+.wrap{max-width:1200px;margin:0 auto;padding:2rem 1.2rem}
+
+/* ─── CATEGORY BAR ─── */
+.catbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.8rem;align-items:center}
+.catbtn{padding:7px 16px;border-radius:99px;border:1.5px solid var(--bd);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .13s;color:var(--mu);white-space:nowrap}
+.catbtn:hover,.catbtn.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.sechd{font-size:19px;font-weight:800;color:var(--pri);margin-bottom:1.2rem;display:flex;align-items:center;gap:8px}
+.sort-sel{margin-left:auto;font-size:12px;padding:5px 10px;border:1px solid var(--bd);border-radius:7px;font-family:'Sarabun',sans-serif;background:#fff;color:var(--mu);cursor:pointer}
+
+/* ─── PRODUCT GRID ─── */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:1.2rem;margin-bottom:2.5rem}
+.pcard{background:#fff;border-radius:14px;border:1px solid var(--bd);overflow:hidden;transition:all .18s;cursor:pointer;display:flex;flex-direction:column;position:relative}
+.pcard:hover{box-shadow:0 8px 32px rgba(14,165,233,.18);transform:translateY(-3px);border-color:var(--acc)}
+.pcard-img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#f1f5f9}
+.pcard-ph{width:100%;aspect-ratio:1/1;background:linear-gradient(135deg,#e2e8f0,#f8fafc);display:flex;align-items:center;justify-content:center;font-size:54px;color:#cbd5e1}
+.pcard-body{padding:.85rem;flex:1;display:flex;flex-direction:column}
+.pcat{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--acc);font-weight:700;margin-bottom:3px}
+.pname{font-weight:700;font-size:14px;color:var(--pri);margin-bottom:3px;line-height:1.3}
+.pdesc{font-size:12px;color:var(--mu);margin-bottom:8px;line-height:1.5;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pfoot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;gap:6px}
+.pprice{font-size:17px;font-weight:800;color:var(--ok)}
+.punit{font-size:11px;color:var(--mu)}
+.addbtn{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .13s;white-space:nowrap;flex-shrink:0}
+.addbtn:hover{background:#0284c7;transform:scale(1.05)}
+.addbtn.added{background:var(--ok)}
+.addbtn:disabled{background:#cbd5e1;cursor:not-allowed;transform:none}
+.out-lbl{background:#fef2f2;color:var(--err);border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;flex-shrink:0}
+.new-badge{position:absolute;top:8px;left:8px;background:var(--err);color:#fff;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700}
+.hot-badge{position:absolute;top:8px;left:8px;background:var(--warn);color:#fff;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700}
+.low-warn{font-size:10px;color:var(--warn);margin-top:3px;font-weight:600}
+
+/* ─── CART DRAWER ─── */
+#cart{position:fixed;top:0;right:0;height:100vh;width:min(400px,100vw);background:#fff;box-shadow:-4px 0 32px rgba(0,0,0,.15);z-index:7000;transform:translateX(110%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+#cart.open{transform:none}
+.chd{padding:1rem 1.2rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--pri);color:#fff}
+.chtx{font-size:15px;font-weight:700}
+.ccl{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .13s}
+.ccl:hover{background:rgba(255,255,255,.3)}
+.citems{flex:1;overflow-y:auto;padding:.8rem}
+.ci{display:flex;gap:10px;padding:10px;border-radius:10px;border:1px solid var(--bd);margin-bottom:8px;background:#fafafa;align-items:flex-start}
+.ci-thumb{width:58px;height:58px;border-radius:8px;object-fit:cover;background:#e2e8f0;flex-shrink:0;font-size:22px;display:flex;align-items:center;justify-content:center;color:#94a3b8;overflow:hidden}
+.ci-info{flex:1;min-width:0}
+.ci-nm{font-weight:700;font-size:13px;color:var(--pri);line-height:1.3}
+.ci-pr{font-size:12px;color:var(--ok);font-weight:600;margin-top:2px}
+.ci-qrow{display:flex;align-items:center;gap:6px;margin-top:6px}
+.qb{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--bd);background:#f1f5f9;cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .13s;flex-shrink:0}
+.qb:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
+.ci-rm{background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:18px;line-height:1;transition:color .13s;padding:0;flex-shrink:0}
+.ci-rm:hover{color:var(--err)}
+.cft{padding:1rem 1.2rem;border-top:1px solid var(--bd);background:#f8fafc}
+.crow{display:flex;justify-content:space-between;padding:3px 0;font-size:13px}
+.ctot{font-size:19px;font-weight:800;color:var(--pri);margin:6px 0}
+.chkbtn{width:100%;background:linear-gradient(135deg,var(--ok) 0%,#059669 100%);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:opacity .13s;margin-top:8px}
+.chkbtn:hover{opacity:.9}
+.chkbtn:disabled{background:#cbd5e1;cursor:not-allowed;opacity:1}
+
+/* ─── FORMS ─── */
+.fi{margin-bottom:10px}
+.fl{font-size:12px;color:var(--mu);font-weight:600;display:block;margin-bottom:3px}
+.fc{width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;font-family:'Sarabun',sans-serif;color:var(--tx);outline:none;transition:border .13s}
+.fc:focus{border-color:var(--acc)}
+textarea.fc{resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* ─── STEPS ─── */
+.steps{display:flex;margin-bottom:1.5rem}
+.step{flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:700;color:var(--mu);border-bottom:3px solid var(--bd)}
+.step.on{color:var(--acc);border-color:var(--acc)}
+.step.dn{color:var(--ok);border-color:var(--ok)}
+
+/* ─── PAYMENT OPTIONS ─── */
+.pmopt{border:2px solid var(--bd);border-radius:12px;padding:.9rem 1rem;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .13s;user-select:none}
+.pmopt:hover,.pmopt.sel{border-color:var(--acc);background:#f0f9ff}
+.pmopt .pmico{font-size:28px;flex-shrink:0}
+.pmopt .pmtx .pmn{font-weight:700;font-size:14px}
+.pmopt .pmtx .pmd{font-size:12px;color:var(--mu)}
+.pmck{margin-left:auto;width:20px;height:20px;border-radius:50%;border:2px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .13s}
+.pmopt.sel .pmck{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* ─── CREDIT CARD ─── */
+.ccwrap{background:linear-gradient(135deg,#1a3a5c,#0ea5e9);border-radius:16px;padding:1.5rem;color:#fff;margin-bottom:1rem;position:relative;overflow:hidden}
+.ccwrap::before{content:'';position:absolute;top:-30px;right:-30px;width:140px;height:140px;border:2px solid rgba(255,255,255,.1);border-radius:50%}
+.ccwrap::after{content:'';position:absolute;top:-10px;right:-10px;width:90px;height:90px;border:2px solid rgba(255,255,255,.08);border-radius:50%}
+.cc-chip{width:38px;height:28px;background:linear-gradient(135deg,#ffd700,#b8860b);border-radius:5px;margin-bottom:1rem;display:flex;align-items:center;justify-content:center}
+.cc-chip::before{content:'';width:20px;height:16px;border:1px solid rgba(0,0,0,.2);border-radius:3px}
+.cc-num{font-size:19px;font-weight:700;letter-spacing:3px;margin-bottom:14px;font-family:monospace}
+.cc-meta{display:flex;justify-content:space-between;font-size:12px;opacity:.75}
+.cc-meta b{display:block;opacity:.6;font-size:10px;margin-bottom:2px;font-weight:400}
+
+/* ─── QR / TRANSFER ─── */
+.qrbox{text-align:center;padding:1rem 0}
+.qrwrap{width:200px;height:200px;margin:0 auto 1rem;border-radius:12px;border:2px solid var(--bd);background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.qtot{font-size:28px;font-weight:800;color:var(--pri)}
+.qsub{font-size:13px;color:var(--mu);margin:.4rem 0 .8rem}
+.qacct{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:.85rem 1rem;margin-bottom:1rem;font-size:13px;line-height:1.7}
+.tmr{font-size:32px;font-weight:800;color:var(--warn);margin:.5rem 0}
+
+/* ─── SUCCESS ─── */
+.sbox{text-align:center;padding:1.5rem .5rem}
+.sico{font-size:64px;display:block;margin-bottom:.8rem;animation:pop .4s cubic-bezier(.36,1.56,.64,1)}
+@keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.sno{font-size:22px;font-weight:800;color:var(--pri);margin-bottom:4px}
+.ssub{color:var(--mu);margin-bottom:1.2rem}
+
+/* ─── PRODUCT DETAIL ─── */
+.pdimg{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;background:#f1f5f9;display:block;margin-bottom:1rem}
+.pdph{width:100%;aspect-ratio:1/1;background:linear-gradient(135deg,#e2e8f0,#f8fafc);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:80px;color:#cbd5e1;margin-bottom:1rem}
+.pdprice{font-size:28px;font-weight:800;color:var(--ok)}
+.qrow{display:flex;align-items:center;gap:12px;margin:1rem 0}
+.qbig{width:42px;height:42px;border-radius:50%;border:2px solid var(--bd);background:#f8fafc;cursor:pointer;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .13s;flex-shrink:0}
+.qbig:hover{background:var(--acc);color:#fff;border-color:var(--acc)}
+.qval{font-size:20px;font-weight:700;min-width:36px;text-align:center}
+.addcartbig{flex:1;background:var(--acc);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .13s}
+.addcartbig:hover{background:#0284c7}
+
+/* ─── IMAGE UPLOAD ─── */
+.imgup{border:2px dashed var(--bd);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .13s;background:#fafafa}
+.imgup:hover,.imgup.drag{border-color:var(--acc);background:#f0f9ff}
+.imgup input{display:none}
+.img-preview{width:100%;border-radius:10px;object-fit:cover;max-height:220px;display:none;margin-top:10px}
+
+/* ─── UTILS ─── */
+.btn{background:var(--acc);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:opacity .13s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-ok{background:var(--ok)}.btn-gy{background:var(--mu)}.btn-err{background:var(--err)}.btn-pri{background:var(--pri)}
+.btn-lg{padding:13px 22px;font-size:15px;border-radius:11px}
+.row{display:flex;gap:8px;align-items:center}
+.row-sb{display:flex;justify-content:space-between;align-items:center}
+.mt{margin-top:1rem}
+.note{font-size:12px;color:var(--mu);line-height:1.6}
+.divider{border:none;border-top:1px solid var(--bd);margin:1rem 0}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;color:var(--mu)}
+.chip.ok{background:#f0fdf4;color:#166534}
+.chip.warn{background:#fffbeb;color:#92400e}
+.chip.err{background:#fef2f2;color:#991b1b}
+
+/* ─── OMISE INFO BOX ─── */
+.omise-note{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:.85rem 1rem;font-size:12px;color:#78350f;line-height:1.6;margin-top:.7rem}
+.omise-note a{color:var(--acc)}
+
+/* ─── FOOTER ─── */
+footer{background:var(--pri);color:rgba(255,255,255,.6);text-align:center;padding:2rem 1rem;margin-top:3rem;font-size:13px}
+footer strong{color:#fff;display:block;font-size:15px;margin-bottom:6px}
+.fpay{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.fpay span{background:rgba(255,255,255,.1);border-radius:6px;padding:3px 10px;font-size:12px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:640px){
+  .pgrid{grid-template-columns:repeat(2,1fr);gap:.8rem}
+  .pcard-body{padding:.7rem}
+  .g3{grid-template-columns:1fr 1fr}
+}
+@media print{
+  #hdr,#hero,.catbar,#cart,#msk,#toasts,#ld,footer,.addbtn,.chkbtn{display:none!important}
+  #pzone{display:block!important}
+}
+#pzone{display:none}
+
+/* ─── SKELETON ─── */
+.sk{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:sk 1.4s infinite;border-radius:6px}
+@keyframes sk{0%{background-position:200%}100%{background-position:-200%}}
+</style>
+</head>
+<body>
+
+<div id="ld">
+  <div class="ld-ring"></div>
+  <div class="ld-tx">กำลังโหลดร้านค้า...</div>
+  <div class="ld-sub">เชื่อมต่อ Firebase</div>
+</div>
+<div id="toasts"></div>
+<div id="pzone"></div>
+
+<!-- CART DRAWER -->
+<div id="cart">
+  <div class="chd">
+    <div class="chtx">🛒 ตะกร้าสินค้า</div>
+    <button class="ccl" onclick="toggleCart()">×</button>
+  </div>
+  <div class="citems" id="citems">
+    <div style="text-align:center;padding:3rem;color:var(--mu)">🛒 ยังไม่มีสินค้า</div>
+  </div>
+  <div class="cft">
+    <div class="crow"><span>รายการ</span><span id="cfc">0 รายการ</span></div>
+    <div class="crow"><span>ยอดสินค้า</span><span id="cfs">฿0</span></div>
+    <div class="crow"><span id="cvl">VAT 7%</span><span id="cfv">฿0</span></div>
+    <div class="crow ctot"><span>ยอดสุทธิ</span><span id="cft">฿0</span></div>
+    <button class="chkbtn" id="chkbtn" onclick="openCheckout()" disabled>ดำเนินการชำระเงิน →</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="msk">
+  <div id="mbox">
+    <div class="mhd"><h3 id="mtx">-</h3><button class="mcl" onclick="closeM()">×</button></div>
+    <div class="mbd" id="mbd"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header id="hdr">
+  <div class="hi">
+    <div class="hlogo" id="hlogo">🏪</div>
+    <div class="htx">
+      <div class="hname" id="hname">ร้านค้าออนไลน์</div>
+      <div class="hsub" id="hsub"></div>
+    </div>
+    <div class="hbts">
+      <a href="index.html" style="color:rgba(255,255,255,.6);font-size:12px;text-decoration:none;white-space:nowrap">← จัดการ</a>
+      <button class="cbtn" onclick="toggleCart()">
+        🛒 <span class="ccnt" id="ccnt">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hri">
+    <div class="htag">🛍️ ช้อปออนไลน์ ส่งทั่วไทย</div>
+    <h1 id="htitle">ยินดีต้อนรับสู่ร้านของเรา</h1>
+    <p id="hdesc">สินค้าคุณภาพ ราคายุติธรรม จัดส่งรวดเร็ว</p>
+    <div class="hsrch">
+      <input type="search" id="sinput" placeholder="🔍 ค้นหาสินค้า ชื่อ หรือ รหัส..." oninput="doFilter()">
+      <button onclick="doFilter()">ค้นหา</button>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN -->
+<main class="wrap">
+  <div class="catbar" id="catbar"></div>
+  <div class="row-sb"><div class="sechd" id="phd">📦 สินค้าทั้งหมด</div>
+    <select class="sort-sel" id="sortsel" onchange="doFilter()">
+      <option value="az">เรียง: ชื่อ ก→ฮ</option>
+      <option value="price-asc">ราคา: น้อย→มาก</option>
+      <option value="price-desc">ราคา: มาก→น้อย</option>
+      <option value="new">ใหม่ล่าสุด</option>
+    </select>
+  </div>
+  <div class="pgrid" id="pgrid">
+    ${Array(8).fill(0).map(()=>`<div class="pcard"><div class="pcard-ph sk" style="font-size:0"></div><div class="pcard-body"><div class="sk" style="height:11px;width:50%;margin-bottom:6px"></div><div class="sk" style="height:15px;margin-bottom:6px"></div><div class="sk" style="height:11px;width:70%;margin-bottom:10px"></div><div class="sk" style="height:30px;border-radius:8px"></div></div></div>`).join('')}
+  </div>
+</main>
+
+<footer>
+  <div id="fname"><strong>ร้านค้าออนไลน์</strong></div>
+  <div id="finfo" style="margin-top:4px"></div>
+  <div class="fpay"><span>📱 QR พร้อมเพย์</span><span>🏦 โอนธนาคาร</span><span>💳 บัตรเครดิต</span><span>💵 เก็บเงินปลายทาง</span></div>
+  <div style="margin-top:10px;font-size:11px;opacity:.4">Powered by ระบบบัญชี & POS Pro</div>
+</footer>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ════════════════════════════════════════
+//  FIREBASE
+// ════════════════════════════════════════
+firebase.initializeApp({
+  apiKey:"AIzaSyCttc2r7PnKnI8dZDGGPuvJWqvib0UMjLc",
+  authDomain:"thai-accounting-d3e6b.firebaseapp.com",
+  projectId:"thai-accounting-d3e6b",
+  storageBucket:"thai-accounting-d3e6b.firebasestorage.app",
+  messagingSenderId:"227660326618",
+  appId:"1:227660326618:web:dfc27778e1eadb519fe7e3"
+});
+const db=firebase.firestore();
+const fsts=()=>firebase.firestore.FieldValue.serverTimestamp();
+const inc=n=>firebase.firestore.FieldValue.increment(n);
+
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+let PRODS=[],CO={
+  name:'ร้านค้าออนไลน์',address:'',tel:'',email:'',taxId:'',vatRate:7,
+  logoEmoji:'🏪',receiptTitle:'ใบเสร็จรับเงิน',receiptFooter:'ขอบคุณที่ใช้บริการ',
+  promptpay:'',bankName:'',bankAccount:'',bankAccountName:'',omiseKey:'',
+  currency:'THB'
+};
+let CART=[],CAT='all',SORT='az';
+let O={step:1,pay:'qr',name:'',phone:'',email:'',addr:'',note:''};
+let _docNo='',_timerID=null,_timerSec=300,_detailQty=1,_lastGrand=0;
+
+// ════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════
+const fmt=n=>new Intl.NumberFormat('th-TH').format(Math.round(n||0));
+const fmtD=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0);
+const $ =id=>document.getElementById(id);
+const todayISO=()=>new Date().toISOString().split('T')[0];
+
+function toast(msg,type='info',dur=3200){
+  const d=document.createElement('div');
+  d.className=`tst ${type}`;d.textContent=msg;
+  $('toasts').appendChild(d);
+  setTimeout(()=>d.remove(),dur);
+}
+
+function openM(title,html){
+  $('mtx').textContent=title;
+  $('mbd').innerHTML=html;
+  $('msk').classList.add('open');
+}
+function closeM(){$('msk').classList.remove('open');clearTimer();}
+$('msk').addEventListener('click',e=>{if(e.target.id==='msk')closeM();});
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+async function init(){
+  try{
+    const [cd,ps]=await Promise.all([
+      db.collection('settings').doc('company').get(),
+      db.collection('products').get()
+    ]);
+    if(cd.exists) Object.assign(CO,cd.data());
+    PRODS=ps.docs.map(d=>({id:d.id,...d.data()}));
+    applyBrand();buildCats();doFilter();
+    $('ld').classList.add('out');
+    toast('โหลดสินค้าสำเร็จ '+PRODS.length+' รายการ','ok');
+  }catch(e){
+    $('ld').classList.add('out');
+    toast('โหลดไม่สำเร็จ: '+e.message,'err');
+  }
+}
+
+function applyBrand(){
+  const c=CO;
+  document.title=(c.name||'ร้านค้า')+' | ช้อปออนไลน์';
+  $('hlogo').textContent=c.logoEmoji||'🏪';
+  $('hname').textContent=c.name||'ร้านค้าออนไลน์';
+  $('hsub').textContent=[c.tel,c.address].filter(Boolean).join(' | ');
+  $('htitle').textContent='ยินดีต้อนรับสู่ '+(c.name||'ร้านของเรา');
+  $('hdesc').textContent=[c.tel&&'📞 '+c.tel,c.email&&'✉️ '+c.email].filter(Boolean).join('  ')||'สินค้าคุณภาพ ราคายุติธรรม';
+  $('fname').innerHTML=`<strong>${c.name||'ร้านค้า'}</strong>`;
+  $('finfo').textContent=[c.address,c.tel,c.email].filter(Boolean).join(' | ');
+  $('cvl').textContent=`VAT ${c.vatRate||7}%`;
+}
+
+// ════════════════════════════════════════
+//  CATEGORIES
+// ════════════════════════════════════════
+function buildCats(){
+  const cats=['all',...[...new Set(PRODS.map(p=>p.category).filter(Boolean))].sort()];
+  $('catbar').innerHTML=cats.map(c=>
+    `<button class="catbtn${CAT===c?' on':''}" onclick="setcat('${c}')">${c==='all'?'🏷️ ทั้งหมด':c}</button>`
+  ).join('');
+}
+function setcat(c){CAT=c;buildCats();doFilter();}
+
+// ════════════════════════════════════════
+//  FILTER & RENDER GRID
+// ════════════════════════════════════════
+function doFilter(){
+  const q=($('sinput')?.value||'').toLowerCase();
+  SORT=$('sortsel')?.value||'az';
+  let list=PRODS.filter(p=>CAT==='all'||p.category===CAT);
+  if(q)list=list.filter(p=>(p.name+p.code+(p.description||'')).toLowerCase().includes(q));
+  const sorts={
+    'az':(a,b)=>a.name.localeCompare(b.name,'th'),
+    'price-asc':(a,b)=>a.price-b.price,
+    'price-desc':(a,b)=>b.price-a.price,
+    'new':(a,b)=>0,
+  };
+  list.sort(sorts[SORT]||sorts.az);
+  $('phd').textContent=(CAT==='all'?'📦 สินค้าทั้งหมด':'🏷️ '+CAT)+` (${list.length})`;
+  $('pgrid').innerHTML=list.length
+    ?list.map(prodCard).join('')
+    :`<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--mu)"><div style="font-size:52px;margin-bottom:12px">🔍</div>ไม่พบสินค้าที่ค้นหา</div>`;
+}
+
+function prodCard(p){
+  const inCart=CART.find(x=>x.id===p.id);
+  const imgEl=p.imageUrl
+    ?`<img src="${p.imageUrl}" class="pcard-img" loading="lazy" alt="${p.name}" onerror="this.outerHTML='<div class=pcard-ph>📦</div>'">`
+    :`<div class="pcard-ph">📦</div>`;
+  return`<div class="pcard" onclick="openDetail('${p.id}')">
+    ${imgEl}
+    <div class="pcard-body">
+      <div class="pcat">${p.category||'สินค้า'}</div>
+      <div class="pname">${p.name}</div>
+      <div class="pdesc">${p.description||p.code||''}</div>
+      <div class="pfoot">
+        <div><div class="pprice">฿${fmt(p.price)}</div><div class="punit">/ ${p.unit||'ชิ้น'}</div></div>
+        ${p.stock>0
+          ?`<button class="addbtn${inCart?' added':''}" onclick="event.stopPropagation();quickAdd('${p.id}')">${inCart?'✓ ในตะกร้า':'+ ตะกร้า'}</button>`
+          :`<span class="out-lbl">หมด</span>`}
+      </div>
+      ${p.stock>0&&p.stock<=5?`<div class="low-warn">⚠️ เหลือ ${p.stock} ${p.unit} เท่านั้น</div>`:''}
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+//  PRODUCT DETAIL
+// ════════════════════════════════════════
+let _dpid='';
+function openDetail(id){
+  const p=PRODS.find(x=>x.id===id);if(!p)return;
+  _dpid=id;_detailQty=1;
+  const imgEl=p.imageUrl
+    ?`<img class="pdimg" src="${p.imageUrl}" alt="${p.name}" onerror="this.outerHTML='<div class=pdph>📦</div>'">`
+    :`<div class="pdph">📦</div>`;
+  openM('📦 '+p.name,`
+    ${imgEl}
+    <div class="pcat" style="font-size:11px">${p.category||''}</div>
+    <div style="font-size:19px;font-weight:800;color:var(--pri);margin:4px 0 6px">${p.name}</div>
+    ${p.description?`<div style="color:var(--mu);font-size:14px;line-height:1.6;margin-bottom:8px">${p.description}</div>`:''}
+    <div style="font-size:12px;color:var(--mu);margin-bottom:6px">รหัส: <b>${p.code}</b> | หน่วย: <b>${p.unit||'ชิ้น'}</b></div>
+    <div class="pdprice">฿${fmt(p.price)}<span style="font-size:14px;color:var(--mu);font-weight:400"> / ${p.unit||'ชิ้น'}</span></div>
+    ${p.stock>0
+      ?`<div style="font-size:13px;color:var(--ok);margin:.5rem 0">✅ พร้อมจัดส่ง (คงเหลือ ${p.stock} ${p.unit})</div>
+        <div class="qrow">
+          <button class="qbig" onclick="dqty(-1)">−</button>
+          <div class="qval" id="dqv">1</div>
+          <button class="qbig" onclick="dqty(1)">+</button>
+          <button class="addcartbig" onclick="addDetailCart()">🛒 เพิ่มในตะกร้า</button>
+        </div>`
+      :`<div style="color:var(--err);font-weight:700;padding:.8rem 0">❌ สินค้าหมดชั่วคราว</div>`}
+    <div style="margin-top:.8rem;font-size:12px;color:var(--mu)">💡 ราคารวม VAT ${CO.vatRate||7}% แล้ว</div>`);
+}
+function dqty(d){
+  const p=PRODS.find(x=>x.id===_dpid);
+  _detailQty=Math.max(1,Math.min(p?.stock||99,_detailQty+d));
+  const el=$('dqv');if(el)el.textContent=_detailQty;
+}
+function addDetailCart(){
+  const p=PRODS.find(x=>x.id===_dpid);if(!p)return;
+  const ex=CART.find(x=>x.id===_dpid);
+  const qty=_detailQty;
+  if(ex)ex.qty=Math.min(p.stock,ex.qty+qty);
+  else CART.push({id:p.id,code:p.code,name:p.name,unit:p.unit||'ชิ้น',price:p.price,stock:p.stock,imageUrl:p.imageUrl||'',qty});
+  updateCart();closeM();toast('เพิ่มสินค้าลงตะกร้าแล้ว 🛒','ok');doFilter();
+}
+
+// ════════════════════════════════════════
+//  CART
+// ════════════════════════════════════════
+function quickAdd(id){
+  const p=PRODS.find(x=>x.id===id);if(!p||p.stock<=0)return;
+  const ex=CART.find(x=>x.id===id);
+  if(ex){if(ex.qty<p.stock)ex.qty++;else{toast('สินค้ามีไม่พอ!','err');return;}}
+  else CART.push({id:p.id,code:p.code,name:p.name,unit:p.unit||'ชิ้น',price:p.price,stock:p.stock,imageUrl:p.imageUrl||'',qty:1});
+  updateCart();toast('✓ '+p.name,'ok',1600);doFilter();
+}
+function cqty(id,d){
+  const i=CART.find(x=>x.id===id);if(!i)return;
+  i.qty=Math.max(0,Math.min(i.stock,i.qty+d));
+  if(i.qty===0)CART.splice(CART.indexOf(i),1);
+  updateCart();
+}
+function cremove(id){CART.splice(CART.findIndex(x=>x.id===id),1);updateCart();}
+
+function cartTotals(){
+  const sub=CART.reduce((a,b)=>a+b.price*b.qty,0);
+  const vat=Math.round(sub*(CO.vatRate||7)/100);
+  return{sub,vat,grand:sub+vat,cnt:CART.reduce((a,b)=>a+b.qty,0)};
+}
+function updateCart(){
+  const {sub,vat,grand,cnt}=cartTotals();
+  $('ccnt').textContent=cnt;
+  $('cfc').textContent=CART.length+' รายการ';
+  $('cfs').textContent='฿'+fmt(sub);
+  $('cfv').textContent='฿'+fmt(vat);
+  $('cft').textContent='฿'+fmt(grand);
+  $('chkbtn').disabled=CART.length===0;
+  $('citems').innerHTML=CART.length
+    ?CART.map(item=>`
+      <div class="ci">
+        <div class="ci-thumb">${item.imageUrl
+          ?`<img src="${item.imageUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.textContent='📦'">`
+          :'📦'}</div>
+        <div class="ci-info">
+          <div class="ci-nm">${item.name}</div>
+          <div class="ci-pr">฿${fmt(item.price)} / ${item.unit}</div>
+          <div class="ci-qrow">
+            <button class="qb" onclick="cqty('${item.id}',-1)">−</button>
+            <span style="font-weight:700;min-width:22px;text-align:center">${item.qty}</span>
+            <button class="qb" onclick="cqty('${item.id}',1)">+</button>
+            <span style="font-size:12px;color:var(--mu)">฿${fmt(item.price*item.qty)}</span>
+          </div>
+        </div>
+        <button class="ci-rm" onclick="cremove('${item.id}')">×</button>
+      </div>`).join('')
+    :`<div style="text-align:center;padding:3rem;color:var(--mu)">🛒 ยังไม่มีสินค้า</div>`;
+}
+function toggleCart(){$('cart').classList.toggle('open');}
+
+// ════════════════════════════════════════
+//  CHECKOUT
+// ════════════════════════════════════════
+function openCheckout(){
+  O.step=1;O.pay='qr';
+  $('cart').classList.remove('open');
+  // เปิด modal ก่อน แล้วค่อย render เนื้อหา
+  $('mtx').textContent='📝 ข้อมูลผู้สั่งซื้อ';
+  $('mbd').innerHTML='<div style="text-align:center;padding:2rem;color:var(--mu)">⏳ กำลังโหลด...</div>';
+  $('msk').classList.add('open');
+  // render หลัง modal เปิดแล้ว
+  setTimeout(()=>renderCheckout(), 50);
+}
+
+function renderCheckout(){
+  if(!$('mbd'))return;
+  const {sub,vat,grand}=cartTotals();
+  const st=(n,l)=>`<div class="step${O.step===n?' on':O.step>n?' dn':''}">${O.step>n?'✓ ':n+'. '}${l}</div>`;
+  const steps=`<div class="steps">${st(1,'ข้อมูล')}${st(2,'ชำระเงิน')}${st(3,'ยืนยัน')}</div>`;
+
+  if(O.step===1){
+    $('mtx').textContent='📝 ข้อมูลผู้สั่งซื้อ';
+    $('mbd').innerHTML=`
+      ${steps}
+      <div class="fi"><label class="fl">ชื่อ-นามสกุล *</label><input class="fc" id="on" value="${O.name}" placeholder="ชื่อผู้รับสินค้า"></div>
+      <div class="g2">
+        <div class="fi"><label class="fl">เบอร์โทร *</label><input class="fc" id="op" value="${O.phone}" placeholder="08X-XXX-XXXX" inputmode="tel"></div>
+        <div class="fi"><label class="fl">อีเมล</label><input class="fc" id="oe" value="${O.email}" placeholder="email@example.com"></div>
+      </div>
+      <div class="fi"><label class="fl">ที่อยู่จัดส่ง *</label><textarea class="fc" id="oa" rows="3" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์">${O.addr}</textarea></div>
+      <div class="fi"><label class="fl">หมายเหตุ</label><input class="fc" id="oz" value="${O.note}" placeholder="หมายเหตุเพิ่มเติม"></div>
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:1rem;margin-top:.8rem">
+        <div style="font-weight:700;margin-bottom:8px;color:var(--pri)">🛒 สรุปคำสั่งซื้อ (${CART.length} รายการ)</div>
+        ${CART.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed #bae6fd">
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px">${i.name} × ${i.qty}</span>
+          <span style="flex-shrink:0;font-weight:600">฿${fmt(i.price*i.qty)}</span></div>`).join('')}
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:13px"><span>VAT ${CO.vatRate||7}%</span><span>฿${fmt(vat)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:17px;color:var(--pri);margin-top:4px"><span>ยอดสุทธิ</span><span>฿${fmtD(grand)}</span></div>
+      </div>
+      <div class="row mt" style="justify-content:flex-end">
+        <button class="btn btn-gy" onclick="closeM()">ยกเลิก</button>
+        <button class="btn" onclick="step2()">ถัดไป →</button>
+      </div>`;
+  }
+  else if(O.step===2){
+    $('mtx').textContent='💳 เลือกวิธีชำระเงิน';
+    const pm=(key,ico,name,desc)=>`
+      <div class="pmopt${O.pay===key?' sel':''}" onclick="O.pay='${key}';renderCheckout()">
+        <div class="pmico">${ico}</div>
+        <div class="pmtx"><div class="pmn">${name}</div><div class="pmd">${desc}</div></div>
+        <div class="pmck">${O.pay===key?'✓':''}</div>
+      </div>`;
+    $('mbd').innerHTML=`
+      ${steps}
+      ${pm('qr','📱','QR Code พร้อมเพย์','สแกนจ่ายทุกธนาคาร ทุกวอลเล็ต — ฟรี!')}
+      ${pm('transfer','🏦','โอนเงินผ่านธนาคาร','โอนแล้วแนบสลิปยืนยัน')}
+      ${pm('credit','💳','บัตรเครดิต / เดบิต','Visa, Mastercard, JCB — ผ่าน Omise')}
+      ${pm('cod','💵','เก็บเงินปลายทาง (COD)','ชำระเมื่อรับสินค้า')}
+      ${O.pay==='credit'?`
+      <div style="margin-top:.5rem">
+        <div class="ccwrap">
+          <div class="cc-chip"></div>
+          <div class="cc-num" id="cc-disp">•••• •••• •••• ••••</div>
+          <div class="cc-meta">
+            <div><b>ชื่อบนบัตร</b><span id="cc-nm-disp">YOUR NAME</span></div>
+            <div><b>หมดอายุ</b><span id="cc-exp-disp">MM/YY</span></div>
+          </div>
+        </div>
+        <div class="fi"><label class="fl">หมายเลขบัตร</label>
+          <input class="fc" id="ccnum" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric"
+            oninput="fmtCC(this);$('cc-disp').textContent=this.value||'•••• •••• •••• ••••'"></div>
+        <div class="g2">
+          <div class="fi"><label class="fl">วันหมดอายุ</label>
+            <input class="fc" id="ccexp" placeholder="MM/YY" maxlength="5" inputmode="numeric"
+              oninput="fmtExp(this);$('cc-exp-disp').textContent=this.value||'MM/YY'"></div>
+          <div class="fi"><label class="fl">CVV</label>
+            <input class="fc" id="cccvv" placeholder="•••" maxlength="4" type="password" inputmode="numeric"></div>
+        </div>
+        <div class="fi"><label class="fl">ชื่อบนบัตร</label>
+          <input class="fc" id="ccname" placeholder="NAME ON CARD" style="text-transform:uppercase"
+            oninput="$('cc-nm-disp').textContent=this.value.toUpperCase()||'YOUR NAME'"></div>
+        <div class="row" style="font-size:12px;color:var(--mu);gap:6px;margin-top:4px">
+          <span>🔒</span><span>ข้อมูลถูกเข้ารหัส SSL — ส่งตรงไป Omise ไม่ผ่านเซิร์ฟเวอร์ร้าน</span></div>
+        <div class="omise-note">
+          ⚠️ <b>Demo Mode:</b> UI นี้แสดงตัวอย่างการกรอกบัตร หากต้องการชำระจริงต้องสมัคร
+          <a href="https://www.omise.co" target="_blank">Omise.co</a> แล้วใส่ Public Key ในหน้าตั้งค่าระบบ
+        </div>
+      </div>`:''}
+      <div class="row mt" style="justify-content:space-between">
+        <button class="btn btn-gy" onclick="O.step=1;renderCheckout()">← กลับ</button>
+        <button class="btn btn-ok btn-lg" onclick="step3()">✅ ยืนยัน ฿${fmtD(grand)}</button>
+      </div>`;
+  }
+  else if(O.step===3){ renderPayScreen(grand,steps); }
+  else if(O.step===4){ renderSuccessScreen(_lastGrand, window._lastCart||[]); }
+}
+
+function step2(){
+  O.name=$('on').value.trim();O.phone=$('op').value.trim();
+  O.email=$('oe').value.trim();O.addr=$('oa').value.trim();O.note=$('oz').value.trim();
+  if(!O.name||!O.phone||!O.addr){toast('กรุณากรอกข้อมูลให้ครบ','err');return;}
+  O.step=2;renderCheckout();
+}
+
+async function step3(){
+  if(O.pay==='credit'){
+    const num=$('ccnum')?.value.replace(/\s/g,'');
+    if(!num||num.length<15||!$('ccexp')?.value||!$('cccvv')?.value){toast('กรุณากรอกข้อมูลบัตรให้ครบ','err');return;}
+  }
+  try{
+    const snap=await db.collection('onlineOrders').orderBy('createdAt','desc').limit(1).get();
+    const last=snap.empty?0:parseInt((snap.docs[0].data().orderNo||'').split('-').pop())||0;
+    _docNo='ORD-'+String(last+1).padStart(5,'0');
+  }catch{_docNo='ORD-'+Date.now();}
+  O.step=3;renderCheckout();
+  if(O.pay!=='cod')startTimer();
+}
+
+// ════════════════════════════════════════
+//  PAYMENT SCREENS
+// ════════════════════════════════════════
+function renderPayScreen(grand,steps){
+  $('mtx').textContent={qr:'📱 QR พร้อมเพย์',transfer:'🏦 โอนเงินธนาคาร',credit:'💳 ชำระด้วยบัตร',cod:'📦 เก็บเงินปลายทาง'}[O.pay];
+
+  if(O.pay==='qr'){
+    $('mbd').innerHTML=`${steps}
+      <div class="qrbox">
+        <div style="font-weight:700;font-size:15px;color:var(--pri);margin-bottom:4px">📱 สแกน QR Code พร้อมเพย์</div>
+        <div style="font-size:13px;color:var(--mu);margin-bottom:12px">เลขที่: <b>${_docNo}</b></div>
+        <div class="qrwrap" id="qrwrap"></div>
+        <div class="qtot">฿${fmtD(grand)}</div>
+        <div class="qsub">กรุณาชำระภายใน</div>
+        <div class="tmr" id="tmrel">05:00</div>
+        <div class="qacct">
+          <b>ข้อมูลพร้อมเพย์ / โอนเงิน</b><br>
+          ชื่อ: <b>${CO.name}</b><br>
+          เบอร์พร้อมเพย์: <b>${CO.promptpay||CO.tel||'(กรุณาตั้งค่า)'}</b><br>
+          <span style="font-size:11px;color:var(--mu)">* กรุณาตรวจสอบชื่อและยอดก่อนโอน</span>
+        </div>
+        <button class="btn btn-ok btn-lg" style="width:100%" onclick="confirmPay()">✅ ฉันโอนแล้ว / ชำระแล้ว</button>
+        <button class="btn btn-gy" style="width:100%;margin-top:8px" onclick="O.step=2;renderCheckout()">← เปลี่ยนวิธีชำระ</button>
+      </div>`;
+    setTimeout(()=>genQR(grand),100);
+  }
+
+  else if(O.pay==='transfer'){
+    $('mbd').innerHTML=`${steps}
+      <div style="font-size:15px;font-weight:700;color:var(--pri);margin-bottom:12px">🏦 โอนเงินผ่านธนาคาร</div>
+      <div class="qacct" style="margin-bottom:12px">
+        <b style="display:block;margin-bottom:8px">📋 ข้อมูลบัญชีธนาคาร</b>
+        <table style="font-size:13px;line-height:2;width:100%">
+          <tr><td style="color:var(--mu);width:90px">ธนาคาร</td><td><b>${CO.bankName||'(กรุณาตั้งค่า)'}</b></td></tr>
+          <tr><td style="color:var(--mu)">เลขบัญชี</td><td><b style="font-size:15px;letter-spacing:1px">${CO.bankAccount||'XXXX-X-XXXXX-X'}</b></td></tr>
+          <tr><td style="color:var(--mu)">ชื่อบัญชี</td><td><b>${CO.bankAccountName||CO.name}</b></td></tr>
+          <tr><td style="color:var(--mu)">ยอดโอน</td><td><b style="font-size:18px;color:var(--ok)">฿${fmtD(grand)}</b></td></tr>
+        </table>
+      </div>
+      <div class="tmr" id="tmrel">05:00</div>
+      <div class="fi"><label class="fl">📎 แนบสลิปการโอน (ถ้ามี)</label>
+        <div class="imgup" onclick="$('slipf').click()" id="slipbox">
+          <input type="file" id="slipf" accept="image/*" onchange="previewSlip(this)">
+          <div id="sliptx">📷 คลิกเพื่อแนบสลิป</div>
+          <img id="slipimg" class="img-preview">
+        </div>
+      </div>
+      <div class="row mt" style="justify-content:space-between">
+        <button class="btn btn-gy" onclick="O.step=2;renderCheckout()">← กลับ</button>
+        <button class="btn btn-ok btn-lg" onclick="confirmPay()">✅ ยืนยันการโอนเงิน</button>
+      </div>`;
+  }
+
+  else if(O.pay==='credit'){
+    $('mbd').innerHTML=`${steps}
+      <div style="text-align:center;padding:1rem 0">
+        <div style="font-size:14px;color:var(--mu);margin-bottom:4px">ยอดที่ต้องชำระ</div>
+        <div style="font-size:32px;font-weight:800;color:var(--pri)">฿${fmtD(grand)}</div>
+        <div style="font-size:13px;color:var(--mu);margin:.4rem 0 1rem">${_docNo}</div>
+        <div style="display:flex;gap:12px;justify-content:center;margin-bottom:1rem">
+          <div class="chip">💳 Visa</div>
+          <div class="chip">💳 Mastercard</div>
+          <div class="chip">💳 JCB</div>
+        </div>
+      </div>
+      <div class="omise-note" style="margin-bottom:1rem">
+        ⚠️ ระบบนี้เป็น <b>Demo UI</b> — ยังไม่ได้เชื่อมต่อกับ Payment Gateway จริง<br>
+        หากต้องการใช้งานจริงด้วยบัตรเครดิต ต้องสมัคร <a href="https://www.omise.co" target="_blank"><b>Omise</b></a>
+        และใส่ Public Key ในหน้า ⚙️ ตั้งค่า → Omise Key<br>
+        ทีมงานรองรับการผ่าน Omise, Stripe, 2C2P
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:.8rem 1rem;font-size:13px;margin-bottom:1rem">
+        🔒 หากเชื่อมต่อจริง ข้อมูลบัตรจะถูกเข้ารหัส TLS/SSL และส่งตรงไป Omise ร้านค้าจะไม่เห็นข้อมูลบัตรของท่าน
+      </div>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn btn-gy" onclick="O.step=2;renderCheckout()">← กลับ</button>
+        <button class="btn btn-ok btn-lg" onclick="confirmPay()">✅ ยืนยัน (Demo)</button>
+      </div>`;
+  }
+
+  else if(O.pay==='cod'){
+    $('mbd').innerHTML=`${steps}
+      <div style="text-align:center;padding:.5rem 0 1rem">
+        <div style="font-size:52px;margin-bottom:.5rem">📦</div>
+        <div style="font-size:18px;font-weight:700;color:var(--pri);margin-bottom:.5rem">ยืนยันคำสั่งซื้อ COD</div>
+      </div>
+      <div class="qacct">
+        <table style="font-size:13px;line-height:2;width:100%">
+          <tr><td style="color:var(--mu);width:90px">เลขที่</td><td><b>${_docNo}</b></td></tr>
+          <tr><td style="color:var(--mu)">ผู้รับ</td><td><b>${O.name}</b></td></tr>
+          <tr><td style="color:var(--mu)">โทร</td><td><b>${O.phone}</b></td></tr>
+          <tr><td style="color:var(--mu)">ที่อยู่</td><td><b>${O.addr}</b></td></tr>
+          <tr><td style="color:var(--mu)">ยอดเก็บ</td><td><b style="font-size:16px;color:var(--ok)">฿${fmtD(grand)}</b></td></tr>
+        </table>
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:.75rem;margin:10px 0;font-size:13px">
+        ⚠️ มีค่าธรรมเนียม COD ตามระยะทาง — จะแจ้งยืนยันก่อนจัดส่ง
+      </div>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn btn-gy" onclick="O.step=2;renderCheckout()">← กลับ</button>
+        <button class="btn btn-ok btn-lg" onclick="confirmPay()">✅ ยืนยันคำสั่งซื้อ</button>
+      </div>`;
+  }
+}
+
+// ════════════════════════════════════════
+//  QR GENERATOR
+// ════════════════════════════════════════
+function genQR(amount){
+  const el=$('qrwrap');if(!el)return;
+  el.innerHTML='';
+  const ph=CO.promptpay||CO.tel||'0000000000';
+  try{
+    new QRCode(el,{text:`promptpay:${ph}:${amount}`,width:180,height:180,colorDark:'#1a3a5c',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  }catch{
+    el.innerHTML=`<div style="text-align:center;padding:1rem">
+      <div style="font-size:44px">📱</div>
+      <div style="font-size:11px;color:var(--mu);margin-top:6px">QR พร้อมเพย์<br>฿${fmtD(amount)}</div></div>`;
+  }
+}
+
+// ════════════════════════════════════════
+//  TIMER
+// ════════════════════════════════════════
+function startTimer(){
+  _timerSec=300;clearTimer();
+  _timerID=setInterval(()=>{
+    _timerSec--;
+    const el=$('tmrel');
+    if(el){
+      const m=Math.floor(_timerSec/60),s=_timerSec%60;
+      el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      el.style.color=_timerSec<=60?'var(--err)':'var(--warn)';
+    }
+    if(_timerSec<=0){clearTimer();toast('หมดเวลาชำระเงิน กรุณาทำรายการใหม่','err');closeM();}
+  },1000);
+}
+function clearTimer(){if(_timerID){clearInterval(_timerID);_timerID=null;}}
+
+// ════════════════════════════════════════
+//  SLIP PREVIEW
+// ════════════════════════════════════════
+function previewSlip(input){
+  if(!input.files[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=$('slipimg');
+    if(img){img.src=e.target.result;img.style.display='block';}
+    const tx=$('sliptx');if(tx)tx.textContent='✅ แนบสลิปแล้ว';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+// ════════════════════════════════════════
+//  CONFIRM PAYMENT → SAVE ORDER
+// ════════════════════════════════════════
+async function confirmPay(){
+  clearTimer();
+  const {sub,vat,grand}=cartTotals();
+  window._lastGrand=grand;  // เก็บก่อนล้างตะกร้า
+  const orderData={
+    orderNo:_docNo,date:todayISO(),
+    customerName:O.name,customerPhone:O.phone,
+    customerEmail:O.email,customerAddress:O.addr,note:O.note,
+    payMethod:O.pay,
+    items:CART.map(x=>({id:x.id,code:x.code,name:x.name,unit:x.unit,price:x.price,qty:x.qty,subtotal:x.price*x.qty})),
+    subtotal:sub,vat,total:grand,status:'รอยืนยัน',
+  };
+  // Upload slip if transfer (skip if Storage not enabled)
+  if(O.pay==='transfer'){
+    const slipF=$('slipf')?.files[0];
+    if(slipF){
+      try{
+        // ใช้ Base64 แทน Storage เพื่อไม่ต้อง upgrade plan
+        const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(slipF);});
+        orderData.slipBase64=b64.slice(0,50000); // จำกัด 50KB
+      }catch(e){console.warn('slip save failed',e);}
+    }
+  }
+  try{
+    const batch=db.batch();
+    const oRef=db.collection('onlineOrders').doc();
+    batch.set(oRef,{...orderData,createdAt:fsts()});
+    CART.forEach(item=>batch.update(db.collection('products').doc(item.id),{stock:inc(-item.qty)}));
+    await batch.commit();
+    CART.forEach(item=>{const p=PRODS.find(x=>x.id===item.id);if(p)p.stock-=item.qty;});
+    window._lastCart=[...CART];
+    CART.length=0;updateCart();doFilter();
+    O.step=4;
+    renderSuccessScreen(grand, window._lastCart);
+  }catch(e){toast('บันทึกไม่สำเร็จ: '+e.message,'err');}
+}
+
+function renderSuccessScreen(grand,savedCart){
+  window._lastCart=savedCart||[];  // เก็บก่อน render
+  $('mtx').textContent='🎉 คำสั่งซื้อสำเร็จ';
+  $('mbd').innerHTML=`
+    <div class="sbox">
+      <span class="sico">🎉</span>
+      <div class="sno">${_docNo}</div>
+      <div class="ssub">คำสั่งซื้อของคุณเสร็จสมบูรณ์แล้ว!</div>
+      <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:1rem;margin-bottom:1.2rem;text-align:left;font-size:13px;line-height:1.9">
+        <div>👤 <b>${O.name}</b></div>
+        <div>📞 ${O.phone}</div>
+        <div>📍 ${O.addr}</div>
+        <div>💳 <b>${{qr:'QR พร้อมเพย์',transfer:'โอนเงิน',credit:'บัตรเครดิต',cod:'COD'}[O.pay]}</b></div>
+        <div>💰 <b style="color:var(--ok)">฿${fmtD(grand)}</b></div>
+        <div>📦 <span class="chip warn">รอยืนยัน</span></div>
+      </div>
+      <div style="font-size:13px;color:var(--mu);margin-bottom:1.2rem">
+        ${CO.tel?`เราจะติดต่อกลับที่ 📞 ${CO.tel} ภายใน 24 ชั่วโมง`:'เราจะดำเนินการโดยเร็ว'}
+      </div>
+      <div class="row" style="flex-wrap:wrap;justify-content:center;gap:8px">
+        <button class="btn btn-pri" onclick="doPrint(${JSON.stringify(grand)})">🖨️ พิมพ์ใบสั่งซื้อ</button>
+        <button class="btn btn-gy" onclick="closeM()">ช้อปต่อ →</button>
+      </div>
+    </div>`;
+}
+
+function doPrint(grand){
+  const c=window._lastCart||[];
+  $('pzone').innerHTML=`
+  <div style="max-width:380px;margin:0 auto;font-family:'Sarabun',sans-serif;font-size:13px;padding:20px">
+    <div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:12px;margin-bottom:12px">
+      <div style="font-size:22px">${CO.logoEmoji||'🏪'}</div>
+      <div style="font-size:18px;font-weight:700">${CO.name}</div>
+      ${CO.address?`<div>${CO.address}</div>`:''}
+      ${CO.tel?`<div>โทร: ${CO.tel}</div>`:''}
+      <div style="font-size:15px;font-weight:700;margin-top:8px">ใบสั่งซื้อออนไลน์</div>
+    </div>
+    <div style="margin-bottom:10px;line-height:1.8">
+      <div><b>เลขที่:</b> ${_docNo}</div>
+      <div><b>วันที่:</b> ${todayISO()}</div>
+      <div><b>ผู้รับ:</b> ${O.name} / ${O.phone}</div>
+      <div><b>จัดส่งไป:</b> ${O.addr}</div>
+      <div><b>ชำระด้วย:</b> ${{qr:'QR พร้อมเพย์',transfer:'โอนเงิน',credit:'บัตรเครดิต',cod:'COD'}[O.pay]||O.pay}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:1px solid #000">
+        <th align="left" style="padding:4px 0">สินค้า</th>
+        <th align="right">จำนวน</th><th align="right">ราคา</th><th align="right">รวม</th>
+      </tr></thead>
+      <tbody>${c.map(i=>`<tr><td style="padding:3px 0">${i.name}</td><td align="right">${i.qty}</td><td align="right">฿${fmtD(i.price)}</td><td align="right">฿${fmtD(i.price*i.qty)}</td></tr>`).join('')}</tbody>
+    </table>
+    <div style="border-top:1px dashed #000;margin-top:8px;padding-top:8px;text-align:right;font-size:14px">
+      <div style="font-size:17px;font-weight:700">ยอดสุทธิ ฿${fmtD(grand)}</div>
+      <div style="color:#555;font-size:12px">สถานะ: รอยืนยัน</div>
+    </div>
+    <div style="text-align:center;margin-top:14px;border-top:2px dashed #000;padding-top:10px;font-weight:700">
+      ${CO.receiptFooter||'ขอบคุณที่ใช้บริการ'}
+    </div>
+  </div>`;
+  setTimeout(()=>window.print(),200);
+}
+
+// ════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════
+function fmtCC(el){let v=el.value.replace(/\D/g,'').slice(0,16);el.value=v.replace(/(.{4})/g,'$1 ').trim();}
+function fmtExp(el){let v=el.value.replace(/\D/g,'');if(v.length>=2)v=v.slice(0,2)+'/'+v.slice(2,4);el.value=v;}
+
+// Drag-over for slip
+document.addEventListener('dragover',e=>{
+  if($('slipbox'))e.preventDefault();
+});
+document.addEventListener('drop',e=>{
+  const sb=$('slipbox');
+  if(sb&&sb.contains(e.target)){
+    e.preventDefault();
+    const f=e.dataTransfer.files[0];
+    if(f&&f.type.startsWith('image/')){
+      const dt=new DataTransfer();dt.items.add(f);
+      $('slipf').files=dt.files;previewSlip($('slipf'));
+    }
+  }
+});
+
+// ════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
