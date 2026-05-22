@@ -884,9 +884,8 @@ function cartTotals(){
 function updateCart(){
   const{sub,vat,grand,cnt}=cartTotals();
   $('ccnt').textContent=cnt;if($('ccnt2'))$('ccnt2').textContent=cnt;
-  $('cart-title').textContent='Cart '+t('cart')+' ('+cnt+')';
-  $('cf-sub').textContent='฿'+fmt(sub);$('cf-vat').textContent='฿'+fmt(vat);const vrow=document.getElementById('cart-vat-row');if(vrow)vrow.style.display='none';
-  $('cf-total').textContent='฿'+fmt(grand);
+  $('cart-title').textContent=String.fromCodePoint(0x1F6D2)+' '+t('cart')+' ('+cnt+')';
+  $('cf-sub').textContent='฿'+fmt(sub);$('cf-total').textContent='฿'+fmt(grand);
   $('chk-btn').disabled=CART.length===0;
   $('citems').innerHTML=CART.length?CART.map(item=>`
     <div class="cart-item">
