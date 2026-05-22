@@ -319,7 +319,6 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
   </div>
   <div class="cart-ft">
     <div class="cart-row"><span id="ct-sub-l">Subtotal</span><span id="cf-sub">฿0</span></div>
-    <div class="cart-row"><span id="ct-vat-l">VAT</span><span id="cf-vat">฿0</span></div>
     <div class="cart-total"><span id="ct-total-l">Total</span><span id="cf-total">฿0</span></div>
     <button class="chk-btn" id="chk-btn" onclick="openCheckout()" disabled>Pay Now →</button>
   </div>
@@ -501,7 +500,42 @@ const fmt=n=>new Intl.NumberFormat('th-TH').format(Math.round(n||0));
 const fmtD=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(n||0);
 const todayISO=()=>new Date().toISOString().split('T')[0];
 
-const CAT_ICONS={'เสื้อกันไฟ':'[fire]','กางเกงกันไฟ':'[pants]','ถุงมือ':'[glove]','ถุงเท้า':'[sock]','รองเท้า':'[shoe]','หมวก/อุปกรณ์หมวก':'⛑️','ชุดแข่ง':'[car]️','หน้ากาก/บาลาคลาวา':'[mask]','อุปกรณ์ป้องกัน':'[shield]️','เบาะ/เข็มขัด':'[seat]','อะไหล่รถ':'[nut]','ระบบเบรค':'[brake]','ช่วงล่าง':'[wrench]','ระบบเครื่องยนต์':'⚙️','ล้อ/น็อต':'[wheel]','กล้อง/อุปกรณ์':'[cam]','สติ๊กเกอร์':'[tag]️','ถังดับเพลิง':'[fire-ext]','อุปกรณ์ไฟฟ้า':'⚡','อุปกรณ์แข่ง':'[trophy]','อุปกรณ์มอเตอร์สปอร์ต':'[flag]'};
+// Emoji helpers - use String.fromCodePoint to avoid browser "illegal character" errors
+const E={
+  fire:String.fromCodePoint(0x1F525),    // 🔥
+  pants:String.fromCodePoint(0x1F456),   // 👖
+  glove:String.fromCodePoint(0x1F9E4),   // 🧤
+  sock:String.fromCodePoint(0x1F9E6),    // 🧦
+  shoe:String.fromCodePoint(0x1F45F),    // 👟
+  helmet:'⛑️',
+  car:String.fromCodePoint(0x1F3CE),     // 🏎️
+  mask:String.fromCodePoint(0x1F3AD),    // 🎭
+  shield:String.fromCodePoint(0x1F6E1),  // 🛡️
+  seat:String.fromCodePoint(0x1F4BA),    // 💺
+  nut:String.fromCodePoint(0x1F529),     // 🔩
+  brake:String.fromCodePoint(0x1F534),   // 🔴
+  wrench:String.fromCodePoint(0x1F527),  // 🔧
+  gear:'⚙️',
+  wheel:String.fromCodePoint(0x1F518),   // 🔘
+  cam:String.fromCodePoint(0x1F4F7),     // 📷
+  tag:String.fromCodePoint(0x1F3F7),     // 🏷️
+  extinguisher:String.fromCodePoint(0x1F9EF), // 🧯
+  electric:'⚡',
+  trophy:String.fromCodePoint(0x1F3C6),  // 🏆
+  flag:String.fromCodePoint(0x1F3C1),    // 🏁
+  box:String.fromCodePoint(0x1F4E6),     // 📦
+  lock:String.fromCodePoint(0x1F512),    // 🔒
+  search:String.fromCodePoint(0x1F50D),  // 🔍
+};
+const CAT_ICONS={
+  'เสื้อกันไฟ':E.fire,'กางเกงกันไฟ':E.pants,'ถุงมือ':E.glove,'ถุงเท้า':E.sock,
+  'รองเท้า':E.shoe,'หมวก/อุปกรณ์หมวก':E.helmet,'ชุดแข่ง':E.car,
+  'หน้ากาก/บาลาคลาวา':E.mask,'อุปกรณ์ป้องกัน':E.shield,'เบาะ/เข็มขัด':E.seat,
+  'อะไหล่รถ':E.nut,'ระบบเบรค':E.brake,'ช่วงล่าง':E.wrench,
+  'ระบบเครื่องยนต์':E.gear,'ล้อ/น็อต':E.wheel,'กล้อง/อุปกรณ์':E.cam,
+  'สติ๊กเกอร์':E.tag,'ถังดับเพลิง':E.extinguisher,'อุปกรณ์ไฟฟ้า':E.electric,
+  'อุปกรณ์แข่ง':E.trophy,'อุปกรณ์มอเตอร์สปอร์ต':E.flag,
+};
 
 // ── TRANSLATIONS ──
 const T={
@@ -514,7 +548,7 @@ const T={
     sort_az:'ชื่อ A→Z',sort_za:'ชื่อ Z→A',sort_pa:'ราคา น้อย→มาก',sort_pd:'ราคา มาก→น้อย',
     sb_cat:'หมวดหมู่',sb_brand:'ยี่ห้อ',sb_price:'ช่วงราคา',sb_avail:'สต็อก',sb_instock:'มีสินค้าเท่านั้น',
     tb_ship:'[truck] จัดส่งทั่วไทย',tb_auth:'✅ สินค้าแท้ 100%',
-    promo:'[trophy] อุปกรณ์แข่งรถมืออาชีพ — ของแท้ทุกชิ้น — จัดส่งรวดเร็วทั่วประเทศ',
+    promo:E.trophy+' อุปกรณ์แข่งรถมืออาชีพ — ของแท้ทุกชิ้น — จัดส่งรวดเร็วทั่วประเทศ',
     ft_cat:'หมวดหมู่',ft_svc:'บริการ',ft_pay:'ชำระเงิน',
     ft_admin:'Admin / จัดการร้าน',ft_contact:'ติดต่อเรา',ft_return:'นโยบายคืนสินค้า',
     pd_tab1:'รายละเอียดสินค้า',pd_tab2:'ข้อมูลจำเพาะ',pd_tab3:'การจัดส่ง',
@@ -537,7 +571,7 @@ const T={
     sort_az:'Name A→Z',sort_za:'Name Z→A',sort_pa:'Price Low→High',sort_pd:'Price High→Low',
     sb_cat:'CATEGORY',sb_brand:'BRAND',sb_price:'PRICE RANGE',sb_avail:'AVAILABILITY',sb_instock:'In Stock Only',
     tb_ship:'[truck] Nationwide Delivery',tb_auth:'✅ 100% Genuine',
-    promo:'[trophy] Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide',
+    promo:E.trophy+' Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide',
     ft_cat:'Categories',ft_svc:'Services',ft_pay:'Payment',
     ft_admin:'Admin / Manage Store',ft_contact:'Contact Us',ft_return:'Returns Policy',
     pd_tab1:'Product Details',pd_tab2:'Specification',pd_tab3:'Delivery',
@@ -564,7 +598,7 @@ function setLang(l){
 function applyLang(){
   $('sinput').placeholder=t('search_ph');
   $('cart-title').textContent='Cart '+t('cart')+' ('+CART.reduce((a,b)=>a+b.qty,0)+')';
-  $('ct-sub-l').textContent=t('sub');$('ct-vat-l').textContent=t('vat');$('ct-total-l').textContent=t('total');
+  $('ct-sub-l').textContent=t('sub');$('ct-total-l').textContent=t('total');
   const cb=$('chk-btn');if(cb)cb.textContent=t('pay')+' →';
   $('nav-all').textContent=t('all');
   $('login-btn').textContent=shopUser?t('logout'):t('login');
@@ -656,7 +690,7 @@ function setcat(c,el){
   if(c==='all'){
     banner.classList.remove('show');
     title.innerHTML=t('all')+' <span>PRODUCTS</span>';
-    icon.textContent='[flag]';
+    icon.textContent=E.flag;
   } else {
     banner.classList.add('show');
     title.innerHTML='<span>'+c.toUpperCase()+'</span>';
@@ -714,7 +748,7 @@ function doFilter(){
   $('result-count').innerHTML=`<strong>${list.length}</strong> ${t('items')}`;
   const grid=$('pgrid');if(!grid)return;
   if(!list.length){
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">[search]</div><div class="empty-msg">${t('no_products')}</div></div>`;return;
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">`+E.search+`</div><div class="empty-msg">${t('no_products')}</div></div>`;return;
   }
   grid.innerHTML=list.map(prodCard).join('');
 }
@@ -729,7 +763,7 @@ function prodCard(p){
   return`<div class="pcard" onclick="openPD('${p.id}')">
     <div class="pcard-img-wrap">
       ${hasImg?`<img class="pcard-img" src="${p.imageUrl}" alt="${p.name.replace(/"/g,'')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}
-      <div class="pcard-ph" style="${hasImg?'display:none':''}">${CAT_ICONS[p.category]||'[box]'}</div>
+      <div class="pcard-ph" style="${hasImg?'display:none':''}">${CAT_ICONS[p.category]||E.box}</div>
       ${p.stock<=0?('<div class="pcard-badge oos">'+t('out_stock')+'</div>'):p.stock<=5?'<div class="pcard-badge sale">LOW</div>':''}
       <div class="pcard-overlay">
         <button class="pcard-add-btn" onclick="event.stopPropagation();qadd('${p.id}')">${p.stock>0&&p.price>0?t('add_cart'):t('sold_out')}</button>
@@ -778,7 +812,7 @@ function openPD(id){
   const specRows=[['SKU',p.code||'-'],['Category',p.category||'-'],['Unit',p.unit||'-'],['Stock',p.stock+' '+(p.unit||'')],['Shopee ID',p.shopeeId||'-']];
   const specHtml=specRows.map(function(r){return'<tr style="border-bottom:1px solid var(--bd)"><td style="padding:8px;color:#555;width:140px">'+r[0]+'</td><td style="padding:8px;color:#ccc">'+r[1]+'</td></tr>';}).join('');
   const deliveryHtml=LANG==='th'?'จัดส่งทั่วประเทศไทย ภายใน 2-5 วันทำการ ติดต่อ '+(CO.tel||'ร้านค้า'):'Nationwide delivery within 2-5 business days. Contact '+(CO.tel||'store')+' for enquiries.';
-  const authBadge=LANG==='th'?'สินค้าแท้ 100% | จัดส่งทั่วไทย | VAT รวมในราคา':'100% Genuine | Nationwide Delivery | VAT Included';
+  const authBadge=LANG==='th'?'สินค้าแท้ 100% | จัดส่งทั่วไทย':'100% Genuine | Nationwide Delivery';
   const priceHtml=p.price>0?('฿'+fmt(p.price)):t('contact_price');
 
   const html='<div class="pd-layout">'
@@ -844,19 +878,19 @@ function cqty(id,d){
 }
 function cremove(id){CART.splice(CART.findIndex(x=>x.id===id),1);updateCart();}
 function cartTotals(){
-  const sub=CART.reduce((a,b)=>a+b.price*b.qty,0),vat=Math.round(sub*((CO.vatRate||7)/100));
-  return{sub,vat,grand:sub+vat,cnt:CART.reduce((a,b)=>a+b.qty,0)};
+  const sub=CART.reduce((a,b)=>a+b.price*b.qty,0),vat=0;
+  return{sub,vat,grand:sub,cnt:CART.reduce((a,b)=>a+b.qty,0)};
 }
 function updateCart(){
   const{sub,vat,grand,cnt}=cartTotals();
   $('ccnt').textContent=cnt;if($('ccnt2'))$('ccnt2').textContent=cnt;
   $('cart-title').textContent='Cart '+t('cart')+' ('+cnt+')';
-  $('cf-sub').textContent='฿'+fmt(sub);$('cf-vat').textContent='฿'+fmt(vat);
+  $('cf-sub').textContent='฿'+fmt(sub);$('cf-vat').textContent='฿'+fmt(vat);const vrow=document.getElementById('cart-vat-row');if(vrow)vrow.style.display='none';
   $('cf-total').textContent='฿'+fmt(grand);
   $('chk-btn').disabled=CART.length===0;
   $('citems').innerHTML=CART.length?CART.map(item=>`
     <div class="cart-item">
-      <div class="ci-thumb">${item.imageUrl?`<img src="${item.imageUrl}" onerror="this.parentNode.textContent='${CAT_ICONS[item.category]||'[box]'}'">`:(CAT_ICONS[item.category]||'[box]')}</div>
+      <div class="ci-thumb">${item.imageUrl?`<img src="${item.imageUrl}" onerror="this.parentNode.textContent='${CAT_ICONS[item.category]||E.box}'">`:(CAT_ICONS[item.category]||E.box)}</div>
       <div class="ci-info">
         <div class="ci-name">${item.name}</div>
         <div class="ci-price">฿${fmt(item.price)}</div>
@@ -878,7 +912,7 @@ function openCheckout(){
   if(!shopUser){
     openM(t('login_first'),`
       <div style="text-align:center;padding:1rem 0">
-        <div style="font-size:48px;margin-bottom:.8rem">[lock]</div>
+        <div style="font-size:48px;margin-bottom:.8rem">🔒</div>
         <div style="font-family:var(--font);font-size:18px;font-weight:900;color:#fff;margin-bottom:1rem;letter-spacing:.5px">${t('login_first').toUpperCase()}</div>
         <button onclick="shopLogin();closeM()" class="act-btn">${t('login_google')}</button>
         <button onclick="closeM();_doCO()" class="act-btn sec" style="margin-top:8px">${t('guest')}</button>
@@ -1001,7 +1035,7 @@ function renderPayScreen(grand,steps){
   } else {
     $('mb').innerHTML=`${steps}
       <div style="text-align:center;padding:1rem 0">
-        <div style="font-size:48px;margin-bottom:.8rem">[box]</div>
+        <div style="font-size:48px;margin-bottom:.8rem">'+(E.box||'?')+'</div>
         <div style="font-family:var(--font);font-size:17px;font-weight:900;color:#fff;margin-bottom:1rem;letter-spacing:.5px">CASH ON DELIVERY</div>
         <div class="qr-acct" style="text-align:left">
           <table style="width:100%;font-size:13px;line-height:2">
