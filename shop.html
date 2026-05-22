@@ -502,7 +502,7 @@ const fmt=n=>new Intl.NumberFormat('th-TH').format(Math.round(n||0));
 const fmtD=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(n||0);
 const todayISO=()=>new Date().toISOString().split('T')[0];
 
-const CAT_ICONS={'เสื้อกันไฟ':'🔥','กางเกงกันไฟ':'👖','ถุงมือ':'🧤','ถุงเท้า':'🧦','รองเท้า':'👟','หมวก/อุปกรณ์หมวก':'⛑️','ชุดแข่ง':'🏎️','หน้ากาก/บาลาคลาวา':'🎭','อุปกรณ์ป้องกัน':'🛡️','เบาะ/เข็มขัด':'💺','อะไหล่รถ':'🔩','ระบบเบรค':'🔴','ช่วงล่าง':'🔧','ระบบเครื่องยนต์':'⚙️','ล้อ/น็อต':'🔘','กล้อง/อุปกรณ์':'📷','สติ๊กเกอร์':'🏷️','ถังดับเพลิง':'🧯','อุปกรณ์ไฟฟ้า':'⚡','อุปกรณ์แข่ง':'🏆','อุปกรณ์มอเตอร์สปอร์ต':'🏁'};
+const CAT_ICONS={'เสื้อกันไฟ':'[fire]','กางเกงกันไฟ':'[pants]','ถุงมือ':'[glove]','ถุงเท้า':'[sock]','รองเท้า':'[shoe]','หมวก/อุปกรณ์หมวก':'⛑️','ชุดแข่ง':'[car]️','หน้ากาก/บาลาคลาวา':'[mask]','อุปกรณ์ป้องกัน':'[shield]️','เบาะ/เข็มขัด':'[seat]','อะไหล่รถ':'[nut]','ระบบเบรค':'[brake]','ช่วงล่าง':'[wrench]','ระบบเครื่องยนต์':'⚙️','ล้อ/น็อต':'[wheel]','กล้อง/อุปกรณ์':'[cam]','สติ๊กเกอร์':'[tag]️','ถังดับเพลิง':'[fire-ext]','อุปกรณ์ไฟฟ้า':'⚡','อุปกรณ์แข่ง':'[trophy]','อุปกรณ์มอเตอร์สปอร์ต':'[flag]'};
 
 // ── TRANSLATIONS ──
 const T={
@@ -514,8 +514,8 @@ const T={
     sub:'ราคาสินค้า',vat:'VAT',total:'ยอดสุทธิ',pay:'ชำระเงิน',
     sort_az:'ชื่อ A→Z',sort_za:'ชื่อ Z→A',sort_pa:'ราคา น้อย→มาก',sort_pd:'ราคา มาก→น้อย',
     sb_cat:'หมวดหมู่',sb_brand:'ยี่ห้อ',sb_price:'ช่วงราคา',sb_avail:'สต็อก',sb_instock:'มีสินค้าเท่านั้น',
-    tb_ship:'🚚 จัดส่งทั่วไทย',tb_auth:'✅ สินค้าแท้ 100%',
-    promo:'🏆 อุปกรณ์แข่งรถมืออาชีพ — ของแท้ทุกชิ้น — จัดส่งรวดเร็วทั่วประเทศ',
+    tb_ship:'[truck] จัดส่งทั่วไทย',tb_auth:'✅ สินค้าแท้ 100%',
+    promo:'[trophy] อุปกรณ์แข่งรถมืออาชีพ — ของแท้ทุกชิ้น — จัดส่งรวดเร็วทั่วประเทศ',
     ft_cat:'หมวดหมู่',ft_svc:'บริการ',ft_pay:'ชำระเงิน',
     ft_admin:'Admin / จัดการร้าน',ft_contact:'ติดต่อเรา',ft_return:'นโยบายคืนสินค้า',
     pd_tab1:'รายละเอียดสินค้า',pd_tab2:'ข้อมูลจำเพาะ',pd_tab3:'การจัดส่ง',
@@ -525,7 +525,7 @@ const T={
     name:'ชื่อ-นามสกุล *',phone:'โทรศัพท์ *',email:'อีเมล',
     address:'ที่อยู่จัดส่ง *',note:'หมายเหตุ',
     next_pay:'ถัดไป: เลือกวิธีชำระ →',confirm_order:'ยืนยันคำสั่งซื้อ',back:'← ย้อนกลับ',
-    order_ok:'คำสั่งซื้อสำเร็จ!',shop_more:'ช้อปต่อ →',print:'🖨️ พิมพ์ใบสั่งซื้อ',
+    order_ok:'คำสั่งซื้อสำเร็จ!',shop_more:'ช้อปต่อ →',print:'[print]️ พิมพ์ใบสั่งซื้อ',
     login_first:'กรุณาเข้าสู่ระบบก่อนสั่งซื้อ',login_google:'เข้าสู่ระบบด้วย Google',guest:'สั่งซื้อโดยไม่เข้าสู่ระบบ',
     var_label:'ตัวเลือกสินค้า (Variations)',required:'* จำเป็น',fill_all:'กรุณากรอกข้อมูลให้ครบ'
   },
@@ -537,8 +537,8 @@ const T={
     sub:'Subtotal',vat:'VAT',total:'Total',pay:'Pay Now',
     sort_az:'Name A→Z',sort_za:'Name Z→A',sort_pa:'Price Low→High',sort_pd:'Price High→Low',
     sb_cat:'CATEGORY',sb_brand:'BRAND',sb_price:'PRICE RANGE',sb_avail:'AVAILABILITY',sb_instock:'In Stock Only',
-    tb_ship:'🚚 Nationwide Delivery',tb_auth:'✅ 100% Genuine',
-    promo:'🏆 Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide',
+    tb_ship:'[truck] Nationwide Delivery',tb_auth:'✅ 100% Genuine',
+    promo:'[trophy] Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide',
     ft_cat:'Categories',ft_svc:'Services',ft_pay:'Payment',
     ft_admin:'Admin / Manage Store',ft_contact:'Contact Us',ft_return:'Returns Policy',
     pd_tab1:'Product Details',pd_tab2:'Specification',pd_tab3:'Delivery',
@@ -548,7 +548,7 @@ const T={
     name:'Full Name *',phone:'Phone *',email:'Email',
     address:'Delivery Address *',note:'Notes',
     next_pay:'Next: Payment →',confirm_order:'Confirm Order',back:'← Back',
-    order_ok:'Order Confirmed!',shop_more:'Continue Shopping →',print:'🖨️ Print Receipt',
+    order_ok:'Order Confirmed!',shop_more:'Continue Shopping →',print:'[print]️ Print Receipt',
     login_first:'Please sign in to continue',login_google:'Sign in with Google',guest:'Continue as Guest',
     var_label:'Product Variations',required:'* Required',fill_all:'Please fill all required fields'
   }
@@ -564,7 +564,7 @@ function setLang(l){
 }
 function applyLang(){
   $('sinput').placeholder=t('search_ph');
-  $('cart-title').textContent='🛒 '+t('cart')+' ('+CART.reduce((a,b)=>a+b.qty,0)+')';
+  $('cart-title').textContent='Cart '+t('cart')+' ('+CART.reduce((a,b)=>a+b.qty,0)+')';
   $('ct-sub-l').textContent=t('sub');$('ct-vat-l').textContent=t('vat');$('ct-total-l').textContent=t('total');
   const cb=$('chk-btn');if(cb)cb.textContent=t('pay')+' →';
   $('nav-all').textContent=t('all');
@@ -634,8 +634,8 @@ async function init(){
 function applyBrand(){
   const c=CO;
   document.title=(c.name||'Racing Garage')+' — Motorsport Shop';
-  if(c.tel)$('tb-tel').textContent='📞 '+c.tel;
-  $('ft-addr').innerHTML=(c.address||'')+(c.tel?'<br>📞 '+c.tel:'');
+  if(c.tel)$('tb-tel').textContent='Tel: '+c.tel;
+  $('ft-addr').innerHTML=(c.address||'')+(c.tel?'<br>Tel: '+c.tel:'');
   $('ft-copy').textContent='© '+new Date().getFullYear()+' '+(c.name||'Racing Garage');
   $('ft-legal').textContent='© '+new Date().getFullYear()+' '+(c.name||'Racing Garage')+'. All rights reserved.';
   const cats=[...new Set(PRODS.map(p=>p.category).filter(Boolean))].slice(0,6);
@@ -654,8 +654,8 @@ function setcat(c,el){
   if(el)el.classList.add('on');
   // Update category banner
   const banner=$('cat-banner'),title=$('cat-banner-title'),icon=$('cat-banner-icon');
-  if(c==='all'){banner.classList.remove('show');title.innerHTML=t('all')+' <span>PRODUCTS</span>';icon.textContent='🏁';}
-  else{banner.classList.add('show');title.innerHTML=c.toUpperCase().replace(/\s/g,' <span>')+' </span>';icon.textContent=CAT_ICONS[c]||'📦';}
+  if(c==='all'){banner.classList.remove('show');title.innerHTML=t('all')+' <span>PRODUCTS</span>';icon.textContent='[flag]';}
+  else{banner.classList.add('show');title.innerHTML=c.toUpperCase().replace(/\s/g,' <span>')+' </span>';icon.textContent=CAT_ICONS[c]||'[box]';}
   buildSidebar();doFilter();
   document.getElementById('products')||window.scrollTo({top:300,behavior:'smooth'});
 }
@@ -707,7 +707,7 @@ function doFilter(){
   $('result-count').innerHTML=`<strong>${list.length}</strong> ${t('items')}`;
   const grid=$('pgrid');if(!grid)return;
   if(!list.length){
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-msg">${t('no_products')}</div></div>`;return;
+    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">[search]</div><div class="empty-msg">${t('no_products')}</div></div>`;return;
   }
   grid.innerHTML=list.map(prodCard).join('');
 }
@@ -722,7 +722,7 @@ function prodCard(p){
   return`<div class="pcard" onclick="openPD('${p.id}')">
     <div class="pcard-img-wrap">
       ${hasImg?`<img class="pcard-img" src="${p.imageUrl}" alt="${p.name.replace(/"/g,'')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}
-      <div class="pcard-ph" style="${hasImg?'display:none':''}">${CAT_ICONS[p.category]||'📦'}</div>
+      <div class="pcard-ph" style="${hasImg?'display:none':''}">${CAT_ICONS[p.category]||'[box]'}</div>
       ${p.stock<=0?`<div class="pcard-badge oos">${t('out_stock')}</div>`:p.stock<=5?`<div class="pcard-badge sale">LOW</div>`:''}
       <div class="pcard-overlay">
         <button class="pcard-add-btn" onclick="event.stopPropagation();qadd('${p.id}')">${p.stock>0&&p.price>0?t('add_cart'):t('sold_out')}</button>
@@ -758,11 +758,11 @@ function openPD(id){
       <div>
         <div class="pd-img-area">
           <div class="pd-thumbs">
-            ${hasImg?`<img class="pd-thumb on" src="${p.imageUrl}" onclick="this.parentNode.parentNode.querySelector('.pd-main-img').src=this.src">`:'<div class="pd-thumb-ph">${CAT_ICONS[p.category]||'📦'}</div>'}
+            ${hasImg?`<img class="pd-thumb on" src="${p.imageUrl}" onclick="this.parentNode.parentNode.querySelector('.pd-main-img').src=this.src">`:'<div class="pd-thumb-ph">${CAT_ICONS[p.category]||'[box]'}</div>'}
           </div>
           <div class="pd-main-img-wrap">
             ${hasImg?`<img class="pd-main-img" src="${p.imageUrl}" id="pd-mimg" onerror="this.style.display='none'">`:''}
-            <div class="pd-main-ph" ${hasImg?'style="display:none"':''}>${CAT_ICONS[p.category]||'📦'}</div>
+            <div class="pd-main-ph" ${hasImg?'style="display:none"':''}>${CAT_ICONS[p.category]||'[box]'}</div>
           </div>
         </div>
       </div>
@@ -867,13 +867,13 @@ function cartTotals(){
 function updateCart(){
   const{sub,vat,grand,cnt}=cartTotals();
   $('ccnt').textContent=cnt;if($('ccnt2'))$('ccnt2').textContent=cnt;
-  $('cart-title').textContent='🛒 '+t('cart')+' ('+cnt+')';
+  $('cart-title').textContent='Cart '+t('cart')+' ('+cnt+')';
   $('cf-sub').textContent='฿'+fmt(sub);$('cf-vat').textContent='฿'+fmt(vat);
   $('cf-total').textContent='฿'+fmt(grand);
   $('chk-btn').disabled=CART.length===0;
   $('citems').innerHTML=CART.length?CART.map(item=>`
     <div class="cart-item">
-      <div class="ci-thumb">${item.imageUrl?`<img src="${item.imageUrl}" onerror="this.parentNode.textContent='${CAT_ICONS[item.category]||'📦'}'">`:(CAT_ICONS[item.category]||'📦')}</div>
+      <div class="ci-thumb">${item.imageUrl?`<img src="${item.imageUrl}" onerror="this.parentNode.textContent='${CAT_ICONS[item.category]||'[box]'}'">`:(CAT_ICONS[item.category]||'[box]')}</div>
       <div class="ci-info">
         <div class="ci-name">${item.name}</div>
         <div class="ci-price">฿${fmt(item.price)}</div>
@@ -895,7 +895,7 @@ function openCheckout(){
   if(!shopUser){
     openM(t('login_first'),`
       <div style="text-align:center;padding:1rem 0">
-        <div style="font-size:48px;margin-bottom:.8rem">🔐</div>
+        <div style="font-size:48px;margin-bottom:.8rem">[lock]</div>
         <div style="font-family:var(--font);font-size:18px;font-weight:900;color:#fff;margin-bottom:1rem;letter-spacing:.5px">${t('login_first').toUpperCase()}</div>
         <button onclick="shopLogin();closeM()" class="act-btn">${t('login_google')}</button>
         <button onclick="closeM();_doCO()" class="act-btn sec" style="margin-top:8px">${t('guest')}</button>
@@ -938,10 +938,10 @@ function renderCO(){
       <div class="pm-ico">${ico}</div><div><div class="pm-n">${n}</div><div class="pm-d">${d}</div></div>
       <div class="pm-ck">${O.pay===k?'✓':''}</div></div>`;
     $('mb').innerHTML=`${steps}
-      ${pm('qr','📱','QR PROMPTPAY',LANG==='th'?'สแกนจ่ายทุกธนาคาร':'Scan any bank app')}
-      ${pm('transfer','🏦','BANK TRANSFER',LANG==='th'?'โอนแล้วแนบสลิป':'Transfer & attach slip')}
-      ${pm('credit','💳','CREDIT / DEBIT CARD','Visa, Mastercard, JCB')}
-      ${pm('cod','💵','CASH ON DELIVERY',LANG==='th'?'ชำระเมื่อรับสินค้า':'Pay on arrival')}
+      ${pm('qr','QR','QR PROMPTPAY',LANG==='th'?'สแกนจ่ายทุกธนาคาร':'Scan any bank app')}
+      ${pm('transfer','Bank','BANK TRANSFER',LANG==='th'?'โอนแล้วแนบสลิป':'Transfer & attach slip')}
+      ${pm('credit','Card','CREDIT / DEBIT CARD','Visa, Mastercard, JCB')}
+      ${pm('cod','Cash','CASH ON DELIVERY',LANG==='th'?'ชำระเมื่อรับสินค้า':'Pay on arrival')}
       <div style="display:flex;gap:8px;margin-top:1rem">
         <button onclick="O.step=1;renderCO()" class="act-btn sec" style="flex:1">← ${LANG==='th'?'ย้อนกลับ':'Back'}</button>
         <button onclick="step3()" class="act-btn" style="flex:2">${t('confirm_order')} ฿${fmtD(grand)} →</button>
@@ -1018,7 +1018,7 @@ function renderPayScreen(grand,steps){
   } else {
     $('mb').innerHTML=`${steps}
       <div style="text-align:center;padding:1rem 0">
-        <div style="font-size:48px;margin-bottom:.8rem">📦</div>
+        <div style="font-size:48px;margin-bottom:.8rem">[box]</div>
         <div style="font-family:var(--font);font-size:17px;font-weight:900;color:#fff;margin-bottom:1rem;letter-spacing:.5px">CASH ON DELIVERY</div>
         <div class="qr-acct" style="text-align:left">
           <table style="width:100%;font-size:13px;line-height:2">
@@ -1041,7 +1041,7 @@ function genQR(amount){
   const el=$('qrw');if(!el)return;el.innerHTML='';
   const ph=CO.promptpay||CO.tel||'0000000000';
   try{new QRCode(el,{text:`promptpay:${ph}:${amount}`,width:160,height:160,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}
-  catch{el.innerHTML=`<div style="text-align:center;padding:1rem;color:#333;font-family:var(--font)">📱 QR PROMPTPAY<br>฿${fmtD(amount)}</div>`;}
+  catch{el.innerHTML=`<div style="text-align:center;padding:1rem;color:#333;font-family:var(--font)">QR QR PROMPTPAY<br>฿${fmtD(amount)}</div>`;}
 }
 function startTimer(){_tSec=300;clearTimer();_tID=setInterval(()=>{_tSec--;const e=$('tmel');if(e){const m=Math.floor(_tSec/60),s=_tSec%60;e.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;if(_tSec<=60)e.style.color='#f87171';}if(_tSec<=0){clearTimer();toast(LANG==='th'?'หมดเวลาชำระ':'Payment timeout','err');closeM();}},1000);}
 function clearTimer(){if(_tID){clearInterval(_tID);_tID=null;}}
@@ -1072,8 +1072,8 @@ function renderSuccess(grand){
       <div class="sno">${_docNo}</div>
       <div style="font-size:13px;color:#444;margin-bottom:1.2rem">${t('order_ok')}</div>
       <div class="qr-acct" style="text-align:left;font-size:13px;line-height:2">
-        <div>👤 <strong>${O.name}</strong> / ${O.phone}</div>
-        <div>📍 ${O.addr}</div>
+        <div>Name: <strong>${O.name}</strong> / ${O.phone}</div>
+        <div>Addr: ${O.addr}</div>
         <div style="font-family:var(--font);font-size:20px;font-weight:900;color:var(--red)">฿${fmtD(grand)}</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:1rem">
@@ -1088,7 +1088,7 @@ function doPrint(grand){
   $('pzone').innerHTML=`<div style="max-width:380px;margin:0 auto;font-family:'Sarabun',sans-serif;font-size:13px;padding:20px">
     <div style="text-align:center;border-bottom:3px solid #000;padding-bottom:12px;margin-bottom:12px">
       <div style="font-family:Impact,sans-serif;font-size:26px;font-style:italic"><span style="color:#e8172c">Racing</span> <span>Garage</span></div>
-      ${CO.address?`<div>${CO.address}</div>`:''}${CO.tel?`<div>📞 ${CO.tel}</div>`:''}
+      ${CO.address?`<div>${CO.address}</div>`:''}${CO.tel?`<div>Tel: ${CO.tel}</div>`:''}
       <div style="font-size:15px;font-weight:700;margin-top:8px">${LANG==='th'?'ใบสั่งซื้อออนไลน์':'Online Order Receipt'}</div>
     </div>
     <div style="margin-bottom:10px;line-height:1.8"><div><b>${LANG==='th'?'เลขที่':'Order No.'}</b> ${_docNo}</div><div><b>${LANG==='th'?'วันที่':'Date'}</b> ${todayISO()}</div><div><b>${LANG==='th'?'ผู้รับ':'Customer'}</b> ${O.name}</div></div>
