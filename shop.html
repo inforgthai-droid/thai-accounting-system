@@ -723,7 +723,7 @@ function prodCard(p){
     <div class="pcard-img-wrap">
       ${hasImg?`<img class="pcard-img" src="${p.imageUrl}" alt="${p.name.replace(/"/g,'')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}
       <div class="pcard-ph" style="${hasImg?'display:none':''}">${CAT_ICONS[p.category]||'[box]'}</div>
-      ${p.stock<=0?`<div class="pcard-badge oos">${t('out_stock')}</div>`:p.stock<=5?`<div class="pcard-badge sale">LOW</div>`:''}
+      ${p.stock<=0?('<div class="pcard-badge oos">'+t('out_stock')+'</div>'):p.stock<=5?'<div class="pcard-badge sale">LOW</div>':''}
       <div class="pcard-overlay">
         <button class="pcard-add-btn" onclick="event.stopPropagation();qadd('${p.id}')">${p.stock>0&&p.price>0?t('add_cart'):t('sold_out')}</button>
       </div>
@@ -751,79 +751,55 @@ function openPD(id){
   const hasImg=p.imageUrl&&p.imageUrl.length>0;
   const brand=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
   const inCart=CART.find(x=>x.id===id);
+  const ico=CAT_ICONS[p.category]||'?';
 
-  $('pdcontent').innerHTML=`
-    <div class="pd-layout">
-      <!-- Images -->
-      <div>
-        <div class="pd-img-area">
-          <div class="pd-thumbs">
-            ${hasImg?`<img class="pd-thumb on" src="${p.imageUrl}" onclick="this.parentNode.parentNode.querySelector('.pd-main-img').src=this.src">`:'<div class="pd-thumb-ph">${CAT_ICONS[p.category]||'[box]'}</div>'}
-          </div>
-          <div class="pd-main-img-wrap">
-            ${hasImg?`<img class="pd-main-img" src="${p.imageUrl}" id="pd-mimg" onerror="this.style.display='none'">`:''}
-            <div class="pd-main-ph" ${hasImg?'style="display:none"':''}>${CAT_ICONS[p.category]||'[box]'}</div>
-          </div>
-        </div>
-      </div>
-      <!-- Info -->
-      <div class="pd-info">
-        <div class="pd-brand">${brand||p.category||'RACING GARAGE'}</div>
-        <div class="pd-title">${p.name}</div>
-        <div class="pd-code">${LANG==='th'?'รหัสสินค้า':'SKU'}: ${p.code||'-'}</div>
+  // Build HTML using string concat to avoid nested backtick issues
+  const imgThumb=hasImg
+    ?'<img class="pd-thumb on" src="'+p.imageUrl+'" onclick="this.parentNode.parentNode.querySelector(&quot;.pd-main-img&quot;).src=this.src">'
+    :'<div class="pd-thumb-ph">'+ico+'</div>';
+  const imgMain=hasImg
+    ?'<img class="pd-main-img" src="'+p.imageUrl+'" id="pd-mimg" onerror="this.style.display=\'none\'">'
+    :'';
+  const phStyle=hasImg?'style="display:none"':'';
+  const stockCls=p.stock<=0?'ou-s':p.stock<=5?'lo-s':'in-s';
+  const stockTx=p.stock<=0?t('out_stock'):p.stock<=5?t('low_stock')+' ('+p.stock+')':t('in_stock');
+  const varHtml=p.variations?'<div class="pd-vars"><div class="pd-var-label">'+t('var_label')+'</div><div class="pd-var-desc">'+p.variations+'</div></div>':'';
+  const descHtml=p.description?'<div class="pd-features">'+p.description.slice(0,200)+'</div>':'';
+  const qtyHtml=p.stock>0&&p.price>0
+    ?'<div class="pd-qty-row"><button class="qb" onclick="dqty(-1)">-</button><div class="qv" id="dqv">1</div><button class="qb" onclick="dqty(1)">+</button></div><button class="pd-add-btn'+(inCart?' in-cart':'')+'" id="pd-add-btn" onclick="addPD()">'+(inCart?t('in_cart'):t('add_cart'))+'</button>'
+    :'<button class="pd-add-btn" disabled>'+t('sold_out')+'</button>';
+  const specRows=[['SKU',p.code||'-'],['Category',p.category||'-'],['Unit',p.unit||'-'],['Stock',p.stock+' '+(p.unit||'')],['Shopee ID',p.shopeeId||'-']];
+  const specHtml=specRows.map(function(r){return'<tr style="border-bottom:1px solid var(--bd)"><td style="padding:8px;color:#555;width:140px">'+r[0]+'</td><td style="padding:8px;color:#ccc">'+r[1]+'</td></tr>';}).join('');
+  const deliveryHtml=LANG==='th'?'จัดส่งทั่วประเทศไทย ภายใน 2-5 วันทำการ ติดต่อ '+(CO.tel||'ร้านค้า'):'Nationwide delivery within 2-5 business days. Contact '+(CO.tel||'store')+' for enquiries.';
+  const authBadge=LANG==='th'?'สินค้าแท้ 100% | จัดส่งทั่วไทย | VAT รวมในราคา':'100% Genuine | Nationwide Delivery | VAT Included';
+  const priceHtml=p.price>0?('฿'+fmt(p.price)):t('contact_price');
 
-        ${p.description?`<div class="pd-features">${p.description.slice(0,200)}</div>`:''}
+  const html='<div class="pd-layout">'
+    +'<div><div class="pd-img-area"><div class="pd-thumbs">'+imgThumb+'</div>'
+    +'<div class="pd-main-img-wrap">'+imgMain
+    +'<div class="pd-main-ph" '+phStyle+'>'+ico+'</div>'
+    +'</div></div></div>'
+    +'<div class="pd-info">'
+    +'<div class="pd-brand">'+(brand||p.category||'RACING GARAGE')+'</div>'
+    +'<div class="pd-title">'+p.name+'</div>'
+    +'<div class="pd-code">'+(LANG==='th'?'รหัสสินค้า':'SKU')+': '+(p.code||'-')+'</div>'
+    +descHtml
+    +'<div class="pd-price-row"><div class="pd-price">'+priceHtml+'</div><div class="pd-unit">/ '+(p.unit||'pcs')+'</div></div>'
+    +'<div class="pd-stock-row"><span class="pcard-stock '+stockCls+'" style="font-size:13px">'+stockTx+'</span></div>'
+    +varHtml+qtyHtml
+    +'<div style="margin-top:1rem;padding:.8rem;background:#0f0f0f;border:1px solid var(--bd);border-left:3px solid var(--red);font-size:12px;color:#555">'+authBadge+'</div>'
+    +'</div></div>'
+    +'<div class="pd-tabs">'
+    +'<button class="pd-tab on" onclick="pdTab(this,\'pdtab1\')">'+t('pd_tab1')+'</button>'
+    +'<button class="pd-tab" onclick="pdTab(this,\'pdtab2\')">'+t('pd_tab2')+'</button>'
+    +'<button class="pd-tab" onclick="pdTab(this,\'pdtab3\')">'+t('pd_tab3')+'</button>'
+    +'</div>'
+    +'<div id="pdtab1" class="pd-tab-content">'+(p.description||'<span style="color:#444">-</span>')+'</div>'
+    +'<div id="pdtab2" class="pd-tab-content" style="display:none"><table style="font-size:13px;width:100%;border-collapse:collapse">'+specHtml+'</table></div>'
+    +'<div id="pdtab3" class="pd-tab-content" style="display:none">'+deliveryHtml+'</div>';
 
-        <div class="pd-price-row">
-          <div class="pd-price">${p.price>0?'฿'+fmt(p.price):t('contact_price')}</div>
-          <div class="pd-unit">/ ${p.unit||'ชิ้น'}</div>
-        </div>
-
-        <div class="pd-stock-row">
-          <span class="pcard-stock ${p.stock<=0?'ou-s':p.stock<=5?'lo-s':'in-s'}" style="font-size:13px">
-            ${p.stock<=0?t('out_stock'):p.stock<=5?t('low_stock')+' — '+p.stock+' remaining':t('in_stock')}
-          </span>
-        </div>
-
-        ${p.variations?`<div class="pd-vars"><div class="pd-var-label">${t('var_label')}</div><div class="pd-var-desc">${p.variations}</div></div>`:''}
-
-        ${p.stock>0&&p.price>0?`
-        <div class="pd-qty-row">
-          <button class="qb" onclick="dqty(-1)">−</button>
-          <div class="qv" id="dqv">1</div>
-          <button class="qb" onclick="dqty(1)">+</button>
-        </div>
-        <button class="pd-add-btn${inCart?' in-cart':''}" id="pd-add-btn" onclick="addPD()">
-          ${inCart?t('in_cart'):t('add_cart')}
-        </button>`:`
-        <button class="pd-add-btn" disabled>${t('sold_out')}</button>`}
-
-        <div style="margin-top:1rem;padding:.8rem;background:#0f0f0f;border:1px solid var(--bd);border-left:3px solid var(--red);font-size:12px;color:#555">
-          ✓ ${LANG==='th'?'สินค้าแท้ 100% | จัดส่งทั่วไทย | VAT รวมในราคา':'100% Genuine | Nationwide Delivery | VAT Included'}
-        </div>
-      </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="pd-tabs">
-      <button class="pd-tab on" onclick="pdTab(this,'pdtab1')">${t('pd_tab1')}</button>
-      <button class="pd-tab" onclick="pdTab(this,'pdtab2')">${t('pd_tab2')}</button>
-      <button class="pd-tab" onclick="pdTab(this,'pdtab3')">${t('pd_tab3')}</button>
-    </div>
-    <div id="pdtab1" class="pd-tab-content">
-      ${p.description||`<span style="color:#444">${LANG==='th'?'ไม่มีคำอธิบาย':'No description available'}</span>`}
-    </div>
-    <div id="pdtab2" class="pd-tab-content" style="display:none">
-      <table style="font-size:13px;width:100%;border-collapse:collapse">
-        ${[['SKU',p.code||'-'],['Category / หมวด',p.category||'-'],['Unit / หน่วย',p.unit||'-'],['Stock / สต็อก',p.stock+' '+p.unit],['Shopee ID',p.shopeeId||'-']].map(([k,v])=>`<tr style="border-bottom:1px solid var(--bd)"><td style="padding:8px;color:#555;width:140px">${k}</td><td style="padding:8px;color:#ccc">${v}</td></tr>`).join('')}
-      </table>
-    </div>
-    <div id="pdtab3" class="pd-tab-content" style="display:none">
-      ${LANG==='th'?'จัดส่งทั่วประเทศไทย ภายใน 2-5 วันทำการ ติดต่อสอบถามได้ที่ '+(CO.tel||'ร้านค้า')
-      :'Nationwide delivery within 2-5 business days. Contact us at '+(CO.tel||'the store')+' for enquiries.'}
-    </div>`;
-
-  $('pdpage').classList.add('show');
+  document.getElementById('pdcontent').innerHTML=html;
+  document.getElementById('pdpage').classList.add('show');
   document.body.style.overflow='hidden';
   window.scrollTo(0,0);
 }
@@ -1088,7 +1064,7 @@ function doPrint(grand){
   $('pzone').innerHTML=`<div style="max-width:380px;margin:0 auto;font-family:'Sarabun',sans-serif;font-size:13px;padding:20px">
     <div style="text-align:center;border-bottom:3px solid #000;padding-bottom:12px;margin-bottom:12px">
       <div style="font-family:Impact,sans-serif;font-size:26px;font-style:italic"><span style="color:#e8172c">Racing</span> <span>Garage</span></div>
-      ${CO.address?`<div>${CO.address}</div>`:''}${CO.tel?`<div>Tel: ${CO.tel}</div>`:''}
+      ${CO.address?('<div>'+CO.address+'</div>'):''}${CO.tel?('<div>Tel: '+CO.tel+'</div>'):''}
       <div style="font-size:15px;font-weight:700;margin-top:8px">${LANG==='th'?'ใบสั่งซื้อออนไลน์':'Online Order Receipt'}</div>
     </div>
     <div style="margin-bottom:10px;line-height:1.8"><div><b>${LANG==='th'?'เลขที่':'Order No.'}</b> ${_docNo}</div><div><b>${LANG==='th'?'วันที่':'Date'}</b> ${todayISO()}</div><div><b>${LANG==='th'?'ผู้รับ':'Customer'}</b> ${O.name}</div></div>
