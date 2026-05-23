@@ -531,7 +531,7 @@ const T={
     name:'ชื่อ-นามสกุล *',phone:'โทรศัพท์ *',email:'อีเมล',
     address:'ที่อยู่จัดส่ง *',note:'หมายเหตุ',
     next_pay:'ถัดไป: เลือกวิธีชำระ →',confirm_order:'ยืนยันคำสั่งซื้อ',back:'← ย้อนกลับ',
-    order_ok:'คำสั่งซื้อสำเร็จ!',shop_more:'ช้อปต่อ →',print:'[print]️ พิมพ์ใบสั่งซื้อ',
+    order_ok:'คำสั่งซื้อสำเร็จ!',shop_more:'ช้อปต่อ →',print:'พิมพ์ใบสั่งซื้อ',
     login_first:'กรุณาเข้าสู่ระบบก่อนสั่งซื้อ',login_google:'เข้าสู่ระบบด้วย Google',guest:'สั่งซื้อโดยไม่เข้าสู่ระบบ',
     var_label:'ตัวเลือกสินค้า (Variations)',required:'* จำเป็น',fill_all:'กรุณากรอกข้อมูลให้ครบ'
   },
@@ -554,7 +554,7 @@ const T={
     name:'Full Name *',phone:'Phone *',email:'Email',
     address:'Delivery Address *',note:'Notes',
     next_pay:'Next: Payment →',confirm_order:'Confirm Order',back:'← Back',
-    order_ok:'Order Confirmed!',shop_more:'Continue Shopping →',print:'[print]️ Print Receipt',
+    order_ok:'Order Confirmed!',shop_more:'Continue Shopping →',print:'Print Receipt',
     login_first:'Please sign in to continue',login_google:'Sign in with Google',guest:'Continue as Guest',
     var_label:'Product Variations',required:'* Required',fill_all:'Please fill all required fields'
   }
@@ -652,7 +652,7 @@ function buildNav(){
   // ใช้ CATS จาก Firestore (มี icon, color, order) ถ้าไม่มีใช้จาก products
   const cats=CATS.length?CATS:[...new Set(PRODS.map(p=>p.category).filter(Boolean))].sort().map(n=>({name:n,icon:CAT_ICONS[n]||'?',color:'#0ea5e9'}));
   $('nav-inner').innerHTML=`<button class="nav-btn${CAT==='all'?' on':''}" onclick="setcat('all',this)">${t('all')}</button>`
-    +cats.map(c=>`<button class="nav-btn${CAT===c.name?' on':''}" onclick="setcat('${c.name}',this)" style="${CAT===c.name?'border-color:'+c.color+';color:'+c.color:''}">${c.icon||''} ${c.name}</button>`).join('');
+    +cats.map(c=>`<button class="nav-btn${CAT===c.name?' on':''}" onclick="setcat('${c.name}',this)" style="${CAT===c.name?'border-color:'+c.color+';color:'+c.color:''}">${c.name}</button>`).join('');
 }
 function setcat(c,el){
   CAT=c;BRAND_FILTER='';
@@ -663,11 +663,11 @@ function setcat(c,el){
   if(c==='all'){
     banner.classList.remove('show');
     title.innerHTML=t('all')+' <span>PRODUCTS</span>';
-    icon.textContent=E.flag;
+    icon.textContent='';
   } else {
     banner.classList.add('show');
     title.innerHTML='<span>'+c.toUpperCase()+'</span>';
-    icon.textContent=catObj?.icon||CAT_ICONS[c]||'?';
+    icon.textContent='';
     if(catObj?.color) banner.style.setProperty('--cat-color', catObj.color);
   }
   buildSidebar();doFilter();
