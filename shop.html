@@ -344,7 +344,7 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
       <span id="pd-back-txt">Back</span>
     </button>
     <svg style="height:30px;display:block;overflow:visible" viewBox="0 0 300 32" xmlns="http://www.w3.org/2000/svg"><text y="28" style="font-family:Impact,'Arial Black',sans-serif;font-size:30px;font-style:italic;font-weight:900"><tspan fill="#e8172c">Racing</tspan><tspan fill="#ffffff"> Garage</tspan></text></svg>
-    <button class="cart-btn" onclick="toggleCart()">🛒 <span class="cart-cnt" id="ccnt2">0</span></button>
+    <button class="cart-btn" onclick="toggleCart()"> <span class="cart-cnt" id="ccnt2">0</span></button>
   </div>
   <div class="pdpage-inner" id="pdcontent"></div>
 </div>
@@ -353,14 +353,14 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
 <div id="topbar">
   <div class="tb-inner">
     <div class="tb-left">
-      <span id="tb-ship">🚚 Nationwide Delivery</span>
-      <span id="tb-auth">✅ 100% Genuine</span>
+      <span id="tb-ship">Nationwide Delivery</span>
+      <span id="tb-auth">100% Genuine</span>
       <span id="tb-tel"></span>
     </div>
     <div class="tb-right">
       <div id="tb-user"></div>
-      <button class="lang-btn" id="btn-th" onclick="setLang('th')">🇹🇭 ไทย</button>
-      <button class="lang-btn on" id="btn-en" onclick="setLang('en')">🇬🇧 EN</button>
+      <button class="lang-btn" id="btn-th" onclick="setLang('th')"> ไทย</button>
+      <button class="lang-btn on" id="btn-en" onclick="setLang('en')"> EN</button>
     </div>
   </div>
 </div>
@@ -380,7 +380,7 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
     <div class="hdr-right">
       <div id="hdr-user-area"></div>
       <button class="login-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
-      <button class="cart-btn" onclick="toggleCart()">🛒 <span class="cart-cnt" id="ccnt">0</span> <span id="cart-btn-txt">Cart</span></button>
+      <button class="cart-btn" onclick="toggleCart()"> <span class="cart-cnt" id="ccnt">0</span> <span id="cart-btn-txt">Cart</span></button>
     </div>
   </div>
 </header>
@@ -393,11 +393,11 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
 </nav>
 
 <!-- PROMO BAR -->
-<div class="promo-bar" id="promo-bar">🏆 Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide</div>
+<div class="promo-bar" id="promo-bar"> Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide</div>
 
 <!-- CATEGORY BANNER -->
 <div class="cat-banner" id="cat-banner">
-  <div class="cat-banner-bg" id="cat-banner-icon">🏁</div>
+  <div class="cat-banner-bg" id="cat-banner-icon"></div>
   <div class="cat-banner-content">
     <div>
       <div class="cat-banner-tag">RACING GARAGE</div>
@@ -474,10 +474,10 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
     </div>
     <div class="ft-col">
       <h4 id="ft-pay-h">Payment</h4>
-      <div>📱 QR พร้อมเพย์</div>
-      <div>🏦 โอนเงินธนาคาร</div>
-      <div>💳 บัตรเครดิต</div>
-      <div>💵 Cash on Delivery</div>
+      <div> QR พร้อมเพย์</div>
+      <div> โอนเงินธนาคาร</div>
+      <div> บัตรเครดิต</div>
+      <div> Cash on Delivery</div>
     </div>
   </div>
   <div class="ft-btm">
@@ -507,41 +507,8 @@ const fmtD=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(n|
 const todayISO=()=>new Date().toISOString().split('T')[0];
 
 // Emoji helpers - use String.fromCodePoint to avoid browser "illegal character" errors
-const E={
-  fire:String.fromCodePoint(0x1F525),    // 🔥
-  pants:String.fromCodePoint(0x1F456),   // 👖
-  glove:String.fromCodePoint(0x1F9E4),   // 🧤
-  sock:String.fromCodePoint(0x1F9E6),    // 🧦
-  shoe:String.fromCodePoint(0x1F45F),    // 👟
-  helmet:'⛑️',
-  car:String.fromCodePoint(0x1F3CE),     // 🏎️
-  mask:String.fromCodePoint(0x1F3AD),    // 🎭
-  shield:String.fromCodePoint(0x1F6E1),  // 🛡️
-  seat:String.fromCodePoint(0x1F4BA),    // 💺
-  nut:String.fromCodePoint(0x1F529),     // 🔩
-  brake:String.fromCodePoint(0x1F534),   // 🔴
-  wrench:String.fromCodePoint(0x1F527),  // 🔧
-  gear:'⚙️',
-  wheel:String.fromCodePoint(0x1F518),   // 🔘
-  cam:String.fromCodePoint(0x1F4F7),     // 📷
-  tag:String.fromCodePoint(0x1F3F7),     // 🏷️
-  extinguisher:String.fromCodePoint(0x1F9EF), // 🧯
-  electric:'⚡',
-  trophy:String.fromCodePoint(0x1F3C6),  // 🏆
-  flag:String.fromCodePoint(0x1F3C1),    // 🏁
-  box:String.fromCodePoint(0x1F4E6),     // 📦
-  lock:String.fromCodePoint(0x1F512),    // 🔒
-  search:String.fromCodePoint(0x1F50D),  // 🔍
-};
-const CAT_ICONS={
-  'เสื้อกันไฟ':E.fire,'กางเกงกันไฟ':E.pants,'ถุงมือ':E.glove,'ถุงเท้า':E.sock,
-  'รองเท้า':E.shoe,'หมวก/อุปกรณ์หมวก':E.helmet,'ชุดแข่ง':E.car,
-  'หน้ากาก/บาลาคลาวา':E.mask,'อุปกรณ์ป้องกัน':E.shield,'เบาะ/เข็มขัด':E.seat,
-  'อะไหล่รถ':E.nut,'ระบบเบรค':E.brake,'ช่วงล่าง':E.wrench,
-  'ระบบเครื่องยนต์':E.gear,'ล้อ/น็อต':E.wheel,'กล้อง/อุปกรณ์':E.cam,
-  'สติ๊กเกอร์':E.tag,'ถังดับเพลิง':E.extinguisher,'อุปกรณ์ไฟฟ้า':E.electric,
-  'อุปกรณ์แข่ง':E.trophy,'อุปกรณ์มอเตอร์สปอร์ต':E.flag,
-};
+const E={fire:'',pants:'',glove:'',sock:'',shoe:'',helmet:'',car:'',mask:'',shield:'',seat:'',nut:'',brake:'',wrench:'',gear:'',wheel:'',cam:'',tag:'',extinguisher:'',electric:'',trophy:'',flag:'',box:'',lock:'',search:''};
+const CAT_ICONS={};
 
 // ── TRANSLATIONS ──
 const T={
@@ -553,8 +520,8 @@ const T={
     sub:'ราคาสินค้า',vat:'VAT',total:'ยอดสุทธิ',pay:'ชำระเงิน',
     sort_az:'ชื่อ A→Z',sort_za:'ชื่อ Z→A',sort_pa:'ราคา น้อย→มาก',sort_pd:'ราคา มาก→น้อย',
     sb_cat:'หมวดหมู่',sb_brand:'ยี่ห้อ',sb_price:'ช่วงราคา',sb_avail:'สต็อก',sb_instock:'มีสินค้าเท่านั้น',
-    tb_ship:'[truck] จัดส่งทั่วไทย',tb_auth:'✅ สินค้าแท้ 100%',
-    promo:E.trophy+' อุปกรณ์แข่งรถมืออาชีพ — ของแท้ทุกชิ้น — จัดส่งรวดเร็วทั่วประเทศ',
+    tb_ship:'[truck] จัดส่งทั่วไทย',tb_auth:'สินค้าแท้ 100%',
+    promo:'อุปกรณ์แข่งรถมืออาชีพ — ของแท้ทุกชิ้น — จัดส่งรวดเร็วทั่วประเทศ',
     ft_cat:'หมวดหมู่',ft_svc:'บริการ',ft_pay:'ชำระเงิน',
     ft_admin:'Admin / จัดการร้าน',ft_contact:'ติดต่อเรา',ft_return:'นโยบายคืนสินค้า',
     pd_tab1:'รายละเอียดสินค้า',pd_tab2:'ข้อมูลจำเพาะ',pd_tab3:'การจัดส่ง',
@@ -576,8 +543,8 @@ const T={
     sub:'Subtotal',vat:'VAT',total:'Total',pay:'Pay Now',
     sort_az:'Name A→Z',sort_za:'Name Z→A',sort_pa:'Price Low→High',sort_pd:'Price High→Low',
     sb_cat:'CATEGORY',sb_brand:'BRAND',sb_price:'PRICE RANGE',sb_avail:'AVAILABILITY',sb_instock:'In Stock Only',
-    tb_ship:'[truck] Nationwide Delivery',tb_auth:'✅ 100% Genuine',
-    promo:E.trophy+' Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide',
+    tb_ship:'[truck] Nationwide Delivery',tb_auth:'100% Genuine',
+    promo:'Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide',
     ft_cat:'Categories',ft_svc:'Services',ft_pay:'Payment',
     ft_admin:'Admin / Manage Store',ft_contact:'Contact Us',ft_return:'Returns Policy',
     pd_tab1:'Product Details',pd_tab2:'Specification',pd_tab3:'Delivery',
@@ -714,7 +681,7 @@ function buildSidebar(){
   $('sb-cats').innerHTML=cats.map(c=>`
     <div class="sb-item${CAT===c.name?' on':''}" onclick="setcat('${c.name}',null)">
       <div class="sb-dot" style="${CAT===c.name?'background:'+c.color+';border-color:'+c.color:''}"></div>
-      <span>${c.icon||''} ${c.name}</span>
+      <span>${c.name}</span>
       <span class="sb-count">(${catCounts[c.name]||0})</span>
     </div>`).join('');
   buildBrands('');
@@ -769,7 +736,7 @@ function prodCard(p){
   return`<div class="pcard" onclick="openPD('${p.id}')">
     <div class="pcard-img-wrap">
       ${hasImg?`<img class="pcard-img" src="${p.imageUrl}" alt="${p.name.replace(/"/g,'')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}
-      <div class="pcard-ph" style="${hasImg?'display:none':''}">${CAT_ICONS[p.category]||E.box}</div>
+      <div class="pcard-ph" style="${hasImg?'display:none':''}">${''}</div>
       ${p.stock<=0?('<div class="pcard-badge oos">'+t('out_stock')+'</div>'):p.stock<=5?'<div class="pcard-badge sale">LOW</div>':''}
       <div class="pcard-overlay">
         <button class="pcard-add-btn" onclick="event.stopPropagation();qadd('${p.id}')">${p.stock>0&&p.price>0?t('add_cart'):t('sold_out')}</button>
@@ -798,7 +765,7 @@ function openPD(id){
   const hasImg=p.imageUrl&&p.imageUrl.length>0;
   const brand=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
   const inCart=CART.find(x=>x.id===id);
-  const ico=CAT_ICONS[p.category]||'?';
+  const ico='';
 
   // Build HTML using string concat to avoid nested backtick issues
   const imgThumb=hasImg
@@ -890,12 +857,12 @@ function cartTotals(){
 function updateCart(){
   const{sub,vat,grand,cnt}=cartTotals();
   $('ccnt').textContent=cnt;if($('ccnt2'))$('ccnt2').textContent=cnt;
-  $('cart-title').textContent=String.fromCodePoint(0x1F6D2)+' '+t('cart')+' ('+cnt+')';
+  $('cart-title').textContent=t('cart')+' ('+cnt+')';
   $('cf-sub').textContent='฿'+fmt(sub);$('cf-total').textContent='฿'+fmt(grand);
   $('chk-btn').disabled=CART.length===0;
   $('citems').innerHTML=CART.length?CART.map(item=>`
     <div class="cart-item">
-      <div class="ci-thumb">${item.imageUrl?`<img src="${item.imageUrl}" onerror="this.parentNode.textContent='${CAT_ICONS[item.category]||E.box}'">`:(CAT_ICONS[item.category]||E.box)}</div>
+      <div class="ci-thumb">${item.imageUrl?`<img src="${item.imageUrl}" onerror="this.style.display='none'">`:('')}</div>
       <div class="ci-info">
         <div class="ci-name">${item.name}</div>
         <div class="ci-price">฿${fmt(item.price)}</div>
@@ -917,7 +884,7 @@ function openCheckout(){
   if(!shopUser){
     openM(t('login_first'),`
       <div style="text-align:center;padding:1rem 0">
-        <div style="font-size:48px;margin-bottom:.8rem">🔒</div>
+        <div style="font-size:48px;margin-bottom:.8rem"></div>
         <div style="font-family:var(--font);font-size:18px;font-weight:900;color:#fff;margin-bottom:1rem;letter-spacing:.5px">${t('login_first').toUpperCase()}</div>
         <button onclick="shopLogin();closeM()" class="act-btn">${t('login_google')}</button>
         <button onclick="closeM();_doCO()" class="act-btn sec" style="margin-top:8px">${t('guest')}</button>
