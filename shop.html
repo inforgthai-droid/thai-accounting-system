@@ -762,47 +762,143 @@ let _dpid='';
 function openPD(id){
   const p=PRODS.find(x=>x.id===id);if(!p)return;
   _dpid=id;_dQty=1;
+
+  // ─── Find related variants ───
+  // Products are "related" if they share the same base name (before " S /", " M /", etc.)
+  // OR same shopeeId (Shopee parent product)
+  const baseName=p.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2})\s*[/|]\s*.+$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
+  const related=PRODS.filter(x=>{
+    if(x.price<=0) return false;
+    if(x.id===p.id) return true;
+    // Same shopeeId base (remove last variant part)
+    if(p.shopeeId&&x.shopeeId){
+      const pBase=p.shopeeId.replace(/-[^-]+$/,'');
+      const xBase=x.shopeeId.replace(/-[^-]+$/,'');
+      if(pBase&&pBase===xBase&&pBase.length>4) return true;
+    }
+    // Same code prefix (e.g. SP001-S-Black → SP001)
+    if(p.code&&x.code){
+      const pPfx=p.code.split('-').slice(0,2).join('-');
+      const xPfx=x.code.split('-').slice(0,2).join('-');
+      if(pPfx&&pPfx===xPfx&&pPfx.length>2) return true;
+    }
+    // Same base name
+    const xBase2=x.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2})\s*[/|]\s*.+$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
+    return baseName.length>5&&xBase2===baseName;
+  });
+
+  // ─── Extract sizes and colors from related ───
+  const sizes=[]; const colors=[];
+  related.forEach(x=>{
+    if(x.variations){
+      const parts=x.variations.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
+      parts.forEach(part=>{
+        if(/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(part)){if(!sizes.includes(part))sizes.push(part);}
+        else if(/^(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon|Gold)/i.test(part)){if(!colors.includes(part))colors.push(part);}
+      });
+    }
+  });
+
+  // Parse current product's size and color from variations
+  let curSize='', curColor='';
+  if(p.variations){
+    const parts=p.variations.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
+    parts.forEach(part=>{
+      if(/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(part)) curSize=part;
+      else curColor=part;
+    });
+  }
+
+  // Sort sizes logically
+  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','36','37','38','39','40','41','42','43','44','45','46'];
+  sizes.sort((a,b)=>{ const ai=sizeOrder.indexOf(a),bi=sizeOrder.indexOf(b); return(ai>=0?ai:99)-(bi>=0?bi:99); });
+
+  // Build selectors HTML
+  function buildSelector(type, items, current){
+    if(!items.length) return '';
+    const label=type==='size'?(LANG==='th'?'ไซส์':'Size'):(LANG==='th'?'สี':'Color');
+    const btns=items.map(val=>{
+      // Find which product this maps to
+      const target=related.find(x=>{
+        if(!x.variations) return false;
+        const vparts=x.variations.split(/[/,|]/).map(s=>s.trim());
+        if(type==='size'){
+          const hasSize=vparts.some(v=>/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(v)&&v===val);
+          if(!hasSize) return false;
+          if(current&&type==='size'&&curColor) return vparts.includes(curColor)||vparts.some(v=>v.toLowerCase()===curColor.toLowerCase());
+          return true;
+        } else {
+          const hasColor=vparts.some(v=>v.toLowerCase()===val.toLowerCase());
+          if(!hasColor) return false;
+          if(curSize) return vparts.some(v=>/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(v)&&v===curSize);
+          return true;
+        }
+      })||related.find(x=>x.variations&&x.variations.includes(val));
+      const tid=target?target.id:'';
+      const isCur=val===current;
+      const oos=target&&target.stock<=0;
+      return '<button onclick="'+(tid&&!isCur?'openPD(\''+tid+'\')':'')+'"'
+        +' style="padding:6px 14px;border:2px solid '+(isCur?'var(--red)':'#333')+';border-radius:4px;'
+        +'background:'+(isCur?'var(--red)':'#111')+';color:'+(isCur?'#fff':'#ccc')+';'
+        +'font-family:var(--font-thai);font-size:13px;font-weight:'+(isCur?700:400)+';cursor:'+(tid&&!isCur?'pointer':'default')+';'
+        +'opacity:'+(oos?0.4:1)+';transition:all .13s;white-space:nowrap"'
+        +' title="'+(oos?'Sold Out':val)+'">'
+        +val+(oos?' (-)':'')+'</button>';
+    }).join('');
+    return '<div style="margin-bottom:12px">'
+      +'<div style="font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">'+label+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+btns+'</div></div>';
+  }
+
+  const sizeSelector=buildSelector('size',sizes,curSize);
+  const colorSelector=buildSelector('color',colors,curColor);
+  const varSelector=sizeSelector+colorSelector;
+
+  // ─── Build product detail HTML ───
   const hasImg=p.imageUrl&&p.imageUrl.length>0;
   const brand=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
   const inCart=CART.find(x=>x.id===id);
-  const ico='';
-
-  // Build HTML using string concat to avoid nested backtick issues
-  const imgThumb=hasImg
-    ?'<img class="pd-thumb on" src="'+p.imageUrl+'" onclick="this.parentNode.parentNode.querySelector(&quot;.pd-main-img&quot;).src=this.src">'
-    :'<div class="pd-thumb-ph">'+ico+'</div>';
-  const imgMain=hasImg
-    ?'<img class="pd-main-img" src="'+p.imageUrl+'" id="pd-mimg" onerror="this.style.display=\'none\'">'
-    :'';
-  const phStyle=hasImg?'style="display:none"':'';
   const stockCls=p.stock<=0?'ou-s':p.stock<=5?'lo-s':'in-s';
   const stockTx=p.stock<=0?t('out_stock'):p.stock<=5?t('low_stock')+' ('+p.stock+')':t('in_stock');
-  const varHtml=p.variations?'<div class="pd-vars"><div class="pd-var-label">'+t('var_label')+'</div><div class="pd-var-desc">'+p.variations+'</div></div>':'';
-  const descHtml=p.description?'<div class="pd-features">'+p.description.slice(0,200)+'</div>':'';
-  const qtyHtml=p.stock>0&&p.price>0
-    ?'<div class="pd-qty-row"><button class="qb" onclick="dqty(-1)">-</button><div class="qv" id="dqv">1</div><button class="qb" onclick="dqty(1)">+</button></div><button class="pd-add-btn'+(inCart?' in-cart':'')+'" id="pd-add-btn" onclick="addPD()">'+(inCart?t('in_cart'):t('add_cart'))+'</button>'
-    :'<button class="pd-add-btn" disabled>'+t('sold_out')+'</button>';
-  const specRows=[['SKU',p.code||'-'],['Category',p.category||'-'],['Unit',p.unit||'-'],['Stock',p.stock+' '+(p.unit||'')],['Shopee ID',p.shopeeId||'-']];
-  const specHtml=specRows.map(function(r){return'<tr style="border-bottom:1px solid var(--bd)"><td style="padding:8px;color:#555;width:140px">'+r[0]+'</td><td style="padding:8px;color:#ccc">'+r[1]+'</td></tr>';}).join('');
-  const deliveryHtml=LANG==='th'?'จัดส่งทั่วประเทศไทย ภายใน 2-5 วันทำการ ติดต่อ '+(CO.tel||'ร้านค้า'):'Nationwide delivery within 2-5 business days. Contact '+(CO.tel||'store')+' for enquiries.';
-  const authBadge=LANG==='th'?'สินค้าแท้ 100% | จัดส่งทั่วไทย':'100% Genuine | Nationwide Delivery';
+  const descHtml=p.description?'<div class="pd-features" style="font-size:13px;color:#888;line-height:1.7;margin-bottom:12px">'+p.description.slice(0,300)+'</div>':'';
   const priceHtml=p.price>0?('฿'+fmt(p.price)):t('contact_price');
+  const authBadge=LANG==='th'?'สินค้าแท้ 100% | จัดส่งทั่วไทย':'100% Genuine | Nationwide Delivery';
+  const qtyHtml=p.stock>0&&p.price>0
+    ?'<div class="pd-qty-row"><button class="qb" onclick="dqty(-1)">-</button><div class="qv" id="dqv">1</div><button class="qb" onclick="dqty(1)">+</button></div>'
+    +'<button class="pd-add-btn'+(inCart?' in-cart':'')+'" id="pd-add-btn" onclick="addPD()">'+(inCart?t('in_cart'):t('add_cart'))+'</button>'
+    :'<button class="pd-add-btn" disabled>'+t('sold_out')+'</button>';
+  const specRows=[['SKU',p.code||'-'],['Category',p.category||'-'],['Unit',p.unit||'-'],['Stock',p.stock+' '+(p.unit||'')]];
+  const specHtml=specRows.map(function(r){return'<tr style="border-bottom:1px solid var(--bd)"><td style="padding:8px;color:#555;width:120px">'+r[0]+'</td><td style="padding:8px;color:#ccc">'+r[1]+'</td></tr>';}).join('');
+  const deliveryHtml=LANG==='th'?'จัดส่งทั่วประเทศไทย ภายใน 2-5 วันทำการ ติดต่อ '+(CO.tel||'ร้านค้า'):'Nationwide delivery within 2-5 business days.';
+
+  // Thumbnail strip for related with same current color/size
+  const relatedThumbs=related.length>1?related.slice(0,8).map(x=>{
+    const isActive=x.id===id;
+    return'<div onclick="openPD(\''+x.id+'\')" style="width:56px;height:56px;flex-shrink:0;border:2px solid '+(isActive?'var(--red)':'#333')+';border-radius:4px;overflow:hidden;cursor:pointer;background:#111;display:flex;align-items:center;justify-content:center;transition:border .13s">'
+      +(x.imageUrl?'<img src="'+x.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:20px;opacity:.3">?</span>')
+      +'</div>';
+  }).join(''):'';
+  const thumbsHtml=relatedThumbs?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+relatedThumbs+'</div>':'';
 
   const html='<div class="pd-layout">'
-    +'<div><div class="pd-img-area"><div class="pd-thumbs">'+imgThumb+'</div>'
-    +'<div class="pd-main-img-wrap">'+imgMain
-    +'<div class="pd-main-ph" '+phStyle+'>'+ico+'</div>'
-    +'</div></div></div>'
+    // Images
+    +'<div>'
+    +(hasImg?'<div class="pd-main-img-wrap"><img class="pd-main-img" src="'+p.imageUrl+'" id="pd-mimg" onerror="this.style.display=\'none\'"></div>':'<div class="pd-main-ph"></div>')
+    +thumbsHtml+'</div>'
+    // Info
     +'<div class="pd-info">'
     +'<div class="pd-brand">'+(brand||p.category||'RACING GARAGE')+'</div>'
     +'<div class="pd-title">'+p.name+'</div>'
-    +'<div class="pd-code">'+(LANG==='th'?'รหัสสินค้า':'SKU')+': '+(p.code||'-')+'</div>'
+    +'<div class="pd-code" style="margin-bottom:10px">'+(LANG==='th'?'รหัสสินค้า':'SKU')+': '+(p.code||'-')+'</div>'
     +descHtml
     +'<div class="pd-price-row"><div class="pd-price">'+priceHtml+'</div><div class="pd-unit">/ '+(p.unit||'pcs')+'</div></div>'
-    +'<div class="pd-stock-row"><span class="pcard-stock '+stockCls+'" style="font-size:13px">'+stockTx+'</span></div>'
-    +varHtml+qtyHtml
+    +'<div class="pd-stock-row" style="margin-bottom:12px"><span class="pcard-stock '+stockCls+'" style="font-size:13px">'+stockTx+'</span></div>'
+    // Variant selectors
+    +varSelector
+    +qtyHtml
     +'<div style="margin-top:1rem;padding:.8rem;background:#0f0f0f;border:1px solid var(--bd);border-left:3px solid var(--red);font-size:12px;color:#555">'+authBadge+'</div>'
     +'</div></div>'
+    // Tabs
     +'<div class="pd-tabs">'
     +'<button class="pd-tab on" onclick="pdTab(this,\'pdtab1\')">'+t('pd_tab1')+'</button>'
     +'<button class="pd-tab" onclick="pdTab(this,\'pdtab2\')">'+t('pd_tab2')+'</button>'
