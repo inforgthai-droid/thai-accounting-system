@@ -610,30 +610,28 @@ function shopScanKey(e, inp){
   const val=inp.value.trim();
   if(!val) return;
 
-  // หาสินค้า exact match จาก barcode
+  // หาสินค้า exact match
   const found=PRODS.find(p=>p.code===val||p.shopeeId===val);
   if(found){
-    // flash green
-    inp.style.borderColor='var(--red)';
-    inp.style.background='#1a0505';
+    // Flash green
+    inp.style.borderColor='var(--red)';inp.style.background='#1a0505';
     setTimeout(()=>{inp.style.borderColor='';inp.style.background='';},400);
-    // เปิดหน้าสินค้าทันที
+    // แสดงสินค้าที่เจอใน grid
     inp.value='';
+    $('sinput').value=val;
     doFilter();
-    openPD(found.id);
+    // ล้างช่อง — grid reset หลัง 3 วินาที
+    setTimeout(()=>{
+      $('sinput').value='';
+      doFilter();
+      const i=$('sinput');if(i){i.value='';i.focus();}
+    },3000);
   } else {
-    // ไม่เจอ exact — ลอง filter ปกติ แต่ไม่ clear
+    // ไม่เจอ exact — filter ปกติ ไม่ล้างช่อง
     inp.style.borderColor='#f87171';
     setTimeout(()=>{inp.style.borderColor='';},600);
     doFilter();
-    // ถ้าเจอแค่ 1 รายการ เปิดเลย
-    const q=val.toLowerCase();
-    const matches=PRODS.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q));
-    if(matches.length===1){
-      inp.value='';
-      doFilter();
-      openPD(matches[0].id);
-    }
+    toast('ไม่พบสินค้า: '+val,'err');
   }
 }
 
