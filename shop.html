@@ -21,7 +21,7 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 /* LOADER */
 #ld{position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;transition:opacity .5s}
 #ld.out{opacity:0;pointer-events:none}
-.ld-logo{display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.ld-logo{display:flex;align-items:center;justify-content:center}
 .ld-bar{width:220px;height:3px;background:#222;overflow:hidden;border-radius:99px}
 .ld-fill{height:100%;background:var(--red);animation:ldfill 1.8s ease forwards}
 @keyframes ldfill{0%{width:0}100%{width:100%}}
@@ -300,8 +300,14 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
 <body>
 
 <div id="ld">
-  <div class="ld-logo"><svg style="height:42px;display:block;overflow:visible" viewBox="0 0 420 44" xmlns="http://www.w3.org/2000/svg"><text y="40" style="font-family:Impact,'Arial Black',sans-serif;font-size:40px;font-style:italic;font-weight:900"><tspan fill="#e8172c">Racing</tspan><tspan fill="#ffffff"> Garage</tspan></text></svg></div>
-  <div style="font-size:11px;color:#333;letter-spacing:3px;text-transform:uppercase;font-family:var(--font)">LOADING...</div>
+  <div class="ld-logo">
+    <svg style="height:48px;display:block;overflow:visible" viewBox="-10 0 440 50" xmlns="http://www.w3.org/2000/svg">
+      <text x="210" y="44" text-anchor="middle" style="font-family:Impact,'Arial Black',sans-serif;font-size:44px;font-style:italic;font-weight:900">
+        <tspan fill="#e8172c">Racing</tspan><tspan fill="#ffffff"> Garage</tspan>
+      </text>
+    </svg>
+  </div>
+  <div style="font-size:11px;color:#444;letter-spacing:3px;text-transform:uppercase;font-family:var(--font);text-align:center">LOADING...</div>
   <div class="ld-bar"><div class="ld-fill"></div></div>
 </div>
 <div id="toasts"></div>
