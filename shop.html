@@ -737,6 +737,52 @@ function updatePriceFilter(v){
 }
 
 // ── FILTER ──
+// ── Group variants ──
+function getBaseName(name){
+  return name
+    .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*[/|]\s*\S.*$/i,'')
+    .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*$/i,'')
+    .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon)\s*$/i,'')
+    .trim();
+}
+function getCodePrefix(code){
+  if(!code) return '';
+  const p=code.split('-');
+  if(p.length>=3) return p.slice(0,-2).join('-');
+  if(p.length===2) return p[0];
+  return code;
+}
+function groupProducts(list){
+  const groups=new Map();
+  list.forEach(p=>{
+    const hasVar=p.variations&&p.variations.trim();
+    let key;
+    if(hasVar){
+      const pfx=getCodePrefix(p.code);
+      key=(pfx&&pfx!==p.code)?'pfx:'+pfx:'name:'+getBaseName(p.name);
+    } else {
+      key='solo:'+p.id;
+    }
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(p);
+  });
+  const result=[];
+  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','36','37','38','39','40','41','42','43','44','45'];
+  groups.forEach((prods)=>{
+    if(prods.length===1){result.push({type:'single',p:prods[0]});}
+    else{
+      prods.sort((a,b)=>{
+        const av=(a.variations||'').split(/[/,|]/)[0].trim();
+        const bv=(b.variations||'').split(/[/,|]/)[0].trim();
+        const ai=sizeOrder.indexOf(av),bi=sizeOrder.indexOf(bv);
+        return(ai>=0?ai:99)-(bi>=0?bi:99);
+      });
+      result.push({type:'group',prods});
+    }
+  });
+  return result;
+}
+
 function doFilter(){
   const q=($('sinput')?.value||'').toLowerCase();
   const srt=$('srt')?.value||'az';
@@ -750,12 +796,13 @@ function doFilter(){
   });
   const sorts={az:(a,b)=>a.name.localeCompare(b.name,'th'),za:(a,b)=>b.name.localeCompare(a.name,'th'),pa:(a,b)=>a.price-b.price,pd:(a,b)=>b.price-a.price};
   list.sort(sorts[srt]||sorts.az);
-  $('result-count').innerHTML=`<strong>${list.length}</strong> ${t('items')}`;
+  const grouped=groupProducts(list);
+  $('result-count').innerHTML='<strong>'+grouped.length+'</strong> '+t('items');
   const grid=$('pgrid');if(!grid)return;
-  if(!list.length){
-    grid.innerHTML=`<div class="empty-state"><div class="empty-icon">`+E.search+`</div><div class="empty-msg">${t('no_products')}</div></div>`;return;
+  if(!grouped.length){
+    grid.innerHTML='<div class="empty-state"><div class="empty-icon"></div><div class="empty-msg">'+t('no_products')+'</div></div>';return;
   }
-  grid.innerHTML=list.map(prodCard).join('');
+  grid.innerHTML=grouped.map(g=>g.type==='single'?prodCard(g.p):prodCardGroup(g.prods)).join('');
 }
 
 // ── PRODUCT CARD ──
@@ -961,6 +1008,87 @@ function addPD(){
   updateCart();
   const btn=$('pd-add-btn');if(btn){btn.textContent=t('in_cart');btn.classList.add('in-cart');}
   toast('✓ '+p.name.slice(0,28),'ok');doFilter();
+}
+
+// ── PRODUCT GROUP CARD (หลาย variant รวมเป็น 1 card) ──
+function prodCardGroup(prods){
+  // ตัวแทน: เลือกตัวที่มีสต็อก + มีรูป หรือตัวแรก
+  const rep=prods.find(p=>p.stock>0&&p.imageUrl)||prods.find(p=>p.imageUrl)||prods[0];
+  const brand=(rep.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
+  const baseName=getBaseName(rep.name);
+  const hasImg=rep.imageUrl&&rep.imageUrl.length>0;
+
+  // Extract unique sizes and colors
+  const sizes=[]; const colors=[];
+  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','36','37','38','39','40','41','42','43','44','45'];
+  prods.forEach(p=>{
+    if(!p.variations) return;
+    const parts=p.variations.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
+    parts.forEach(part=>{
+      if(/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(part)){if(!sizes.includes(part))sizes.push(part);}
+      else if(part){if(!colors.includes(part))colors.push(part);}
+    });
+  });
+  sizes.sort((a,b)=>(sizeOrder.indexOf(a)>=0?sizeOrder.indexOf(a):99)-(sizeOrder.indexOf(b)>=0?sizeOrder.indexOf(b):99));
+
+  // Price range
+  const prices=prods.filter(p=>p.price>0).map(p=>p.price);
+  const minP=Math.min(...prices), maxP=Math.max(...prices);
+  const priceDisplay=prices.length===0?t('contact_price')
+    :minP===maxP?'฿'+fmt(minP)
+    :'฿'+fmt(minP)+' – ฿'+fmt(maxP);
+
+  // Total stock
+  const totalStock=prods.reduce((a,p)=>a+p.stock,0);
+  const stockClass=totalStock<=0?'ou-s':totalStock<=5?'lo-s':'in-s';
+  const stockTx=totalStock<=0?t('out_stock'):totalStock<=10?t('low_stock')+' ('+totalStock+')':t('in_stock');
+
+  // Variant chips
+  const sizeChips=sizes.map(s=>{
+    const p=prods.find(x=>x.variations&&x.variations.includes(s));
+    const oos=!p||p.stock<=0;
+    return'<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin:2px;'
+      +'border:1px solid '+(oos?'#333':'#555')+';color:'+(oos?'#444':'#aaa')+';'
+      +'text-decoration:'+(oos?'line-through':'none')+'">'+s+'</span>';
+  }).join('');
+
+  const colorChips=colors.slice(0,5).map(c=>{
+    const p=prods.find(x=>x.variations&&x.variations.toLowerCase().includes(c.toLowerCase()));
+    const oos=!p||p.stock<=0;
+    return'<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin:2px;'
+      +'border:1px solid '+(oos?'#333':'#555')+';color:'+(oos?'#444':'#aaa')+'">'+c+'</span>';
+  }).join('');
+
+  const variantCount=prods.length;
+
+  return`<div class="pcard" onclick="openPD('${rep.id}')">
+    <div class="pcard-img-wrap">
+      ${hasImg?`<img class="pcard-img" src="${rep.imageUrl}" alt="${baseName.replace(/"/g,'')}" loading="lazy" onerror="this.style.display='none'">`:
+        '<div class="pcard-ph"></div>'}
+      ${totalStock<=0?`<div class="pcard-badge oos">${t('out_stock')}</div>`:totalStock<=5?`<div class="pcard-badge sale">LOW</div>`:''}
+      <div class="pcard-overlay">
+        <button class="pcard-add-btn" onclick="event.stopPropagation();openPD('${rep.id}')">
+          ${sizes.length||colors.length?t('var_label')+' →':t('add_cart')}
+        </button>
+      </div>
+    </div>
+    <div class="pcard-body">
+      ${brand?`<div class="pcard-brand">${brand}</div>`:''}
+      <div class="pcard-name">${baseName}</div>
+      <div class="pcard-cat-tag">${rep.category||''}</div>
+      <!-- Size chips -->
+      ${sizes.length?`<div style="margin-top:5px;line-height:1.8">${sizeChips}</div>`:''}
+      <!-- Color chips -->
+      ${colors.length?`<div style="line-height:1.8">${colorChips}</div>`:''}
+      <div class="pcard-foot">
+        <div>
+          <div class="pcard-price has">${priceDisplay}</div>
+          <div class="pcard-stock ${stockClass}" style="font-size:10px">${stockTx}</div>
+        </div>
+        <div style="font-size:10px;color:#555;text-align:right">${variantCount} ${LANG==='th'?'ตัวเลือก':'options'}</div>
+      </div>
+    </div>
+  </div>`;
 }
 
 // ── CART ──
