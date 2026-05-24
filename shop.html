@@ -640,21 +640,23 @@ async function init(){
   const hideLd=()=>{const l=$('ld');if(l){l.style.opacity='0';setTimeout(()=>l.style.display='none',500);}};
   setTimeout(hideLd,3000);
   try{
-    const[cd,ps,cs]=await Promise.all([
+    const[cd,ps,cs,sd]=await Promise.all([
       db.collection('settings').doc('company').get(),
       db.collection('products').get(),
-      db.collection('categories').orderBy('order','asc').get()
+      db.collection('categories').orderBy('order','asc').get(),
+      db.collection('settings').doc('shopDesign').get()
     ]);
     if(cd.exists)Object.assign(CO,cd.data());
     PRODS=ps.docs.map(d=>({id:d.id,...d.data()}));
-    // Load categories from Firestore, fallback to product categories
     if(!cs.empty){
       CATS=cs.docs.map(d=>({id:d.id,...d.data()})).filter(c=>c.visible!==false);
     } else {
-      // Fallback: build from products
       CATS=[...new Set(PRODS.map(p=>p.category).filter(Boolean))].sort()
-        .map(name=>({name,icon:CAT_ICONS[name]||'?',color:'#0ea5e9',visible:true}));
+        .map(name=>({name,icon:'',color:'#0ea5e9',visible:true}));
     }
+    // Apply shopDesign from admin
+    if(sd.exists) applyShopDesign(sd.data());
+
     applyBrand();buildNav();buildSidebar();doFilter();applyLang();
     if($('price-max')){
       const maxP=Math.max(...PRODS.map(p=>p.price||0),500000);
@@ -666,6 +668,43 @@ async function init(){
     if(location.protocol==='file:')toast('กรุณาเปิดจาก GitHub Pages','err',6000);
     else toast('Error: '+e.message,'err');
   }finally{hideLd();}
+}
+
+function applyShopDesign(d){
+  if(!d) return;
+  const root=document.documentElement;
+  if(d.colorRed) root.style.setProperty('--red',d.colorRed);
+  if(d.colorBg) root.style.setProperty('--bg',d.colorBg);
+  if(d.colorText) root.style.setProperty('--text',d.colorText);
+  // Promo bar
+  if(d.promoText){
+    const pb=$('promo-bar');
+    if(pb){pb.textContent=d.promoText;if(d.promoColor)pb.style.background=d.promoColor;if(d.promoTextColor)pb.style.color=d.promoTextColor;}
+  }
+  // Topbar
+  if(d.topbarShip){const el=$('tb-ship');if(el)el.textContent=d.topbarShip;}
+  if(d.topbarAuth){const el=$('tb-auth');if(el)el.textContent=d.topbarAuth;}
+  // Logo
+  if(d.logoRacing||d.logoGarage||d.logoSize){
+    document.querySelectorAll('.logo-text,.ld-logo,.ft-logo').forEach(el=>{
+      if(el.tagName==='svg'||el.querySelector('svg')) return;
+      const r=d.logoRacing||'Racing'; const g=d.logoGarage||'Garage';
+      const sz=d.logoSize||'30';
+      el.innerHTML=`<tspan style="fill:${d.colorRed||'#e8172c'}">${r}</tspan><tspan style="fill:#fff"> ${g}</tspan>`;
+    });
+    document.querySelectorAll('svg text').forEach(txt=>{
+      const r=d.logoRacing||'Racing';const g=d.logoGarage||'Garage';
+      txt.innerHTML=`<tspan fill="${d.colorRed||'#e8172c'}">${r}</tspan><tspan fill="#fff"> ${g}</tspan>`;
+    });
+  }
+  // Footer text
+  if(d.footerText){const el=$('ft-copy');if(el)el.textContent=d.footerText;}
+  // CSS red2 (darker)
+  if(d.colorRed){
+    const c=d.colorRed;
+    const darker=c.replace(/^#/,'');
+    root.style.setProperty('--red2',d.colorRed);
+  }
 }
 
 function applyBrand(){
