@@ -981,11 +981,10 @@ function doPrint58(){
   // Clear barcode SVG (will be re-rendered)
   const bcSvg=clone.querySelector('#receipt-bc-inline');
   if(bcSvg){bcSvg.removeAttribute('id');bcSvg.id='bc-print';bcSvg.innerHTML='';}
-  // Clear QR div — ใช้ทั้ง DOM และ regex เพื่อให้แน่ใจ
+  // Clear QR div (strip rendered img/canvas, keep empty div)
   const qrDiv=clone.querySelector('#receipt-qr-wrap');
-  if(qrDiv){qrDiv.innerHTML='';qrDiv.id='qr-print';}
-  // แปลงเป็น string แล้วลบ children ใน qr-print ออกอีกครั้ง (กัน img/canvas ที่ติดมา)
-  let bodyHtml=clone.outerHTML.replace(/(<div id="qr-print"[^>]*>)[\s\S]*?(<\/div>)/,'$1$2');
+  if(qrDiv){while(qrDiv.firstChild) qrDiv.removeChild(qrDiv.firstChild);qrDiv.id='qr-print';}
+  let bodyHtml=clone.outerHTML;
 
   const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบเสร็จ '+bcCode+'</title>'
     +'<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">'
@@ -1006,7 +1005,6 @@ function doPrint58(){
     +'if(typeof JsBarcode!=="undefined"){try{JsBarcode("#bc-print","'+bcCode+'",{format:"CODE128",width:1.6,height:44,fontSize:0,textMargin:0,margin:2,background:"#fff",lineColor:"#000",displayValue:false});}catch(ex){}}'
     // QR — same width as barcode
     +'var qw=document.getElementById("qr-print");'
-    +'if(qw){while(qw.firstChild)qw.removeChild(qw.firstChild);}'
     +'var sz=110;'
     +'if(qw&&typeof QRCode!=="undefined"){try{new QRCode(qw,{text:"'+shopUrl+'",width:sz,height:sz,colorDark:"#000",colorLight:"#fff",correctLevel:QRCode.CorrectLevel.M});}catch(ex){}}'
     +'setTimeout(function(){window.print();},1000);'
