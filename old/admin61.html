@@ -607,18 +607,21 @@ function renderPOS(){
   return`<div class="pos-wrap">
     <div class="pos-left">
 
-      <!-- Category Dropdown -->
-      <div style="padding:6px 8px 0 8px">
-        <select id="pos-cat-select"
-          onchange="setPOSCat(this.value)"
-          style="width:100%;padding:8px 12px;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text);cursor:pointer;outline:none">
-          <option value="all" ${posCat==='all'?'selected':''}>🏷️ ทั้งหมด (${S.products.length})</option>
-          ${cats.map(c=>{
-            const cnt=catCount(c.name);
-            if(!cnt) return '';
-            return`<option value="${c.name}" ${posCat===c.name?'selected':''}>${c.icon?c.icon+' ':''}${c.name} (${cnt})</option>`;
-          }).join('')}
-        </select>
+      <!-- Category Nav Tabs -->
+      <div class="pos-cat-nav" id="pos-cat-nav">
+        <button class="pos-cat-btn${posCat==='all'?' on':''}" data-cat="all" onclick="setPOSCat('all')">
+          ทั้งหมด <span style="font-size:10px;background:${posCat==='all'?'var(--accent)':'#e2e8f0'};color:${posCat==='all'?'#fff':'#888'};border-radius:99px;padding:1px 6px">${S.products.length}</span>
+        </button>
+        ${cats.map(c=>{
+          const cnt=catCount(c.name);
+          if(!cnt) return '';
+          const on=posCat===c.name;
+          return`<button class="pos-cat-btn${on?' on':''}" data-cat="${c.name}"
+            onclick="setPOSCat('${c.name}')"
+            style="${on?'color:'+c.color+';border-bottom-color:'+c.color:''}">${c.icon?c.icon+' ':''}${c.name}
+            <span style="font-size:10px;background:${on?c.color:'#e2e8f0'};color:${on?'#fff':'#888'};border-radius:99px;padding:1px 6px">${cnt}</span>
+          </button>`;
+        }).join('')}
       </div>
 
       <!-- Search -->
