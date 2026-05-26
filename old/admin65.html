@@ -4689,15 +4689,10 @@ async function saveCat(id){
       await addFB('categories',data);
       toast('เพิ่มหมวดหมู่แล้ว ✓','success');
     }
-    closeModal();await reloadCategories();renderPage('categories');if(S._page==='pos')renderPage('pos');
+    closeModal();renderPage('categories');
   }catch(e){toast('บันทึกไม่สำเร็จ: '+e.message,'error');}
 }
 
-
-async function reloadCategories(){
-  const snap=await db.collection('categories').orderBy('order','asc').get();
-  S.categories=snap.docs.map(d=>({id:d.id,...d.data()}));
-}
 async function deleteCat(id,name){
   const prodCount=S.products.filter(p=>p.category===name).length;
   const msg=prodCount>0
@@ -4706,13 +4701,13 @@ async function deleteCat(id,name){
   if(!confirm(msg))return;
   await deleteFB('categories',id);
   toast('ลบหมวดหมู่แล้ว','info');
-  await reloadCategories();renderPage('categories');if(S._page==='pos')renderPage('pos');
+  renderPage('categories');
 }
 
 async function toggleCatVisible(id,visible){
   await updateFB('categories',id,{visible,updatedAt:ts()});
   toast(visible?'แสดงหมวดหมู่แล้ว':'ซ่อนหมวดหมู่แล้ว','info');
-  await reloadCategories();renderCatList();
+  renderCatList();
 }
 
 async function updateCatColor(id,color){
