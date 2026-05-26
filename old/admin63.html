@@ -466,9 +466,21 @@ function renderProdGrid(prods){
 
 function setPOSCat(cat){
   S._posCat=cat;
-  // Sync dropdown value
-  const sel=document.getElementById('pos-cat-select');
-  if(sel) sel.value=cat;
+  // Update tabs active state
+  document.querySelectorAll('.pos-cat-btn').forEach(b=>b.classList.remove('on'));
+  const btns=document.querySelectorAll('.pos-cat-btn');
+  btns.forEach(b=>{
+    const on=(cat==='all'&&b.textContent.trim().startsWith('ทั้งหมด'))||(cat!=='all'&&b.dataset.cat===cat);
+    if(on){
+      b.classList.add('on');
+      const cats=(S.categories&&S.categories.length)?S.categories.filter(c=>c.visible!==false):[];
+      const catObj=cats.find(c=>c.name===cat);
+      const color=catObj?.color||'var(--accent)';
+      b.style.color=color; b.style.borderBottomColor=color;
+    } else {
+      b.style.color=''; b.style.borderBottomColor='';
+    }
+  });
   _updatePOSGrid();
 }
 
@@ -601,7 +613,11 @@ function renderPOS(){
           onchange="setPOSCat(this.value)"
           style="width:100%;padding:8px 12px;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:700;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text);cursor:pointer;outline:none">
           <option value="all" ${posCat==='all'?'selected':''}>🏷️ ทั้งหมด (${S.products.length})</option>
-          ${cats.filter(c=>catCount(c.name)>0).map(c=>`<option value="${c.name}" ${posCat===c.name?'selected':''}>${c.icon?c.icon+' ':''}${c.name} (${catCount(c.name)})</option>`).join('')}
+          ${cats.map(c=>{
+            const cnt=catCount(c.name);
+            if(!cnt) return '';
+            return`<option value="${c.name}" ${posCat===c.name?'selected':''}>${c.icon?c.icon+' ':''}${c.name} (${cnt})</option>`;
+          }).join('')}
         </select>
       </div>
 
