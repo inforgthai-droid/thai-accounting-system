@@ -1217,19 +1217,10 @@ function renderSales(){
     payMethod:o.payMethod||'-',
   }));
 
-  // ── Sort helper: createdAt desc, fallback to date desc, fallback to docNo desc ──
-  const sortDesc=(a,b)=>{
-    const ta=a.createdAt?.toDate?.()?.getTime?.()??a.createdAt?.seconds??0;
-    const tb=b.createdAt?.toDate?.()?.getTime?.()??b.createdAt?.seconds??0;
-    if(ta&&tb&&ta!==tb) return tb-ta;
-    const da=a.date||''; const db2=b.date||'';
-    if(da!==db2) return db2.localeCompare(da);
-    return (b.docNo||'').localeCompare(a.docNo||'');
-  };
   // ── Filter by channel ──
-  let all=[...posRows,...ordRows].sort(sortDesc);
-  if(ch==='pos') all=posRows.sort(sortDesc);
-  if(ch==='online') all=ordRows.sort(sortDesc);
+  let all=[...posRows,...ordRows].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(ch==='pos') all=posRows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(ch==='online') all=ordRows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 
   // ── Filter by date ──
   if(df) all=all.filter(s=>(s.date||'')>=df);
