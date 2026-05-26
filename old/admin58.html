@@ -942,16 +942,13 @@ function showReceiptModal(sale){
     if(typeof JsBarcode!=='undefined'){
       try{JsBarcode('#receipt-bc-inline',sale.docNo,{format:'CODE128',width:1.6,height:44,fontSize:0,textMargin:0,margin:2,background:'#fff',lineColor:'#000',displayValue:false});}catch(e){}
     }
-    // QR — render อันเดียว ล้างก่อนทุกครั้ง
+    // QR — fixed size 110px เหมาะกับ 58mm — ล้างก่อน render
     const qrWrap=document.getElementById('receipt-qr-wrap');
-    if(qrWrap){
-      // ล้าง QR เก่าออกทั้งหมด (QRCode.js append img/canvas ทับซ้อนกัน)
-      while(qrWrap.firstChild) qrWrap.removeChild(qrWrap.firstChild);
-    }
+    if(qrWrap) qrWrap.innerHTML=''; // ล้าง QR เก่าออก
     const qrSize=110;
     function makeQR(){
       if(qrWrap&&typeof QRCode!=='undefined'){
-        while(qrWrap.firstChild) qrWrap.removeChild(qrWrap.firstChild);
+        qrWrap.innerHTML=''; // ล้างซ้ำ กันกรณี load ช้า
         try{new QRCode(qrWrap,{text:'https://www.racinggarage.net/',width:qrSize,height:qrSize,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(e){}
       }
     }
@@ -983,7 +980,7 @@ function doPrint58(){
   if(bcSvg){bcSvg.removeAttribute('id');bcSvg.id='bc-print';bcSvg.innerHTML='';}
   // Clear QR div (strip rendered img/canvas, keep empty div)
   const qrDiv=clone.querySelector('#receipt-qr-wrap');
-  if(qrDiv){while(qrDiv.firstChild) qrDiv.removeChild(qrDiv.firstChild);qrDiv.id='qr-print';}
+  if(qrDiv){qrDiv.innerHTML='';qrDiv.id='qr-print';}
   let bodyHtml=clone.outerHTML;
 
   const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบเสร็จ '+bcCode+'</title>'
