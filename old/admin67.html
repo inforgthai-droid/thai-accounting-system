@@ -419,10 +419,10 @@ function renderDashboard(){
   <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ภาพรวม</button>
   </div>
   <div class="stat-grid">
-    ${sc('ยอดขายวันนี้',''+fmt(todTotal),'#0ea5e9',todSales.length+' รายการ')}
-    ${sc('รายได้ POS รวม',''+fmt(allRev),'#10b981',S.sales.length+' บิล')}
-    ${sc('กำไรขั้นต้น',''+fmt(profit),'#7c3aed',fmtM(allRev?profit/allRev*100:0)+'%')}
-    ${sc('ออเดอร์ออนไลน์',''+fmt(onlineRev),'#0ea5e9',S.onlineOrders.length+' คำสั่งซื้อ')}
+    ${sc('ยอดขายวันนี้','฿'+fmt(todTotal),'#0ea5e9',todSales.length+' รายการ')}
+    ${sc('รายได้ POS รวม','฿'+fmt(allRev),'#10b981',S.sales.length+' บิล')}
+    ${sc('กำไรขั้นต้น','฿'+fmt(profit),'#7c3aed',fmtM(allRev?profit/allRev*100:0)+'%')}
+    ${sc('ออเดอร์ออนไลน์','฿'+fmt(onlineRev),'#0ea5e9',S.onlineOrders.length+' คำสั่งซื้อ')}
     ${sc('รอยืนยัน',pendingOrders.length+' รายการ','#f59e0b','ออเดอร์ใหม่')}
     ${sc('สินค้าใกล้หมด',lowStock.length+outStock.length+' รายการ','#ef4444',outStock.length+' หมดสต็อก')}
   </div>
@@ -439,7 +439,7 @@ function renderDashboard(){
             <div style="color:var(--muted);font-size:11px">${o.date||''} • ${o.customerName||''}</div>
           </div>
           <div style="text-align:right">
-            <div style="font-weight:700;color:var(--success)">${fmt(o.total)}</div>
+            <div style="font-weight:700;color:var(--success)">฿${fmt(o.total)}</div>
             <div>${badge(o.status||'รอยืนยัน',o.status==='เสร็จสิ้น'?'green':o.status==='ยกเลิก'?'red':'amber')}</div>
           </div>
         </div>`).join(''):'<div style="color:var(--muted);padding:1rem 0;text-align:center">ยังไม่มีออเดอร์ออนไลน์<br><a href="shop.html" target="_blank" style="color:var(--accent)">เปิดร้านค้า →</a></div>'}
@@ -459,7 +459,7 @@ function renderProdGrid(prods){
     ${p.imageUrl?`<img src="${p.imageUrl}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;margin-bottom:4px" onerror="this.style.display='none'">`:'<div style="font-size:28px;margin-bottom:6px">'+String.fromCodePoint(0x1F4E6)+'</div>'}
     <div class="product-name">${p.name}</div>
     <div style="font-size:10px;color:var(--muted);margin-bottom:4px">${p.code}</div>
-    <div class="product-price">${fmt(p.price)}</div>
+    <div class="product-price">฿${fmt(p.price)}</div>
     <div style="font-size:11px;color:var(--muted)">${p.stock<=0?'<span style="color:var(--danger)">หมดสต็อก</span>':'เหลือ '+p.stock+' '+p.unit}</div>
   </div>`).join('')||'<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted)">'+String.fromCodePoint(0x1F50D)+' ไม่พบสินค้า</div>';
 }
@@ -565,8 +565,8 @@ function renderPOS(){
     <div class="cart-item">
       <div style="flex:1">
         <div style="font-weight:700;font-size:13px">${item.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${item.code} • ${fmt(item.price)}/หน่วย • ต้นทุน ${fmt(item.cost)}</div>
-        <div style="font-size:11px;color:#7c3aed">กำไร ${fmt((item.price-item.cost)*item.qty)}</div>
+        <div style="font-size:11px;color:var(--muted)">${item.code} • ฿${fmt(item.price)}/หน่วย • ต้นทุน ฿${fmt(item.cost)}</div>
+        <div style="font-size:11px;color:#7c3aed">กำไร ฿${fmt((item.price-item.cost)*item.qty)}</div>
       </div>
       <div style="display:flex;align-items:center;gap:5px">
         <button class="qty-btn" onclick="cartQty(${i},-1)">−</button>
@@ -575,7 +575,7 @@ function renderPOS(){
         <button class="qty-btn" onclick="cartQty(${i},1)">+</button>
         <button class="qty-btn" style="background:#fef2f2;border-color:#fca5a5;color:#ef4444" onclick="cartRemove(${i})">×</button>
       </div>
-      <div style="font-weight:700;color:var(--primary);min-width:70px;text-align:right;margin-left:6px">${fmt(item.price*item.qty)}</div>
+      <div style="font-weight:700;color:var(--primary);min-width:70px;text-align:right;margin-left:6px">฿${fmt(item.price*item.qty)}</div>
     </div>`).join(''):'<div style="text-align:center;padding:2rem;color:var(--muted)">🛒 เพิ่มสินค้าจากด้านซ้าย</div>';
 
   const sub=S.cart.reduce((a,b)=>a+b.price*b.qty,0);
@@ -632,14 +632,14 @@ function renderPOS(){
         <button class="btn btn-danger btn-xs" onclick="cartClear()">ล้าง</button></div>
       <div class="pos-cart-items">${cartHTML}</div>
       <div class="pos-summary">
-        <div class="pos-row"><span>ยอดรวม</span><span>${fmt(sub)}</span></div>
+        <div class="pos-row"><span>ยอดรวม</span><span>฿${fmt(sub)}</span></div>
         <div class="pos-row" style="align-items:center">
           <span>ส่วนลด</span>
           <div style="display:flex;gap:4px;align-items:center">
             <input type="number" value="${S.posDiscount}" min="0" onchange="S.posDiscount=this.value;updatePOSCart()"
               style="width:55px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px 4px;font-size:12px;font-family:'Sarabun',sans-serif">
-            <span style="font-size:11px;color:var(--muted)">${disc>0&&disc<=100?'%':''}</span>
-            <span style="color:var(--danger);font-weight:600">-${fmt(discAmt)}</span>
+            <span style="font-size:11px;color:var(--muted)">${disc>0&&disc<=100?'%':'฿'}</span>
+            <span style="color:var(--danger);font-weight:600">-฿${fmt(discAmt)}</span>
           </div>
         </div>
         <!-- VAT TOGGLE -->
@@ -665,17 +665,17 @@ function renderPOS(){
               บวกเพิ่ม (100+7=107)
             </button>
           </div>
-          <div style="font-size:11px;color:var(--muted)">ราคาก่อนภาษี ${fmt(baseAmt)} + VAT ${fmt(vatAmt)} = ${fmt(total)}</div>`
+          <div style="font-size:11px;color:var(--muted)">ราคาก่อนภาษี ฿${fmt(baseAmt)} + VAT ฿${fmt(vatAmt)} = ฿${fmt(total)}</div>`
           :'<div style="font-size:11px;color:var(--muted)">ไม่คิด VAT</div>'}
         </div>
-        <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>${fmt(total)}</span></div>
-        <div class="pos-row" style="color:#7c3aed;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>${fmt(afterDisc-totalCost)}</span></div>
+        <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>฿${fmt(total)}</span></div>
+        <div class="pos-row" style="color:#7c3aed;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>฿${fmt(afterDisc-totalCost)}</span></div>
         <div style="margin-bottom:8px">
           <label class="fl">ลูกค้า / หมายเหตุ</label>
           <input class="fc" value="${S.posNote}" onchange="S.posNote=this.value" placeholder="ลูกค้าทั่วไป">
         </div>
         <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
-          onclick="checkout()" ${S.cart.length?'':'disabled'}>💳 ชำระเงิน ${fmt(total)}</button>
+          onclick="checkout()" ${S.cart.length?'':'disabled'}>💳 ชำระเงิน ฿${fmt(total)}</button>
       </div>
     </div>
   </div>`;
@@ -730,11 +730,11 @@ function updatePOSCart(){
       </div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${item.code} • ต้นทุน ${fmt(item.cost)}</div>
+        <div style="font-size:11px;color:var(--muted)">${item.code} • ต้นทุน ฿${fmt(item.cost)}</div>
         <!-- ราคา + จำนวน -->
         <div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:3px">
-            <span style="font-size:10px;color:var(--muted)"></span>
+            <span style="font-size:10px;color:var(--muted)">฿</span>
             <input type="number" value="${item.price}" min="0" step="1"
               onchange="cartSetPrice(${i},this.value)"
               onclick="this.select()"
@@ -750,22 +750,22 @@ function updatePOSCart(){
           </div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px">
-          <span style="font-size:11px;color:#7c3aed">กำไร ${fmt((item.price-item.cost)*item.qty)}</span>
-          <span style="font-weight:700;color:var(--primary);font-size:14px">${fmt(item.price*item.qty)}</span>
+          <span style="font-size:11px;color:#7c3aed">กำไร ฿${fmt((item.price-item.cost)*item.qty)}</span>
+          <span style="font-weight:700;color:var(--primary);font-size:14px">฿${fmt(item.price*item.qty)}</span>
         </div>
       </div>
     </div>`).join('')
     :'<div style="text-align:center;padding:2rem;color:var(--muted)">เพิ่มสินค้าจากด้านซ้าย</div>';
 
   summaryEl.innerHTML=`
-    <div class="pos-row"><span>ยอดรวม</span><span>${fmt(sub)}</span></div>
+    <div class="pos-row"><span>ยอดรวม</span><span>฿${fmt(sub)}</span></div>
     <div class="pos-row" style="align-items:center">
       <span>ส่วนลด</span>
       <div style="display:flex;gap:4px;align-items:center">
         <input type="number" value="${S.posDiscount}" min="0" onchange="S.posDiscount=this.value;updatePOSCart()"
           style="width:55px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px 4px;font-size:12px;font-family:'Sarabun',sans-serif">
-        <span style="font-size:11px;color:var(--muted)">${disc>0&&disc<=100?'%':''}</span>
-        <span style="color:var(--danger);font-weight:600">-${fmt(discAmt)}</span>
+        <span style="font-size:11px;color:var(--muted)">${disc>0&&disc<=100?'%':'฿'}</span>
+        <span style="color:var(--danger);font-weight:600">-฿${fmt(discAmt)}</span>
       </div>
     </div>
     <div style="background:#f8fafc;border-radius:8px;padding:8px;margin:4px 0;border:1px solid var(--border)">
@@ -785,17 +785,17 @@ function updatePOSCart(){
         <button onclick="S.posVatMode='exclusive';updatePOSCart()"
           style="flex:1;padding:4px;font-size:11px;border-radius:6px;border:1.5px solid ${!vatIncl?'var(--accent)':'var(--border)'};background:${!vatIncl?'#eff6ff':'#fff'};cursor:pointer;font-weight:${!vatIncl?700:400}">บวกเพิ่ม (100+7=107)</button>
       </div>
-      <div style="font-size:11px;color:var(--muted)">${fmt(total-vatAmt)} + VAT ${fmt(vatAmt)} = ${fmt(total)}</div>`
+      <div style="font-size:11px;color:var(--muted)">฿${fmt(total-vatAmt)} + VAT ฿${fmt(vatAmt)} = ฿${fmt(total)}</div>`
       :'<div style="font-size:11px;color:var(--muted)">ไม่คิด VAT</div>'}
     </div>
-    <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>${fmt(total)}</span></div>
-    <div class="pos-row" style="color:#7c3aed;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>${fmt(afterDisc-totalCost)}</span></div>
+    <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>฿${fmt(total)}</span></div>
+    <div class="pos-row" style="color:#7c3aed;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>฿${fmt(afterDisc-totalCost)}</span></div>
     <div style="margin-bottom:8px">
       <label class="fl">ลูกค้า / หมายเหตุ</label>
       <input class="fc" value="${S.posNote}" onchange="S.posNote=this.value" placeholder="ลูกค้าทั่วไป">
     </div>
     <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
-      onclick="checkout()" ${S.cart.length?'':'disabled'}>💳 ชำระเงิน ${fmt(total)}</button>
+      onclick="checkout()" ${S.cart.length?'':'disabled'}>💳 ชำระเงิน ฿${fmt(total)}</button>
     ${S.cart.length?`
     <button onclick="openFullReceipt()" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;background:#eff6ff;color:var(--accent);border:1.5px solid var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">ใบเสร็จเต็มรูปแบบ / ใบกำกับภาษี</button>
     <button onclick="openShippingLabel({itemsText:S.cart.map(i=>i.name+' x'+i.qty).join(', ')})" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">จัดส่งสินค้า</button>`:''}`;
@@ -841,9 +841,9 @@ function showReceiptModal(sale){
   const rows=(sale.items||[]).map(i=>`
     <tr><td colspan="3" style="padding:2px 0;font-size:12px;font-family:'Sarabun',sans-serif">${i.name}</td></tr>
     <tr>
-      <td style="padding:1px 0;font-size:11px;color:#555;font-family:'Sarabun',sans-serif">${i.qty} x ${fmtM(i.price)}</td>
+      <td style="padding:1px 0;font-size:11px;color:#555;font-family:'Sarabun',sans-serif">${i.qty} x ฿${fmtM(i.price)}</td>
       <td></td>
-      <td align="right" style="font-weight:700;font-size:12px;font-family:'Sarabun',sans-serif">${fmtM(i.subtotal||i.price*i.qty)}</td>
+      <td align="right" style="font-weight:700;font-size:12px;font-family:'Sarabun',sans-serif">฿${fmtM(i.subtotal||i.price*i.qty)}</td>
     </tr>`).join('');
 
   const vatIncl=sale.vatMode!=='exclusive';
@@ -852,9 +852,9 @@ function showReceiptModal(sale){
   let vatSection='';
   if(applyVat){
     vatSection=vatIncl
-      ?`<tr><td colspan="2" style="font-size:11px">ราคาก่อน VAT</td><td align="right" style="font-size:11px">${fmtM(baseAmt)}</td></tr>
-         <tr><td colspan="2" style="font-size:11px">VAT ${c.vatRate||7}% (รวมใน)</td><td align="right" style="font-size:11px">${fmtM(sale.vat)}</td></tr>`
-      :`<tr><td colspan="2" style="font-size:11px">+ VAT ${c.vatRate||7}%</td><td align="right" style="font-size:11px">${fmtM(sale.vat)}</td></tr>`;
+      ?`<tr><td colspan="2" style="font-size:11px">ราคาก่อน VAT</td><td align="right" style="font-size:11px">฿${fmtM(baseAmt)}</td></tr>
+         <tr><td colspan="2" style="font-size:11px">VAT ${c.vatRate||7}% (รวมใน)</td><td align="right" style="font-size:11px">฿${fmtM(sale.vat)}</td></tr>`
+      :`<tr><td colspan="2" style="font-size:11px">+ VAT ${c.vatRate||7}%</td><td align="right" style="font-size:11px">฿${fmtM(sale.vat)}</td></tr>`;
   }
   const logoHtml=c.logoUrl?`<img src="${c.logoUrl}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;display:block;margin:0 auto 4px">` :'';
 
@@ -879,12 +879,12 @@ function showReceiptModal(sale){
       <table style="width:100%;border-collapse:collapse">${rows}</table>
       <hr style="border:none;border-top:1px dashed #000;margin:5px 0">
       <table style="width:100%;border-collapse:collapse">
-        <tr><td colspan="2" style="font-size:12px">ยอดรวม</td><td align="right" style="font-size:12px">${fmtM(sale.subtotal)}</td></tr>
-        ${(sale.discount||0)>0?`<tr><td colspan="2" style="font-size:12px">ส่วนลด</td><td align="right" style="font-size:12px;color:red">-${fmtM(sale.discount)}</td></tr>`:''}
+        <tr><td colspan="2" style="font-size:12px">ยอดรวม</td><td align="right" style="font-size:12px">฿${fmtM(sale.subtotal)}</td></tr>
+        ${(sale.discount||0)>0?`<tr><td colspan="2" style="font-size:12px">ส่วนลด</td><td align="right" style="font-size:12px;color:red">-฿${fmtM(sale.discount)}</td></tr>`:''}
         ${vatSection}
         <tr style="font-weight:800;font-size:15px;border-top:1.5px solid #000">
           <td colspan="2" style="padding-top:4px">รวมสุทธิ</td>
-          <td align="right" style="padding-top:4px">${fmtM(sale.total)}</td>
+          <td align="right" style="padding-top:4px">฿${fmtM(sale.total)}</td>
         </tr>
       </table>
       <hr style="border:none;border-top:1px dashed #000;margin:5px 0">
@@ -1121,7 +1121,7 @@ function printReceiptToWindow(sale, pw){
   <table>
     <tr class="total-row">
       <td colspan="2">ยอดสุทธิ</td>
-      <td align="right">${fmtM(sale.total||0)}</td>
+      <td align="right">฿${fmtM(sale.total||0)}</td>
     </tr>
   </table>
 
@@ -1262,10 +1262,10 @@ function renderSales(){
       s.date||'-',
       s.customerName||'ลูกค้าทั่วไป',
       s.items?s.items.length+' รายการ':'-',
-      isCancelled?`<s style="color:#aaa">${fmt(s.subtotal||s.total)}</s>`:''+fmt(s.subtotal||s.total),
-      (s.discount||0)>0?'-'+fmt(s.discount):'-',
-      isCancelled?`<s style="color:#aaa">${fmt(s.total)}</s>`:''+fmt(s.total),
-      profit>0?`<span style="color:#7c3aed;font-weight:700">${fmt(profit)}</span>`:'-',
+      isCancelled?`<s style="color:#aaa">฿${fmt(s.subtotal||s.total)}</s>`:'฿'+fmt(s.subtotal||s.total),
+      (s.discount||0)>0?'-฿'+fmt(s.discount):'-',
+      isCancelled?`<s style="color:#aaa">฿${fmt(s.total)}</s>`:'฿'+fmt(s.total),
+      profit>0?`<span style="color:#7c3aed;font-weight:700">฿${fmt(profit)}</span>`:'-',
       actions
     ];
   });
@@ -1320,8 +1320,8 @@ function renderSales(){
   <!-- Stats -->
   <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1rem">
     ${sc('รายการทั้งหมด',`<div style="font-size:13px">${posCount} POS + ${ordCount} Online</div><div style="font-size:22px;font-weight:700">${all.length} บิล</div>`,'#0ea5e9')}
-    ${sc('รายได้รวม',''+fmt(totalRev),'#10b981',df||dt?'ช่วงที่เลือก':'ทั้งหมด')}
-    ${sc('กำไรขั้นต้น',''+fmt(totalProfit),'#7c3aed','จาก POS เท่านั้น')}
+    ${sc('รายได้รวม','฿'+fmt(totalRev),'#10b981',df||dt?'ช่วงที่เลือก':'ทั้งหมด')}
+    ${sc('กำไรขั้นต้น','฿'+fmt(totalProfit),'#7c3aed','จาก POS เท่านั้น')}
     ${sc('อัตรากำไร',fmtM(totalSub?totalProfit/totalSub*100:0)+'%','#f59e0b')}
   </div>
 
@@ -1336,9 +1336,9 @@ function viewSale(id){
       <td style="padding:6px 8px;text-align:left;font-size:11px">${i.code}</td>
       <td style="padding:6px 8px;text-align:left">${i.name}</td>
       <td style="padding:6px 8px;text-align:right">${i.qty} ${i.unit||''}</td>
-      <td style="padding:6px 8px;text-align:right">${fmt(i.price)}</td>
-      <td style="padding:6px 8px;text-align:right">${fmt(i.subtotal||i.price*i.qty)}</td>
-      <td style="padding:6px 8px;text-align:right;color:#7c3aed">${fmt((i.price-i.cost)*i.qty)}</td>
+      <td style="padding:6px 8px;text-align:right">฿${fmt(i.price)}</td>
+      <td style="padding:6px 8px;text-align:right">฿${fmt(i.subtotal||i.price*i.qty)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#7c3aed">฿${fmt((i.price-i.cost)*i.qty)}</td>
     </tr>`).join(''):'';
 
   const isCancelled=s.status==='ยกเลิก';
@@ -1366,11 +1366,11 @@ function viewSale(id){
       <tbody>${rows}</tbody>
     </table></div>
     <div style="text-align:right;margin-top:1rem;font-size:13px;line-height:2">
-      <div>ยอดสินค้า: <b>${fmt(s.subtotal)}</b></div>
-      ${(s.discount||0)>0?`<div>ส่วนลด: <b style="color:var(--danger)">-${fmt(s.discount)}</b></div>`:''}
-      ${(s.vat||0)>0?`<div>VAT: <b>${fmt(s.vat)}</b></div>`:''}
-      <div style="font-size:16px;font-weight:700;color:var(--primary)">ยอดสุทธิ: ${fmt(s.total)}</div>
-      <div style="color:#7c3aed;font-weight:700">กำไรขั้นต้น: ${fmt((s.subtotal||0)-(s.totalCost||0))}</div>
+      <div>ยอดสินค้า: <b>฿${fmt(s.subtotal)}</b></div>
+      ${(s.discount||0)>0?`<div>ส่วนลด: <b style="color:var(--danger)">-฿${fmt(s.discount)}</b></div>`:''}
+      ${(s.vat||0)>0?`<div>VAT: <b>฿${fmt(s.vat)}</b></div>`:''}
+      <div style="font-size:16px;font-weight:700;color:var(--primary)">ยอดสุทธิ: ฿${fmt(s.total)}</div>
+      <div style="color:#7c3aed;font-weight:700">กำไรขั้นต้น: ฿${fmt((s.subtotal||0)-(s.totalCost||0))}</div>
     </div>
     ${isCancelled?`<div style="background:#fef2f2;border-left:3px solid var(--danger);padding:8px 12px;border-radius:6px;font-size:12px;color:var(--danger);margin-top:8px">รายการนี้ถูกยกเลิกแล้ว ${s.cancelNote?'('+s.cancelNote+')':''}</div>`:''}`,
   `<div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1415,7 +1415,7 @@ function editSale(id){
     <div class="fg">
       <div class="fm"><label class="fl">ลูกค้า / หมายเหตุ</label>
         <input class="fc" id="es-customer" value="${s.customerName||''}"></div>
-      <div class="fm"><label class="fl">ส่วนลด ()</label>
+      <div class="fm"><label class="fl">ส่วนลด (฿)</label>
         <input type="number" class="fc" id="es-discount" value="${s.discount||0}" min="0"></div>
     </div>
     <div style="font-weight:700;color:var(--primary);margin:12px 0 6px;font-size:13px">รายการสินค้า</div>
@@ -1431,7 +1431,7 @@ function editSale(id){
         </div>`).join('')}
     </div>
     <div id="es-total" style="text-align:right;font-weight:700;font-size:14px;margin-top:8px;color:var(--primary)">
-      ยอดสุทธิ: ${fmt(s.total)}
+      ยอดสุทธิ: ฿${fmt(s.total)}
     </div>`,
   `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
    <button class="btn" onclick="saveSaleEdit('${id}')">บันทึกการแก้ไข</button>`);
@@ -1449,7 +1449,7 @@ function esUpdateRow(idx, qty, price){
   const disc=parseFloat(document.getElementById('es-discount')?.value)||0;
   const sub=window._esItems.reduce((a,i)=>a+i.subtotal,0);
   const el=document.getElementById('es-total');
-  if(el) el.textContent='ยอดสุทธิ: '+fmt(Math.max(0,sub-disc));
+  if(el) el.textContent='ยอดสุทธิ: ฿'+fmt(Math.max(0,sub-disc));
 }
 
 function esRemoveRow(idx){
@@ -1632,7 +1632,7 @@ th.r{text-align:right}th.c{text-align:center}
     <tr><td colspan="4"></td><td style="text-align:right;color:#555;padding:5px 8px">VAT ${vatR}%</td><td style="text-align:right;padding:5px 8px">${fmtM(s.vat)}</td></tr>`:''}
     <tr class="total-line"><td colspan="4" style="font-size:12px;color:#555;padding:6px 8px"><i>${bahtText(s.total||0)}</i></td>
       <td style="text-align:right;font-size:16px;font-weight:700;padding:6px 8px">ยอดสุทธิ</td>
-      <td style="text-align:right;font-size:18px;font-weight:700;color:#1a3a5c;padding:6px 8px">${fmtM(s.total||0)}</td>
+      <td style="text-align:right;font-size:18px;font-weight:700;color:#1a3a5c;padding:6px 8px">฿${fmtM(s.total||0)}</td>
     </tr>
   </tfoot>
 </table>
@@ -1716,9 +1716,9 @@ tr:nth-child(even){background:#f8fafc}
 <!-- Stats -->
 <div class="stat-row">
   <div class="stat" style="--c:#0ea5e9"><div class="stat-lbl">บิลทั้งหมด</div><div class="stat-val">${all.length} บิล</div></div>
-  <div class="stat" style="--c:#10b981"><div class="stat-lbl">รายได้รวม</div><div class="stat-val">${fmt(totalRev)}</div></div>
-  <div class="stat" style="--c:#7c3aed"><div class="stat-lbl">กำไรขั้นต้น</div><div class="stat-val">${fmt(totalProfit)}</div></div>
-  <div class="stat" style="--c:#f59e0b"><div class="stat-lbl">เฉลี่ย/บิล</div><div class="stat-val">${fmt(all.length?Math.round(totalRev/all.length):0)}</div></div>
+  <div class="stat" style="--c:#10b981"><div class="stat-lbl">รายได้รวม</div><div class="stat-val">฿${fmt(totalRev)}</div></div>
+  <div class="stat" style="--c:#7c3aed"><div class="stat-lbl">กำไรขั้นต้น</div><div class="stat-val">฿${fmt(totalProfit)}</div></div>
+  <div class="stat" style="--c:#f59e0b"><div class="stat-lbl">เฉลี่ย/บิล</div><div class="stat-val">฿${fmt(all.length?Math.round(totalRev/all.length):0)}</div></div>
 </div>
 <!-- Table -->
 <table>
@@ -1744,20 +1744,20 @@ tr:nth-child(even){background:#f8fafc}
         <td>${s.date||'-'}</td>
         <td>${s.customerName||'ลูกค้าทั่วไป'}</td>
         <td style="text-align:right">${s.items?s.items.length:'-'}</td>
-        <td style="text-align:right">${fmt(s.subtotal||s.total)}</td>
-        <td style="text-align:right;color:#ef4444">${(s.discount||0)>0?'-'+fmt(s.discount):'-'}</td>
-        <td style="text-align:right;font-weight:700">${fmt(s.total)}</td>
-        <td style="text-align:right;color:#7c3aed;font-weight:700">${profit>0?''+fmt(profit):'-'}</td>
+        <td style="text-align:right">฿${fmt(s.subtotal||s.total)}</td>
+        <td style="text-align:right;color:#ef4444">${(s.discount||0)>0?'-฿'+fmt(s.discount):'-'}</td>
+        <td style="text-align:right;font-weight:700">฿${fmt(s.total)}</td>
+        <td style="text-align:right;color:#7c3aed;font-weight:700">${profit>0?'฿'+fmt(profit):'-'}</td>
       </tr>`;
     }).join('')}
   </tbody>
   <tfoot>
     <tr style="background:#1a3a5c;color:#fff;font-weight:700">
       <td colspan="6" style="padding:7px 8px;color:#fff">รวมทั้งหมด ${all.length} บิล</td>
-      <td style="text-align:right;padding:7px 8px;color:#fff">${fmt(all.reduce((a,s)=>a+(s.subtotal||s.total),0))}</td>
-      <td style="text-align:right;padding:7px 8px;color:#fca5a5">-${fmt(all.reduce((a,s)=>a+(s.discount||0),0))}</td>
-      <td style="text-align:right;padding:7px 8px;color:#6ee7b7">${fmt(totalRev)}</td>
-      <td style="text-align:right;padding:7px 8px;color:#c4b5fd">${fmt(totalProfit)}</td>
+      <td style="text-align:right;padding:7px 8px;color:#fff">฿${fmt(all.reduce((a,s)=>a+(s.subtotal||s.total),0))}</td>
+      <td style="text-align:right;padding:7px 8px;color:#fca5a5">-฿${fmt(all.reduce((a,s)=>a+(s.discount||0),0))}</td>
+      <td style="text-align:right;padding:7px 8px;color:#6ee7b7">฿${fmt(totalRev)}</td>
+      <td style="text-align:right;padding:7px 8px;color:#c4b5fd">฿${fmt(totalProfit)}</td>
     </tr>
   </tfoot>
 </table>
@@ -1786,10 +1786,10 @@ function renderProducts(){
     p.code,
     `<div style="font-weight:600">${p.name}</div>${p.description?`<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${p.description}</div>`:''}`,
     p.category||'-',p.unit||'-',
-    ''+fmt(p.cost),''+fmt(p.price),
+    '฿'+fmt(p.cost),'฿'+fmt(p.price),
     `<span style="font-weight:700;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
     p.minStock||5,
-    `<span style="color:var(--success);font-weight:600">${fmt((p.price||0)-(p.cost||0))}</span>`,
+    `<span style="color:var(--success);font-weight:600">฿${fmt((p.price||0)-(p.cost||0))}</span>`,
     `<button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>`
   ]);
 
@@ -1918,10 +1918,10 @@ function _updateProdTable(){
     p.code,
     `<div style="font-weight:600">${p.name}</div>${p.description?`<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${p.description}</div>`:''}`,
     p.category||'-',p.unit||'-',
-    ''+fmt(p.cost),''+fmt(p.price),
+    '฿'+fmt(p.cost),'฿'+fmt(p.price),
     `<span style="font-weight:700;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
     p.minStock||5,
-    `<span style="color:var(--success);font-weight:600">${fmt((p.price||0)-(p.cost||0))}</span>`,
+    `<span style="color:var(--success);font-weight:600">฿${fmt((p.price||0)-(p.cost||0))}</span>`,
     `<button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>`
   ]);
   wrap.innerHTML=tbl(['รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า');
@@ -2062,7 +2062,7 @@ async function importProductsExcel(input){
         <div style="font-size:13px;font-weight:600;color:var(--primary);margin-bottom:6px">ตัวอย่าง 3 รายการแรก:</div>
         <div style="font-size:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
           ${records.slice(0,3).map((r,i)=>`<div style="padding:7px 10px;border-bottom:1px solid var(--border);background:${i%2===0?'#fff':'#f8fafc'}">
-            <strong>${r.code||'(ใหม่)'}</strong> — ${r.name} | ${fmt(r.price)} | stock ${r.stock}
+            <strong>${r.code||'(ใหม่)'}</strong> — ${r.name} | ฿${fmt(r.price)} | stock ${r.stock}
             ${r._firebaseId
               ?'<span style="font-size:10px;background:#eff6ff;color:#1d4ed8;border-radius:4px;padding:1px 6px;margin-left:4px">อัปเดต</span>'
               :'<span style="font-size:10px;background:#f0fdf4;color:#166534;border-radius:4px;padding:1px 6px;margin-left:4px">ใหม่</span>'}
@@ -2167,8 +2167,8 @@ function prodForm(p={}){
     <datalist id="pCatList">${cats.map(c=>`<option value="${c}">`).join('')}</datalist>
   </div>
   <div class="fm"><label class="fl">หน่วยนับ</label><input class="fc" id="pUnit" value="${p.unit||''}" placeholder="เช่น ชิ้น, คู่, อัน"></div>
-  <div class="fm"><label class="fl">ราคาต้นทุน ()</label><input type="number" class="fc" id="pCost" value="${p.cost||''}" min="0"></div>
-  <div class="fm"><label class="fl">ราคาขาย ()</label><input type="number" class="fc" id="pPrice" value="${p.price||''}" min="0"></div>
+  <div class="fm"><label class="fl">ราคาต้นทุน (฿)</label><input type="number" class="fc" id="pCost" value="${p.cost||''}" min="0"></div>
+  <div class="fm"><label class="fl">ราคาขาย (฿)</label><input type="number" class="fc" id="pPrice" value="${p.price||''}" min="0"></div>
   <div class="fm"><label class="fl">จำนวนสต็อก</label><input type="number" class="fc" id="pStock" value="${p.stock||0}" min="0"></div>
   <div class="fm"><label class="fl">สต็อกขั้นต่ำ</label><input type="number" class="fc" id="pMin" value="${p.minStock||5}" min="0"></div>
   <div class="fm" style="grid-column:1/-1">
@@ -2258,8 +2258,8 @@ function openBulkProduct(){
         </div>
         <div><label class="fl">หน่วยนับ</label><input class="fc" id="bpUnit" value="ชิ้น" style="font-size:13px"></div>
         <div><label class="fl">รหัสสินค้า prefix</label><input class="fc" id="bpCodePfx" placeholder="เช่น SP001" style="font-size:13px"></div>
-        <div><label class="fl">ราคาต้นทุน ()</label><input type="number" class="fc" id="bpCost" value="0" min="0" style="font-size:13px"></div>
-        <div><label class="fl">ราคาขาย ()</label><input type="number" class="fc" id="bpPrice" value="0" min="0" style="font-size:13px"></div>
+        <div><label class="fl">ราคาต้นทุน (฿)</label><input type="number" class="fc" id="bpCost" value="0" min="0" style="font-size:13px"></div>
+        <div><label class="fl">ราคาขาย (฿)</label><input type="number" class="fc" id="bpPrice" value="0" min="0" style="font-size:13px"></div>
         <div><label class="fl">สต็อกต่อ variant</label><input type="number" class="fc" id="bpStock" value="1" min="0" style="font-size:13px"></div>
         <div><label class="fl">สต็อกขั้นต่ำ</label><input type="number" class="fc" id="bpMin" value="2" min="0" style="font-size:13px"></div>
         <div></div>
@@ -2724,7 +2724,7 @@ function renderStock(){
     const sc2=p.stock<=0?'red':p.stock<=(p.minStock||5)?'amber':'green';
     return[p.code,p.name,p.category||'-',p.unit||'-',
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
-      p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
+      p.minStock||5,'฿'+fmt(p.cost),'฿'+fmt(p.price),'฿'+fmt((p.cost||0)*(p.stock||0)),
       badge(st,sc2),
       `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button>`];
   });
@@ -2735,7 +2735,7 @@ function renderStock(){
   </div>
   <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
     ${sc('สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9')}
-    ${sc('มูลค่าสต็อก',''+fmt(totalVal),'#7c3aed')}
+    ${sc('มูลค่าสต็อก','฿'+fmt(totalVal),'#7c3aed')}
     ${sc('ใกล้หมด',S.products.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0).length+' ชนิด','#f59e0b')}
     ${sc('หมดสต็อก',S.products.filter(p=>p.stock<=0).length+' ชนิด','#ef4444')}
   </div>
@@ -2812,7 +2812,7 @@ function _updateStockTable(){
     const sc2=p.stock<=0?'red':p.stock<=(p.minStock||5)?'amber':'green';
     return[p.code,p.name,p.category||'-',p.unit||'-',
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
-      p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
+      p.minStock||5,'฿'+fmt(p.cost),'฿'+fmt(p.price),'฿'+fmt((p.cost||0)*(p.stock||0)),
       badge(st,sc2),
       `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button>`];
   });
@@ -2841,11 +2841,11 @@ function renderPurchases(){
     <td style="text-align:left">${item.code} - ${item.name}</td>
     <td style="text-align:right"><input type="number" value="${item.qty}" min="1" onchange="piQty(${i},this.value)" style="width:55px;text-align:center;border:1px solid var(--border);border-radius:5px;padding:3px;font-size:12px;font-family:'Sarabun',sans-serif"></td>
     <td style="text-align:right"><input type="number" value="${item.cost}" min="0" onchange="piCost(${i},this.value)" style="width:75px;text-align:right;border:1px solid var(--border);border-radius:5px;padding:3px;font-size:12px;font-family:'Sarabun',sans-serif"></td>
-    <td style="text-align:right;font-weight:600">${fmt(item.qty*item.cost)}</td>
+    <td style="text-align:right;font-weight:600">฿${fmt(item.qty*item.cost)}</td>
     <td><button class="btn btn-danger btn-xs" onclick="piRemove(${i})">ลบ</button></td>
   </tr>`).join('');
   const total=PI.reduce((a,b)=>a+b.qty*b.cost,0);
-  const rows=[...S.purchases].reverse().map(p=>[p.docNo||'',p.date||'',p.supplierName||'-',p.items?p.items.length+' รายการ':'-',''+fmt(p.total),badge('เสร็จสิ้น','green'),
+  const rows=[...S.purchases].reverse().map(p=>[p.docNo||'',p.date||'',p.supplierName||'-',p.items?p.items.length+' รายการ':'-','฿'+fmt(p.total),badge('เสร็จสิ้น','green'),
     `<button class="btn btn-primary btn-xs" onclick="viewPurchase('${p.id}')">ดู</button> <button class="btn btn-danger btn-xs" onclick="deletePurchase('${p.id}')">ลบ</button>`]);
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">🚚 ซื้อสินค้าเข้า</div>
@@ -2876,7 +2876,7 @@ function renderPurchases(){
       </div>
       <div id="pi-items-container">
         ${PI.length?`<div class="tbl"><table><thead><tr><th style="text-align:left">สินค้า</th><th>จำนวน</th><th>ราคาต้นทุน</th><th>รวม</th><th></th></tr></thead><tbody>${piRows}</tbody></table></div>
-      <div style="text-align:right;font-weight:700;font-size:15px;margin-top:8px;color:var(--primary)">รวม: ${fmt(total)}</div>`
+      <div style="text-align:right;font-weight:700;font-size:15px;margin-top:8px;color:var(--primary)">รวม: ฿${fmt(total)}</div>`
       :'<div style="color:var(--muted);font-size:13px">ยังไม่มีสินค้า</div>'}
       </div>
     </div>
@@ -2907,7 +2907,7 @@ function showPurProdDropdown(q){
         ${p.category?`<span style="font-size:10px;background:#f1f5f9;color:var(--muted);border-radius:4px;padding:1px 6px;margin-left:4px">${p.category}</span>`:''}
       </div>
       <div style="text-align:right;flex-shrink:0;margin-left:10px">
-        <div style="font-weight:700;color:var(--success);font-size:12px">${fmt(p.cost)}</div>
+        <div style="font-weight:700;color:var(--success);font-size:12px">฿${fmt(p.cost)}</div>
         <div style="font-size:10px;color:var(--muted)">คงเหลือ ${p.stock} ${p.unit||'ชิ้น'}</div>
       </div>
     </div>`).join('');
@@ -2962,14 +2962,14 @@ function _updatePIList(){
     <td style="text-align:right"><input type="number" value="${item.cost}" min="0"
       onchange="piCost(${i},this.value)"
       style="width:75px;text-align:right;border:1px solid var(--border);border-radius:5px;padding:3px;font-size:12px;font-family:'Sarabun',sans-serif"></td>
-    <td style="text-align:right;font-weight:600">${fmt(item.qty*item.cost)}</td>
+    <td style="text-align:right;font-weight:600">฿${fmt(item.qty*item.cost)}</td>
     <td><button class="btn btn-danger btn-xs" onclick="piRemove(${i})">ลบ</button></td>
   </tr>`).join('');
   container.innerHTML=`<div class="tbl"><table>
     <thead><tr><th style="text-align:left">สินค้า</th><th>จำนวน</th><th>ราคาต้นทุน</th><th>รวม</th><th></th></tr></thead>
     <tbody>${piRows}</tbody>
   </table></div>
-  <div style="text-align:right;font-weight:700;font-size:15px;margin-top:8px;color:var(--primary)">รวม: ${fmt(total)}</div>`;
+  <div style="text-align:right;font-weight:700;font-size:15px;margin-top:8px;color:var(--primary)">รวม: ฿${fmt(total)}</div>`;
 }
 async function savePurchase(){
   if(!PI.length)return;
@@ -2991,10 +2991,10 @@ async function savePurchase(){
 }
 function viewPurchase(id){
   const p=S.purchases.find(x=>x.id===id);if(!p)return;
-  const rows=p.items?p.items.map((i,idx)=>`<tr><td>${idx+1}</td><td style="text-align:left">${i.code}</td><td style="text-align:left">${i.name}</td><td style="text-align:right">${i.qty} ${i.unit}</td><td style="text-align:right">${fmt(i.cost)}</td><td style="text-align:right;font-weight:600">${fmt(i.qty*i.cost)}</td></tr>`).join(''):'';
+  const rows=p.items?p.items.map((i,idx)=>`<tr><td>${idx+1}</td><td style="text-align:left">${i.code}</td><td style="text-align:left">${i.name}</td><td style="text-align:right">${i.qty} ${i.unit}</td><td style="text-align:right">฿${fmt(i.cost)}</td><td style="text-align:right;font-weight:600">฿${fmt(i.qty*i.cost)}</td></tr>`).join(''):'';
   openModal('📋 '+p.docNo,`<div class="fg2" style="margin-bottom:1rem">
     <div><span class="fl">เลขที่</span><b>${p.docNo}</b></div><div><span class="fl">วันที่</span><b>${p.date}</b></div>
-    <div><span class="fl">ซัพพลายเออร์</span><b>${p.supplierName}</b></div><div><span class="fl">รวม</span><b style="color:var(--primary)">${fmt(p.total)}</b></div></div>
+    <div><span class="fl">ซัพพลายเออร์</span><b>${p.supplierName}</b></div><div><span class="fl">รวม</span><b style="color:var(--primary)">฿${fmt(p.total)}</b></div></div>
     <div class="tbl"><table><thead><tr><th style="text-align:left">#</th><th style="text-align:left">รหัส</th><th style="text-align:left">สินค้า</th><th>จำนวน</th><th>ราคาต้นทุน</th><th>รวม</th></tr></thead><tbody>${rows}</tbody></table></div>`,
   `<button class="btn btn-primary" onclick="closeModal()">ปิด</button>`);
 }
@@ -3061,7 +3061,7 @@ async function deleteCustomer(id){if(!confirm('ลบ?'))return;await deleteFB('
 
 // ===== JOURNAL =====
 function renderJournal(){
-  const rows=[...S.journals].reverse().map(j=>[j.date||'',j.ref||'',j.desc||'',j.debit||'',j.credit||'',''+fmt(j.amount),j.vat?''+fmt(j.vat):'-',j.vatType||'-',
+  const rows=[...S.journals].reverse().map(j=>[j.date||'',j.ref||'',j.desc||'',j.debit||'',j.credit||'','฿'+fmt(j.amount),j.vat?'฿'+fmt(j.vat):'-',j.vatType||'-',
     `<button class="btn btn-primary btn-xs" onclick="editJournal('${j.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteJournal('${j.id}')">ลบ</button>`]);
   return`<div class="sec-title">📒 สมุดรายวัน</div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:1rem">
@@ -3076,8 +3076,8 @@ function jForm(j={}){return`<div class="fg">
   <div class="fm"><label class="fl">รายการ</label><input class="fc" id="jDesc" value="${j.desc||''}"></div>
   <div class="fm"><label class="fl">บัญชีเดบิต</label><input class="fc" id="jDeb" value="${j.debit||''}"></div>
   <div class="fm"><label class="fl">บัญชีเครดิต</label><input class="fc" id="jCre" value="${j.credit||''}"></div>
-  <div class="fm"><label class="fl">จำนวนเงิน ()</label><input type="number" class="fc" id="jAmt" value="${j.amount||''}"></div>
-  <div class="fm"><label class="fl">VAT ()</label><input type="number" class="fc" id="jVat" value="${j.vat||''}"></div>
+  <div class="fm"><label class="fl">จำนวนเงิน (฿)</label><input type="number" class="fc" id="jAmt" value="${j.amount||''}"></div>
+  <div class="fm"><label class="fl">VAT (฿)</label><input type="number" class="fc" id="jVat" value="${j.vat||''}"></div>
   <div class="fm"><label class="fl">ประเภท VAT</label><select class="fc" id="jVT"><option value="">ไม่มี</option><option${j.vatType==='ซื้อ'?' selected':''}>ซื้อ</option><option${j.vatType==='ขาย'?' selected':''}>ขาย</option></select></div>
 </div>`;}
 function editJournal(id){const j=id?S.journals.find(x=>x.id===id):{};openModal(id?'✏️ แก้ไขรายการ':'➕ บันทึกรายการ',jForm(j||{}),`<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button><button class="btn" onclick="saveJournal('${id||''}')">บันทึก</button>`);}
@@ -3092,7 +3092,7 @@ async function deleteJournal(id){if(!confirm('ลบ?'))return;await deleteFB('j
 
 // ===== INVOICE =====
 function renderInvoice(){
-  const rows=[...S.invoices].reverse().map(inv=>[inv.no||'',inv.date||'',inv.customer||'',''+fmt(inv.amount),''+fmt(inv.vat),''+fmt(inv.total),badge(inv.status,inv.status==='ชำระแล้ว'?'green':'amber'),
+  const rows=[...S.invoices].reverse().map(inv=>[inv.no||'',inv.date||'',inv.customer||'','฿'+fmt(inv.amount),'฿'+fmt(inv.vat),'฿'+fmt(inv.total),badge(inv.status,inv.status==='ชำระแล้ว'?'green':'amber'),
     `<button class="btn btn-primary btn-xs" onclick="editInvoice('${inv.id}')">แก้ไข</button> ${inv.status!=='ชำระแล้ว'?`<button class="btn btn-success btn-xs" onclick="payInvoice('${inv.id}')">รับชำระ</button> `:''}<button class="btn btn-danger btn-xs" onclick="deleteInvoice('${inv.id}')">ลบ</button>`]);
   return`<div class="sec-title">🧾 ใบแจ้งหนี้ / ใบกำกับภาษี</div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:1rem">
@@ -3108,8 +3108,8 @@ function invForm(inv={}){
   <div class="fm"><label class="fl">วันที่</label><input type="date" class="fc" id="iDate" value="${inv.date||todayISO()}"></div>
   <div class="fm"><label class="fl">ลูกค้า</label><select class="fc" id="iCust"><option>-- เลือกลูกค้า --</option>${custOpts}</select></div>
   <div class="fm"><label class="fl">รายการ</label><input class="fc" id="iDesc" value="${inv.desc||''}"></div>
-  <div class="fm"><label class="fl">ยอดก่อน VAT ()</label><input type="number" class="fc" id="iAmt" value="${inv.amount||''}" oninput="document.getElementById('iVat').value=Math.round((parseFloat(this.value)||0)*${S.company.vatRate}/100)"></div>
-  <div class="fm"><label class="fl">VAT ${S.company.vatRate}% ()</label><input type="number" class="fc" id="iVat" value="${inv.vat||''}" readonly></div>
+  <div class="fm"><label class="fl">ยอดก่อน VAT (฿)</label><input type="number" class="fc" id="iAmt" value="${inv.amount||''}" oninput="document.getElementById('iVat').value=Math.round((parseFloat(this.value)||0)*${S.company.vatRate}/100)"></div>
+  <div class="fm"><label class="fl">VAT ${S.company.vatRate}% (฿)</label><input type="number" class="fc" id="iVat" value="${inv.vat||''}" readonly></div>
 </div>`;}
 function editInvoice(id){const inv=id?S.invoices.find(x=>x.id===id):{};openModal(id?'✏️ แก้ไขใบแจ้งหนี้':'➕ ใบแจ้งหนี้ใหม่',invForm(inv||{}),`<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button><button class="btn" onclick="saveInvoice('${id||''}')">บันทึก</button>`);}
 async function saveInvoice(id){
@@ -3132,13 +3132,13 @@ function renderVat(){
   <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ ภ.พ.30</button>
   </div>
   <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
-    ${sc('ภาษีขาย',''+fmt(vs),'#10b981')}${sc('ภาษีซื้อ',''+fmt(vb),'#f59e0b')}
-    ${sc('ภาษีสุทธิ',''+fmt(vs-vb),vs-vb>0?'#ef4444':'#10b981',vs-vb>0?'ต้องชำระ':'ขอคืน')}
+    ${sc('ภาษีขาย','฿'+fmt(vs),'#10b981')}${sc('ภาษีซื้อ','฿'+fmt(vb),'#f59e0b')}
+    ${sc('ภาษีสุทธิ','฿'+fmt(vs-vb),vs-vb>0?'#ef4444':'#10b981',vs-vb>0?'ต้องชำระ':'ขอคืน')}
   </div>
   <div class="card" style="background:#f0fdf4">
     <div style="font-weight:700;color:var(--primary);margin-bottom:10px">สรุป ภ.พ.30</div>
     ${[['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีขาย (Output Tax)',vs],['มูลค่าฐานภาษีซื้อ',S.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีซื้อ (Input Tax)',vb],['ภาษีสุทธิที่ต้องนำส่ง',vs-vb]]
-      .map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #d1fae5;font-size:14px${i===4?';font-weight:700':''}"><span style="color:var(--muted)">${k}</span><span style="color:${i===4?'var(--danger)':'var(--primary)'};font-weight:700">${fmtM(v)}</span></div>`).join('')}
+      .map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #d1fae5;font-size:14px${i===4?';font-weight:700':''}"><span style="color:var(--muted)">${k}</span><span style="color:${i===4?'var(--danger)':'var(--primary)'};font-weight:700">฿${fmtM(v)}</span></div>`).join('')}
   </div>`;
 }
 
@@ -3147,7 +3147,7 @@ function renderPayroll(){
   const ts2=S.employees.reduce((a,b)=>a+(b.salary||0),0);
   const tt=S.employees.reduce((a,b)=>a+(b.tax||0),0);
   const tss=S.employees.reduce((a,b)=>a+(b.sso||0),0);
-  const rows=S.employees.map(e=>[e.code||'',e.name,e.position,''+fmt(e.salary),''+fmt(e.tax),''+fmt(e.sso),''+fmt((e.salary||0)-(e.tax||0)-(e.sso||0)),
+  const rows=S.employees.map(e=>[e.code||'',e.name,e.position,'฿'+fmt(e.salary),'฿'+fmt(e.tax),'฿'+fmt(e.sso),'฿'+fmt((e.salary||0)-(e.tax||0)-(e.sso||0)),
     `<button class="btn btn-primary btn-xs" onclick="editEmployee('${e.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteEmployee('${e.id}')">ลบ</button>`]);
   return`<div class="sec-title">👥 เงินเดือนพนักงาน</div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:1rem">
@@ -3155,8 +3155,8 @@ function renderPayroll(){
     <button class="btn" onclick="editEmployee()">+ เพิ่มพนักงาน</button>
   </div>
   <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
-    ${sc('พนักงาน',S.employees.length+' คน','#1a3a5c')}${sc('เงินเดือนรวม',''+fmt(ts2),'#0ea5e9')}
-    ${sc('ภาษีหัก',''+fmt(tt),'#f59e0b')}${sc('ประกันสังคม',''+fmt(tss),'#ef4444')}
+    ${sc('พนักงาน',S.employees.length+' คน','#1a3a5c')}${sc('เงินเดือนรวม','฿'+fmt(ts2),'#0ea5e9')}
+    ${sc('ภาษีหัก','฿'+fmt(tt),'#f59e0b')}${sc('ประกันสังคม','฿'+fmt(tss),'#ef4444')}
   </div>
   ${tbl(['รหัส','ชื่อ-สกุล','ตำแหน่ง','เงินเดือน','ภาษีหัก','ประกัน','สุทธิ',''],rows)}`;
 }
@@ -3164,9 +3164,9 @@ function empForm(e={}){return`<div class="fg">
   <div class="fm"><label class="fl">รหัสพนักงาน</label><input class="fc" id="eCode" value="${e.code||''}"></div>
   <div class="fm"><label class="fl">ชื่อ-สกุล *</label><input class="fc" id="eName" value="${e.name||''}"></div>
   <div class="fm"><label class="fl">ตำแหน่ง</label><input class="fc" id="ePos" value="${e.position||''}"></div>
-  <div class="fm"><label class="fl">เงินเดือน ()</label><input type="number" class="fc" id="eSal" value="${e.salary||''}"></div>
-  <div class="fm"><label class="fl">ภาษีหัก ณ ที่จ่าย ()</label><input type="number" class="fc" id="eTax" value="${e.tax||''}"></div>
-  <div class="fm"><label class="fl">ประกันสังคม ()</label><input type="number" class="fc" id="eSSO" value="${e.sso||750}"></div>
+  <div class="fm"><label class="fl">เงินเดือน (฿)</label><input type="number" class="fc" id="eSal" value="${e.salary||''}"></div>
+  <div class="fm"><label class="fl">ภาษีหัก ณ ที่จ่าย (฿)</label><input type="number" class="fc" id="eTax" value="${e.tax||''}"></div>
+  <div class="fm"><label class="fl">ประกันสังคม (฿)</label><input type="number" class="fc" id="eSSO" value="${e.sso||750}"></div>
 </div>`;}
 function editEmployee(id){const e=id?S.employees.find(x=>x.id===id):{};openModal(id?'✏️ แก้ไขพนักงาน':'➕ เพิ่มพนักงาน',empForm(e||{}),`<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button><button class="btn" onclick="saveEmployee('${id||''}')">บันทึก</button>`);}
 async function saveEmployee(id){
@@ -3200,14 +3200,14 @@ function renderFinancial(){
          {l:'รวมค่าใช้จ่าย',v:totExp,b:true,c:'#ef4444',neg:true},
          {l:'กำไร (ขาดทุน) สุทธิ',v:net,b:true,c:net>0?'#10b981':'#ef4444',sz:16}]
         .map(r=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-weight:${r.b?700:400};font-size:${r.sz||13}px;color:${r.c||'var(--text)'}">
-          <span>${r.l}</span><span>${r.neg?'-':''}${fmtM(r.v)}</span></div>`).join('')}
+          <span>${r.l}</span><span>${r.neg?'-':''}฿${fmtM(r.v)}</span></div>`).join('')}
     </div>
     <div>
-      ${sc('รายได้รวม',''+fmt(totRev),'#10b981')}
+      ${sc('รายได้รวม','฿'+fmt(totRev),'#10b981')}
       <div style="margin:8px 0"></div>
-      ${sc('ต้นทุน+ค่าใช้จ่าย',''+fmt(totExp),'#ef4444')}
+      ${sc('ต้นทุน+ค่าใช้จ่าย','฿'+fmt(totExp),'#ef4444')}
       <div style="margin:8px 0"></div>
-      ${sc('กำไรสุทธิ',''+fmt(net),net>0?'#7c3aed':'#ef4444',fmtM(totRev?net/totRev*100:0)+'%')}
+      ${sc('กำไรสุทธิ','฿'+fmt(net),net>0?'#7c3aed':'#ef4444',fmtM(totRev?net/totRev*100:0)+'%')}
       <div style="margin:8px 0"></div>
       ${sc('อัตรากำไรขั้นต้น',fmtM(posRev?((posRev-cogs)/posRev)*100:0)+'%','#0ea5e9','จากการขายหน้าร้าน')}
     </div>
@@ -3230,22 +3230,22 @@ function renderTaxForms(){
     <div class="card">
       <b style="color:var(--primary)">ภ.พ.30 — ภาษีมูลค่าเพิ่ม</b>
       <div style="font-size:12px;color:var(--muted);margin:6px 0">ยื่นภายในวันที่ 15 ของเดือนถัดไป</div>
-      ${[['ภาษีขาย',vs],['ภาษีซื้อ',vb],['ภาษีสุทธิ',vs-vb]].map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${k}</span><span style="font-weight:700;color:${i===2?'var(--danger)':'var(--primary)'}">${fmtM(v)}</span></div>`).join('')}
+      ${[['ภาษีขาย',vs],['ภาษีซื้อ',vb],['ภาษีสุทธิ',vs-vb]].map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${k}</span><span style="font-weight:700;color:${i===2?'var(--danger)':'var(--primary)'}">฿${fmtM(v)}</span></div>`).join('')}
       <div style="margin-top:1rem;padding:.8rem;background:#fef2f2;border-radius:8px;text-align:center">
         <div style="font-size:12px;color:var(--muted)">ต้องนำส่ง</div>
-        <div style="font-size:24px;font-weight:700;color:var(--danger)">${fmtM(vs-vb)}</div></div>
+        <div style="font-size:24px;font-weight:700;color:var(--danger)">฿${fmtM(vs-vb)}</div></div>
     </div>
     <div class="card">
       <b style="color:var(--primary)">ภ.ง.ด.50 — ภาษีนิติบุคคล (ประจำปี)</b>
       <div style="font-size:12px;color:var(--muted);margin:6px 0">ยื่นภายใน 150 วัน นับจากวันสิ้นรอบบัญชี</div>
-      ${[['รายได้รวม',rev],['ค่าใช้จ่ายรวม',exp],['กำไรสุทธิ',rev-exp],['ภาษีนิติบุคคล 20%',corp]].map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${k}</span><span style="font-weight:700;color:${i===3?'var(--danger)':'var(--primary)'}">${fmtM(v)}</span></div>`).join('')}
+      ${[['รายได้รวม',rev],['ค่าใช้จ่ายรวม',exp],['กำไรสุทธิ',rev-exp],['ภาษีนิติบุคคล 20%',corp]].map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">${k}</span><span style="font-weight:700;color:${i===3?'var(--danger)':'var(--primary)'}">฿${fmtM(v)}</span></div>`).join('')}
     </div>
   </div>
   <div class="card" style="margin-top:1rem">
     <b style="color:var(--primary)">ภ.ง.ด.1 — ภาษีเงินได้หัก ณ ที่จ่าย (เงินเดือน)</b>
     <div style="font-size:12px;color:var(--muted);margin:6px 0 10px">ยื่นภายในวันที่ 7 ของเดือนถัดไป</div>
-    ${tbl(['#','ชื่อ-สกุล','เงินได้','ภาษีหัก ณ ที่จ่าย'],S.employees.map((e,i)=>[i+1,e.name,''+fmt(e.salary),''+fmt(e.tax)]))}
-    <div style="text-align:right;font-weight:700;margin-top:8px">รวมนำส่ง: <span style="color:var(--danger)">${fmtM(tt)}</span></div>
+    ${tbl(['#','ชื่อ-สกุล','เงินได้','ภาษีหัก ณ ที่จ่าย'],S.employees.map((e,i)=>[i+1,e.name,'฿'+fmt(e.salary),'฿'+fmt(e.tax)]))}
+    <div style="text-align:right;font-weight:700;margin-top:8px">รวมนำส่ง: <span style="color:var(--danger)">฿${fmtM(tt)}</span></div>
   </div>`;
 }
 
@@ -3407,7 +3407,7 @@ function renderSettings(){
         </div>
         <div style="color:#888;font-size:12px;text-align:center;padding:.5rem">— รายการสินค้า —</div>
         <div style="border-top:1px dashed #000;padding-top:8px;margin-top:8px">
-          <div style="display:flex;justify-content:space-between;font-weight:700">ยอดสุทธิ<span>XXX.XX</span></div>
+          <div style="display:flex;justify-content:space-between;font-weight:700">ยอดสุทธิ<span>฿XXX.XX</span></div>
         </div>
         <div style="text-align:center;margin-top:12px;border-top:2px dashed #000;padding-top:10px;font-size:13px;font-weight:700">${c.receiptFooter||'ขอบคุณที่ใช้บริการ'}</div>
         ${c.receiptNote?`<div style="text-align:center;font-size:11px;color:#777;margin-top:4px">${c.receiptNote}</div>`:''}
@@ -3621,7 +3621,7 @@ function renderOrders(){
     `<div style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${o.customerAddress||''}">${o.customerAddress||'-'}</div>`,
     PAY_LABEL[o.payMethod]||o.payMethod||'-',
     o.items?o.items.length+' รายการ':'-',
-    `<span style="font-weight:700;color:var(--success)">${fmt(o.total)}</span>`,
+    `<span style="font-weight:700;color:var(--success)">฿${fmt(o.total)}</span>`,
     `<select class="fc" style="padding:3px 6px;font-size:11px;min-width:110px" onchange="updateOrderStatus('${o.id}',this.value)">
       ${ORDER_STATUS.map(s=>`<option${o.status===s?' selected':''} value="${s}">${s}</option>`).join('')}
     </select>`,
@@ -3639,7 +3639,7 @@ function renderOrders(){
     ${sc('ยืนยันแล้ว',confirmed+' รายการ','#0ea5e9')}
     ${sc('กำลังจัดส่ง',shipping+' รายการ','#7c3aed')}
     ${sc('เสร็จสิ้น',done+' รายการ','#10b981')}
-    ${sc('รายได้รวม',''+fmt(totalOnlineRev),'#1a3a5c',S.onlineOrders.length+' คำสั่งซื้อ')}
+    ${sc('รายได้รวม','฿'+fmt(totalOnlineRev),'#1a3a5c',S.onlineOrders.length+' คำสั่งซื้อ')}
   </div>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
     <div style="font-size:13px;color:var(--muted)">ออเดอร์ทั้งหมด ${S.onlineOrders.length} รายการ</div>
@@ -3672,8 +3672,8 @@ function viewOrder(id){
       <td>${idx+1}</td>
       <td style="text-align:left">${i.name}</td>
       <td style="text-align:right">${i.qty} ${i.unit||'ชิ้น'}</td>
-      <td style="text-align:right">${fmt(i.price)}</td>
-      <td style="text-align:right;font-weight:600">${fmt(i.subtotal||i.price*i.qty)}</td>
+      <td style="text-align:right">฿${fmt(i.price)}</td>
+      <td style="text-align:right;font-weight:600">฿${fmt(i.subtotal||i.price*i.qty)}</td>
     </tr>`).join(''):'';
   openModal('🛍️ '+o.orderNo,`
     <div class="fg2" style="margin-bottom:1rem;font-size:13px;gap:12px">
@@ -3697,9 +3697,9 @@ function viewOrder(id){
       <th style="text-align:left">#</th><th style="text-align:left">สินค้า</th><th>จำนวน</th><th>ราคา</th><th>รวม</th>
     </tr></thead><tbody>${itemRows}</tbody></table></div>
     <div style="margin-top:1rem;text-align:right;font-size:14px">
-      <div>ยอดสินค้า: <strong>${fmt(o.subtotal||0)}</strong></div>
-      <div>VAT: <strong>${fmt(o.vat||0)}</strong></div>
-      <div style="font-size:16px;font-weight:700;color:var(--primary)">ยอดสุทธิ: ${fmt(o.total)}</div>
+      <div>ยอดสินค้า: <strong>฿${fmt(o.subtotal||0)}</strong></div>
+      <div>VAT: <strong>฿${fmt(o.vat||0)}</strong></div>
+      <div style="font-size:16px;font-weight:700;color:var(--primary)">ยอดสุทธิ: ฿${fmt(o.total)}</div>
     </div>`,
   `<button class="btn btn-gray" onclick="printOnlineOrder('${id}')">🖨️ พิมพ์ใบสั่งซื้อ</button>
    <button class="btn btn-success" onclick="updateOrderStatus('${id}','เสร็จสิ้น');closeModal()">✅ เสร็จสิ้น</button>
@@ -3709,7 +3709,7 @@ function viewOrder(id){
 function printOnlineOrder(id){
   const o=S.onlineOrders.find(x=>x.id===id);if(!o)return;
   const PAY_LABEL={qr:'QR พร้อมเพย์',transfer:'โอนเงิน',credit:'บัตรเครดิต',cod:'COD'};
-  const rows=o.items?o.items.map(i=>`<tr><td>${i.name}</td><td align="right">${i.qty}</td><td align="right">${fmtM(i.price)}</td><td align="right">${fmtM(i.subtotal||i.price*i.qty)}</td></tr>`).join(''):'';
+  const rows=o.items?o.items.map(i=>`<tr><td>${i.name}</td><td align="right">${i.qty}</td><td align="right">฿${fmtM(i.price)}</td><td align="right">฿${fmtM(i.subtotal||i.price*i.qty)}</td></tr>`).join(''):'';
   document.getElementById('print-area').innerHTML=`
   <div style="max-width:380px;margin:0 auto;font-family:'Sarabun',sans-serif;font-size:13px;padding:20px">
     <div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:12px;margin-bottom:12px">
@@ -3734,8 +3734,8 @@ function printOnlineOrder(id){
       </tr></thead><tbody>${rows}</tbody>
     </table>
     <div style="border-top:1px dashed #000;margin-top:8px;padding-top:8px;text-align:right">
-      <div>VAT: ${fmtM(o.vat||0)}</div>
-      <div style="font-size:16px;font-weight:700">ยอดสุทธิ ${fmtM(o.total)}</div>
+      <div>VAT: ฿${fmtM(o.vat||0)}</div>
+      <div style="font-size:16px;font-weight:700">ยอดสุทธิ ฿${fmtM(o.total)}</div>
     </div>
     <div style="text-align:center;margin-top:14px;font-weight:700;border-top:2px dashed #000;padding-top:10px">
       ${S.company.receiptFooter||'ขอบคุณที่ใช้บริการ'}
@@ -3823,7 +3823,7 @@ function getPageData(){
   else if(currentPage==='vat'){
     const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
     const vb=S.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
-    headers=['รายการ','จำนวนเงิน ()'];
+    headers=['รายการ','จำนวนเงิน (฿)'];
     rows=[['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],
       ['ภาษีขาย (Output Tax)',vs],['มูลค่าฐานภาษีซื้อ',S.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)],
       ['ภาษีซื้อ (Input Tax)',vb],['ภาษีสุทธิ',vs-vb]];
@@ -3840,7 +3840,7 @@ function getPageData(){
     const sE=S.employees.reduce((a,b)=>a+(b.salary||0),0)*2;
     const oE=40000;
     const tR=pR+iR; const tE=cg+sE+oE;
-    headers=['รายการ','จำนวนเงิน ()'];
+    headers=['รายการ','จำนวนเงิน (฿)'];
     rows=[['รายได้จาก POS',pR],['รายได้จากใบแจ้งหนี้',iR],['รวมรายได้',tR],
       ['ต้นทุนสินค้าขาย',cg],['ค่าใช้จ่ายเงินเดือน',sE],['ค่าใช้จ่ายอื่น',oE],
       ['รวมค่าใช้จ่าย',tE],['กำไร (ขาดทุน) สุทธิ',tR-tE]];
@@ -3851,7 +3851,7 @@ function getPageData(){
     const tt=S.employees.reduce((a,b)=>a+(b.tax||0),0);
     const rev=S.sales.reduce((a,b)=>a+(b.subtotal||0),0)+S.invoices.reduce((a,b)=>a+(b.amount||0),0);
     const exp=S.employees.reduce((a,b)=>a+(b.salary||0),0)*2+40000;
-    headers=['แบบฟอร์ม','รายการ','จำนวนเงิน ()'];
+    headers=['แบบฟอร์ม','รายการ','จำนวนเงิน (฿)'];
     rows=[['ภ.พ.30','ภาษีขาย',vs],['ภ.พ.30','ภาษีซื้อ',vb],['ภ.พ.30','ภาษีสุทธิ',vs-vb],
       ['ภ.ง.ด.50','รายได้รวม',rev],['ภ.ง.ด.50','ค่าใช้จ่าย',exp],['ภ.ง.ด.50','ภาษีนิติบุคคล 20%',Math.max(0,Math.round((rev-exp)*0.20))],
       ['ภ.ง.ด.1','รวมภาษีหัก ณ ที่จ่าย',tt]];
@@ -3885,19 +3885,19 @@ function exportPDF(){
   if(currentPage==='sales'){
     const tv=rows.reduce((a,r)=>a+(Number(r[6])||0),0);
     const tp=rows.reduce((a,r)=>a+(Number(r[8])||0),0);
-    summary=`<div class="sum-row"><span>ยอดขายรวม</span><span>${fmtM(tv)}</span></div>
-    <div class="sum-row"><span>กำไรรวม</span><span style="color:#10b981">${fmtM(tp)}</span></div>`;
+    summary=`<div class="sum-row"><span>ยอดขายรวม</span><span>฿${fmtM(tv)}</span></div>
+    <div class="sum-row"><span>กำไรรวม</span><span style="color:#10b981">฿${fmtM(tp)}</span></div>`;
   }else if(currentPage==='products'||currentPage==='stock'){
     const tv=rows.reduce((a,r)=>a+(Number(r[9])||0),0);
-    summary=`<div class="sum-row"><span>มูลค่าสต็อกรวม</span><span>${fmtM(tv)}</span></div>`;
+    summary=`<div class="sum-row"><span>มูลค่าสต็อกรวม</span><span>฿${fmtM(tv)}</span></div>`;
   }else if(currentPage==='payroll'){
     const ts=rows.reduce((a,r)=>a+(Number(r[3])||0),0);
     const tt=rows.reduce((a,r)=>a+(Number(r[4])||0),0);
-    summary=`<div class="sum-row"><span>เงินเดือนรวม</span><span>${fmtM(ts)}</span></div>
-    <div class="sum-row"><span>ภาษีหัก ณ ที่จ่ายรวม</span><span style="color:#ef4444">${fmtM(tt)}</span></div>`;
+    summary=`<div class="sum-row"><span>เงินเดือนรวม</span><span>฿${fmtM(ts)}</span></div>
+    <div class="sum-row"><span>ภาษีหัก ณ ที่จ่ายรวม</span><span style="color:#ef4444">฿${fmtM(tt)}</span></div>`;
   }else if(currentPage==='purchases'){
     const tv=rows.reduce((a,r)=>a+(Number(r[4])||0),0);
-    summary=`<div class="sum-row"><span>ยอดซื้อรวม</span><span>${fmtM(tv)}</span></div>`;
+    summary=`<div class="sum-row"><span>ยอดซื้อรวม</span><span>฿${fmtM(tv)}</span></div>`;
   }
 
   const pw=window.open('','_blank','width=1000,height=800,scrollbars=yes');
@@ -4000,14 +4000,14 @@ function exportExcel(){
     if(currentPage==='sales'){
       const total=rows.reduce((a,r)=>a+(r[6]||0),0);
       const profit=rows.reduce((a,r)=>a+(r[8]||0),0);
-      sumData.push(['ยอดรวมทั้งหมด ()',total],['กำไรรวม ()',profit]);
+      sumData.push(['ยอดรวมทั้งหมด (฿)',total],['กำไรรวม (฿)',profit]);
     }else if(currentPage==='products'||currentPage==='stock'){
       const stockVal=rows.reduce((a,r)=>a+(r[9]||0),0);
-      sumData.push(['มูลค่าสต็อกรวม ()',stockVal]);
+      sumData.push(['มูลค่าสต็อกรวม (฿)',stockVal]);
     }else if(currentPage==='payroll'){
       const totalSal=rows.reduce((a,r)=>a+(r[3]||0),0);
       const totalTax=rows.reduce((a,r)=>a+(r[4]||0),0);
-      sumData.push(['เงินเดือนรวม ()',totalSal],['ภาษีรวม ()',totalTax]);
+      sumData.push(['เงินเดือนรวม (฿)',totalSal],['ภาษีรวม (฿)',totalTax]);
     }
     const wsSummary=XLSX.utils.aoa_to_sheet(sumData);
     wsSummary['!cols']=[{wch:30},{wch:25}];
@@ -4188,8 +4188,8 @@ const FIELD_DEFS={
     {key:'name',label:'ชื่อสินค้า *',required:true},
     {key:'code',label:'รหัสสินค้า'},
     {key:'category',label:'หมวดหมู่'},
-    {key:'price',label:'ราคาขาย ()'},
-    {key:'cost',label:'ราคาต้นทุน ()'},
+    {key:'price',label:'ราคาขาย (฿)'},
+    {key:'cost',label:'ราคาต้นทุน (฿)'},
     {key:'stock',label:'จำนวนสต็อก'},
     {key:'unit',label:'หน่วยนับ'},
     {key:'description',label:'คำอธิบาย'},
@@ -4498,7 +4498,7 @@ function renderCategories(){
             <td style="padding:8px;text-align:right">${prods.length}</td>
             <td style="padding:8px;text-align:right;color:var(--success)">${withPrice}</td>
             <td style="padding:8px;text-align:right;color:var(--accent)">${withStock}</td>
-            <td style="padding:8px;text-align:right;color:#7c3aed">${fmt(stockVal)}</td>
+            <td style="padding:8px;text-align:right;color:#7c3aed">฿${fmt(stockVal)}</td>
             <td style="padding:8px">
               <button class="btn btn-primary btn-xs" onclick="filterProductsByCat('${cat}')">ดูสินค้า</button>
               <button class="btn btn-gray btn-xs" onclick="bulkRenameCat('${cat}')">เปลี่ยนชื่อ</button>
@@ -5047,7 +5047,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
           <i>จำนวนเงินรวมทั้งสิ้น (ตัวอักษร): ${bahtText(total)}</i>
         </td>
         <td style="text-align:right;font-size:16px;font-weight:700">ยอดสุทธิ</td>
-        <td style="text-align:right;font-size:18px;font-weight:700;color:#1a3a5c">${fmtM(total)}</td>
+        <td style="text-align:right;font-size:18px;font-weight:700;color:#1a3a5c">฿${fmtM(total)}</td>
       </tr>
     </tfoot>
   </table>
@@ -5056,7 +5056,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
   ${showBarcode?`<div class="barcode-section">
     <div class="barcode-label">SCAN เพื่อดูเลขที่ใบเสร็จ / Scan to verify receipt</div>
     <svg id="receipt-barcode"></svg>
-    <div style="font-size:11px;color:#888;margin-top:4px">${docNo} | ${todayISO()} | ${fmtM(total)}</div>
+    <div style="font-size:11px;color:#888;margin-top:4px">${docNo} | ${todayISO()} | ฿${fmtM(total)}</div>
   </div>`:''}
 
   <!-- STAMP & SIGNATURE -->
@@ -5966,42 +5966,42 @@ function printPage(){
   if(currentPage==='sales'){
     const r=S.sales.reduce((a,b)=>a+(b.subtotal||0),0);
     const p=S.sales.reduce((a,b)=>a+(b.subtotal||0)-(b.totalCost||0),0);
-    body=pStats([['รายการทั้งหมด',S.sales.length+' บิล','#0ea5e9'],['รายได้รวม',''+fmt(r),'#10b981'],['กำไรขั้นต้น',''+fmt(p),'#7c3aed'],['อัตรากำไร',fmtM(r?p/r*100:0)+'%','#f59e0b']]);
+    body=pStats([['รายการทั้งหมด',S.sales.length+' บิล','#0ea5e9'],['รายได้รวม','฿'+fmt(r),'#10b981'],['กำไรขั้นต้น','฿'+fmt(p),'#7c3aed'],['อัตรากำไร',fmtM(r?p/r*100:0)+'%','#f59e0b']]);
     body+=pTable(['เลขที่','วันที่','ลูกค้า','ยอดสินค้า','ส่วนลด','VAT','ยอดสุทธิ','กำไร'],
       [...S.sales].reverse().map(s=>[s.docNo||'',s.date||'',s.customerName||'ลูกค้าทั่วไป',
-        ''+fmt(s.subtotal),s.discount>0?'-'+fmt(s.discount):'-',''+fmt(s.vat),''+fmt(s.total),''+fmt((s.subtotal||0)-(s.totalCost||0))]));
+        '฿'+fmt(s.subtotal),s.discount>0?'-฿'+fmt(s.discount):'-','฿'+fmt(s.vat),'฿'+fmt(s.total),'฿'+fmt((s.subtotal||0)-(s.totalCost||0))]));
   }
   else if(currentPage==='products'){
     const mv=S.products.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
-    body=pStats([['สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9'],['มูลค่าสต็อก',''+fmt(mv),'#7c3aed'],['ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length+' ชนิด','#f59e0b'],['หมดสต็อก',S.products.filter(p=>p.stock<=0).length+' ชนิด','#ef4444']]);
+    body=pStats([['สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9'],['มูลค่าสต็อก','฿'+fmt(mv),'#7c3aed'],['ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length+' ชนิด','#f59e0b'],['หมดสต็อก',S.products.filter(p=>p.stock<=0).length+' ชนิด','#ef4444']]);
     body+=pTable(['รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย'],
-      S.products.map(p=>[p.code,p.name,p.category||'-',p.unit||'-',''+fmt(p.cost),''+fmt(p.price),p.stock,p.minStock||5,''+fmt((p.price||0)-(p.cost||0))]));
+      S.products.map(p=>[p.code,p.name,p.category||'-',p.unit||'-','฿'+fmt(p.cost),'฿'+fmt(p.price),p.stock,p.minStock||5,'฿'+fmt((p.price||0)-(p.cost||0))]));
   }
   else if(currentPage==='stock'){
     const mv=S.products.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
-    body=pStats([['สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9'],['มูลค่าสต็อก',''+fmt(mv),'#7c3aed'],['ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length+' ชนิด','#f59e0b'],['หมดสต็อก',S.products.filter(p=>p.stock<=0).length+' ชนิด','#ef4444']]);
+    body=pStats([['สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9'],['มูลค่าสต็อก','฿'+fmt(mv),'#7c3aed'],['ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length+' ชนิด','#f59e0b'],['หมดสต็อก',S.products.filter(p=>p.stock<=0).length+' ชนิด','#ef4444']]);
     body+=pTable(['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','สถานะ'],
-      S.products.map(p=>[p.code,p.name,p.category||'-',p.unit||'-',p.stock,p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ']));
+      S.products.map(p=>[p.code,p.name,p.category||'-',p.unit||'-',p.stock,p.minStock||5,'฿'+fmt(p.cost),'฿'+fmt(p.price),'฿'+fmt((p.cost||0)*(p.stock||0)),p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ']));
   }
   else if(currentPage==='purchases'){
-    body=pStats([['ใบสั่งซื้อทั้งหมด',S.purchases.length+' ใบ','#0ea5e9'],['ยอดซื้อรวม',''+fmt(S.purchases.reduce((a,b)=>a+(b.total||0),0)),'#f59e0b']]);
+    body=pStats([['ใบสั่งซื้อทั้งหมด',S.purchases.length+' ใบ','#0ea5e9'],['ยอดซื้อรวม','฿'+fmt(S.purchases.reduce((a,b)=>a+(b.total||0),0)),'#f59e0b']]);
     body+=pTable(['เลขที่','วันที่','ซัพพลายเออร์','รายการ','ยอดรวม','สถานะ'],
-      [...S.purchases].reverse().map(p=>[p.docNo||'',p.date||'',p.supplierName||'-',p.items?p.items.length+' รายการ':'-',''+fmt(p.total),p.status||'เสร็จสิ้น']));
+      [...S.purchases].reverse().map(p=>[p.docNo||'',p.date||'',p.supplierName||'-',p.items?p.items.length+' รายการ':'-','฿'+fmt(p.total),p.status||'เสร็จสิ้น']));
     S.purchases.forEach(p=>{
       if(!p.items) return;
       body+=`<div style="margin-top:12px;font-weight:700;color:#1a3a5c;border-bottom:1px solid #ddd;padding-bottom:4px;margin-bottom:6px">📋 ${p.docNo} — ${p.date} — ${p.supplierName||''}</div>`;
       body+=pTable(['ลำดับ','สินค้า','จำนวน','ราคาต้นทุน','รวม'],
-        p.items.map((i,idx)=>[idx+1,i.name,i.qty+' '+i.unit,''+fmtM(i.cost),''+fmtM(i.qty*i.cost)]));
-      body+=`<div style="text-align:right;font-weight:700">รวม: ${fmtM(p.total)}</div>`;
+        p.items.map((i,idx)=>[idx+1,i.name,i.qty+' '+i.unit,'฿'+fmtM(i.cost),'฿'+fmtM(i.qty*i.cost)]));
+      body+=`<div style="text-align:right;font-weight:700">รวม: ฿${fmtM(p.total)}</div>`;
     });
   }
   else if(currentPage==='dashboard'){
     const todS=S.sales.filter(s=>s.date===todayISO());
     const allR=S.sales.reduce((a,b)=>a+(b.subtotal||0),0);
-    body=pStats([['ยอดขายวันนี้',''+fmt(todS.reduce((a,b)=>a+(b.total||0),0)),'#0ea5e9'],['รายได้รวม',''+fmt(allR),'#10b981'],['กำไรขั้นต้น',''+fmt(allR-S.sales.reduce((a,b)=>a+(b.totalCost||0),0)),'#7c3aed'],['ออเดอร์ออนไลน์',S.onlineOrders.length+' คำสั่งซื้อ','#f59e0b']]);
+    body=pStats([['ยอดขายวันนี้','฿'+fmt(todS.reduce((a,b)=>a+(b.total||0),0)),'#0ea5e9'],['รายได้รวม','฿'+fmt(allR),'#10b981'],['กำไรขั้นต้น','฿'+fmt(allR-S.sales.reduce((a,b)=>a+(b.totalCost||0),0)),'#7c3aed'],['ออเดอร์ออนไลน์',S.onlineOrders.length+' คำสั่งซื้อ','#f59e0b']]);
     body+=`<div style="font-weight:700;margin-bottom:8px;color:#1a3a5c">การขายล่าสุด 20 รายการ</div>`;
     body+=pTable(['เลขที่','วันที่','ลูกค้า','ยอดสุทธิ','กำไร'],
-      [...S.sales].reverse().slice(0,20).map(s=>[s.docNo,s.date,s.customerName||'ลูกค้าทั่วไป',''+fmt(s.total),''+fmt((s.subtotal||0)-(s.totalCost||0))]));
+      [...S.sales].reverse().slice(0,20).map(s=>[s.docNo,s.date,s.customerName||'ลูกค้าทั่วไป','฿'+fmt(s.total),'฿'+fmt((s.subtotal||0)-(s.totalCost||0))]));
   }
   else if(currentPage==='customers'){
     body=pTable(['รหัส','ชื่อบริษัท/ร้าน','เลขภาษี','โทรศัพท์','ที่อยู่','เครดิต (วัน)'],
@@ -6012,26 +6012,26 @@ function printPage(){
       S.suppliers.map(s=>[s.code||'',s.name||'',s.taxId||'-',s.tel||'-',s.contact||'-',s.credit||30]));
   }
   else if(currentPage==='journal'){
-    body=pStats([['รายการทั้งหมด',S.journals.length+' รายการ','#0ea5e9'],['ยอดรวม',''+fmt(S.journals.reduce((a,b)=>a+(b.amount||0),0)),'#1a3a5c']]);
+    body=pStats([['รายการทั้งหมด',S.journals.length+' รายการ','#0ea5e9'],['ยอดรวม','฿'+fmt(S.journals.reduce((a,b)=>a+(b.amount||0),0)),'#1a3a5c']]);
     body+=pTable(['วันที่','เลขที่','รายการ','เดบิต','เครดิต','จำนวน','VAT'],
-      [...S.journals].reverse().map(j=>[j.date||'',j.ref||'',j.desc||'',j.debit||'-',j.credit||'-',''+fmt(j.amount),j.vat?''+fmt(j.vat):'-']));
+      [...S.journals].reverse().map(j=>[j.date||'',j.ref||'',j.desc||'',j.debit||'-',j.credit||'-','฿'+fmt(j.amount),j.vat?'฿'+fmt(j.vat):'-']));
   }
   else if(currentPage==='invoice'){
     const tv=S.invoices.reduce((a,b)=>a+(b.total||0),0);
     const paid=S.invoices.filter(i=>i.status==='ชำระแล้ว').length;
-    body=pStats([['ใบแจ้งหนี้ทั้งหมด',S.invoices.length+' ใบ','#0ea5e9'],['ชำระแล้ว',paid+' ใบ','#10b981'],['รอชำระ',(S.invoices.length-paid)+' ใบ','#f59e0b'],['ยอดรวม',''+fmt(tv),'#1a3a5c']]);
+    body=pStats([['ใบแจ้งหนี้ทั้งหมด',S.invoices.length+' ใบ','#0ea5e9'],['ชำระแล้ว',paid+' ใบ','#10b981'],['รอชำระ',(S.invoices.length-paid)+' ใบ','#f59e0b'],['ยอดรวม','฿'+fmt(tv),'#1a3a5c']]);
     body+=pTable(['เลขที่','วันที่','ลูกค้า','ก่อน VAT','VAT','รวม','สถานะ'],
-      S.invoices.map(i=>[i.no||'',i.date||'',i.customer||'',''+fmt(i.amount),''+fmt(i.vat),''+fmt(i.total),i.status||'-']));
+      S.invoices.map(i=>[i.no||'',i.date||'',i.customer||'','฿'+fmt(i.amount),'฿'+fmt(i.vat),'฿'+fmt(i.total),i.status||'-']));
   }
   else if(currentPage==='vat'){
     const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
     const vb=S.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
     const net=vs-vb;
-    body=pStats([['ภาษีขาย',''+fmt(vs),'#10b981'],['ภาษีซื้อ',''+fmt(vb),'#f59e0b'],['ภาษีสุทธิ',''+fmt(net),net>0?'#ef4444':'#10b981']]);
+    body=pStats([['ภาษีขาย','฿'+fmt(vs),'#10b981'],['ภาษีซื้อ','฿'+fmt(vb),'#f59e0b'],['ภาษีสุทธิ','฿'+fmt(net),net>0?'#ef4444':'#10b981']]);
     body+=`<div style="border:2px solid #1a3a5c;border-radius:8px;padding:1rem">`;
     body+=`<div style="font-weight:700;font-size:14px;color:#1a3a5c;text-align:center;margin-bottom:12px">แบบ ภ.พ.30</div>`;
     [['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีขาย',vs],['มูลค่าฐานภาษีซื้อ',S.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีซื้อ',vb],['ภาษีสุทธิ',net]].forEach(([k,v],i)=>{
-      body+=`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;${i===4?'font-weight:700;font-size:14px':''}"><span>${k}</span><span style="color:${i===4?'#ef4444':'#1a3a5c'}">${fmtM(v)}</span></div>`;
+      body+=`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;${i===4?'font-weight:700;font-size:14px':''}"><span>${k}</span><span style="color:${i===4?'#ef4444':'#1a3a5c'}">฿${fmtM(v)}</span></div>`;
     });
     body+=`</div>`;
   }
@@ -6040,10 +6040,10 @@ function printPage(){
     const tt=S.employees.reduce((a,b)=>a+(b.tax||0),0);
     const tss=S.employees.reduce((a,b)=>a+(b.sso||0),0);
     body=`<div style="font-weight:700;color:#1a3a5c;text-align:center;margin-bottom:12px;font-size:15px">แบบ ภ.ง.ด.1 — ภาษีเงินได้หัก ณ ที่จ่าย</div>`;
-    body+=pStats([['พนักงาน',S.employees.length+' คน','#0ea5e9'],['เงินเดือนรวม',''+fmt(ts2),'#1a3a5c'],['ภาษีรวม',''+fmt(tt),'#f59e0b'],['ประกันสังคม',''+fmt(tss),'#ef4444']]);
+    body+=pStats([['พนักงาน',S.employees.length+' คน','#0ea5e9'],['เงินเดือนรวม','฿'+fmt(ts2),'#1a3a5c'],['ภาษีรวม','฿'+fmt(tt),'#f59e0b'],['ประกันสังคม','฿'+fmt(tss),'#ef4444']]);
     body+=pTable(['รหัส','ชื่อ-สกุล','ตำแหน่ง','เงินเดือน','ภาษีหัก','ประกันสังคม','สุทธิ'],
-      S.employees.map(e=>[e.code||'',e.name||'',e.position||'',''+fmt(e.salary),''+fmt(e.tax),''+fmt(e.sso||750),''+fmt((e.salary||0)-(e.tax||0)-(e.sso||750))]));
-    body+=`<div style="text-align:right;font-weight:700;margin-top:8px">รวมภาษีนำส่ง: <span style="color:#ef4444">${fmtM(tt)}</span></div>`;
+      S.employees.map(e=>[e.code||'',e.name||'',e.position||'','฿'+fmt(e.salary),'฿'+fmt(e.tax),'฿'+fmt(e.sso||750),'฿'+fmt((e.salary||0)-(e.tax||0)-(e.sso||750))]));
+    body+=`<div style="text-align:right;font-weight:700;margin-top:8px">รวมภาษีนำส่ง: <span style="color:#ef4444">฿${fmtM(tt)}</span></div>`;
   }
   else if(currentPage==='financial'){
     const pR=S.sales.reduce((a,b)=>a+(b.subtotal||0),0);
@@ -6061,7 +6061,7 @@ function printPage(){
      {l:'รวมค่าใช้จ่าย',v:tE,b:true,col:'#ef4444',neg:true},
      {l:'กำไร (ขาดทุน) สุทธิ',v:nt,b:true,col:nt>0?'#10b981':'#ef4444',big:true}
     ].forEach(r=>{
-      body+=`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee;font-weight:${r.b?700:400};font-size:${r.big?15:13}px;color:${r.col||'#000'}"><span>${r.l}</span><span>${r.neg?'-':''}${fmtM(r.v)}</span></div>`;
+      body+=`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee;font-weight:${r.b?700:400};font-size:${r.big?15:13}px;color:${r.col||'#000'}"><span>${r.l}</span><span>${r.neg?'-':''}฿${fmtM(r.v)}</span></div>`;
     });
     body+=`</div>`;
   }
@@ -6075,23 +6075,23 @@ function printPage(){
     body=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">`;
     body+=`<div style="border:2px solid #1a3a5c;border-radius:8px;padding:1rem"><div style="font-weight:700;color:#1a3a5c;margin-bottom:8px">ภ.พ.30 — VAT</div>`;
     [['ภาษีขาย',vs,'#10b981'],['ภาษีซื้อ',vb,'#f59e0b'],['ภาษีสุทธิ',vs-vb,'#ef4444']].forEach(([k,v,col])=>{
-      body+=`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>${k}</span><span style="font-weight:700;color:${col}">${fmtM(v)}</span></div>`;
+      body+=`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>${k}</span><span style="font-weight:700;color:${col}">฿${fmtM(v)}</span></div>`;
     });
     body+=`</div><div style="border:2px solid #1a3a5c;border-radius:8px;padding:1rem"><div style="font-weight:700;color:#1a3a5c;margin-bottom:8px">ภ.ง.ด.50 — นิติบุคคล</div>`;
     [['รายได้รวม',rev,'#10b981'],['ค่าใช้จ่ายรวม',exp,'#f59e0b'],['กำไรสุทธิ',rev-exp,'#1a3a5c'],['ภาษี 20%',corp,'#ef4444']].forEach(([k,v,col])=>{
-      body+=`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>${k}</span><span style="font-weight:700;color:${col}">${fmtM(v)}</span></div>`;
+      body+=`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee"><span>${k}</span><span style="font-weight:700;color:${col}">฿${fmtM(v)}</span></div>`;
     });
     body+=`</div></div>`;
     body+=`<div style="font-weight:700;color:#1a3a5c;margin-bottom:8px">ภ.ง.ด.1 — ภาษีหัก ณ ที่จ่าย</div>`;
-    body+=pTable(['#','ชื่อ-สกุล','เงินได้','ภาษีหัก'],S.employees.map((e,i)=>[i+1,e.name,''+fmt(e.salary),''+fmt(e.tax)]));
-    body+=`<div style="text-align:right;font-weight:700">รวมนำส่ง: <span style="color:#ef4444">${fmtM(tt)}</span></div>`;
+    body+=pTable(['#','ชื่อ-สกุล','เงินได้','ภาษีหัก'],S.employees.map((e,i)=>[i+1,e.name,'฿'+fmt(e.salary),'฿'+fmt(e.tax)]));
+    body+=`<div style="text-align:right;font-weight:700">รวมนำส่ง: <span style="color:#ef4444">฿${fmtM(tt)}</span></div>`;
   }
   else if(currentPage==='orders'){
     const PAY={qr:'QR พร้อมเพย์',transfer:'โอนเงิน',credit:'บัตรเครดิต',cod:'COD'};
     const tv=S.onlineOrders.filter(o=>o.status!=='ยกเลิก').reduce((a,b)=>a+(b.total||0),0);
-    body=pStats([['ออเดอร์ทั้งหมด',S.onlineOrders.length+' รายการ','#0ea5e9'],['รอยืนยัน',S.onlineOrders.filter(o=>o.status==='รอยืนยัน').length+' รายการ','#f59e0b'],['เสร็จสิ้น',S.onlineOrders.filter(o=>o.status==='เสร็จสิ้น').length+' รายการ','#10b981'],['รายได้รวม',''+fmt(tv),'#1a3a5c']]);
+    body=pStats([['ออเดอร์ทั้งหมด',S.onlineOrders.length+' รายการ','#0ea5e9'],['รอยืนยัน',S.onlineOrders.filter(o=>o.status==='รอยืนยัน').length+' รายการ','#f59e0b'],['เสร็จสิ้น',S.onlineOrders.filter(o=>o.status==='เสร็จสิ้น').length+' รายการ','#10b981'],['รายได้รวม','฿'+fmt(tv),'#1a3a5c']]);
     body+=pTable(['เลขที่','วันที่','ลูกค้า','โทร','ชำระ','ยอด','สถานะ'],
-      [...S.onlineOrders].reverse().map(o=>[o.orderNo||'',o.date||'',o.customerName||'',o.customerPhone||'',PAY[o.payMethod]||o.payMethod||'-',''+fmt(o.total),o.status||'-']));
+      [...S.onlineOrders].reverse().map(o=>[o.orderNo||'',o.date||'',o.customerName||'',o.customerPhone||'',PAY[o.payMethod]||o.payMethod||'-','฿'+fmt(o.total),o.status||'-']));
   }
   else{
     body=`<div style="text-align:center;padding:2rem;color:#888">ไม่มีข้อมูลสำหรับพิมพ์</div>`;
