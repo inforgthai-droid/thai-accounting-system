@@ -629,7 +629,7 @@ function _renderRentalPage(){
           <td style="padding:10px 12px">${r.renterPhone||'-'}</td>
           <td style="padding:10px 12px;font-size:12px;max-width:160px">${(r.items||[]).map(i=>i.name+(i.qty>1?` x${i.qty}`:'')).join(', ')}</td>
           <td style="padding:10px 12px">${r.rentalDate||'-'}</td>
-          <td style="padding:10px 12px;color:${over?'var(--danger)':'var(--text)'};font-weight:${over?700:400}">${r.returnDate||'-'}</td>
+          <td style="padding:10px 12px;color:${over?'var(--danger)':'var(--text)';font-weight:${over?700:400}}">${r.returnDate||'-'}</td>
           <td style="padding:10px 12px">${fmtM(fee)}</td>
           <td style="padding:10px 12px;font-weight:700;color:var(--warning)">${fmtM(dep)}</td>
           <td style="padding:10px 12px"><span style="background:${r.depositPayMethod==='cash'?'#d1fae5':'#dbeafe'};color:${r.depositPayMethod==='cash'?'#065f46':'#1e40af'};padding:2px 8px;border-radius:6px;font-size:11px">${r.depositPayMethod==='cash'?'💵 เงินสด':'📱 โอน'}</span></td>
