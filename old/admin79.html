@@ -994,14 +994,17 @@ function _printRental58(id){
     +'}</scr'+'ipt>'
     +'</body></html>';
 
-  // ใช้ iframe เพื่อหลีกเลี่ยง popup blocker
-  const iframe=document.createElement('iframe');
-  iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:80mm;height:300mm;border:none';
-  document.body.appendChild(iframe);
-  iframe.contentDocument.open();
-  iframe.contentDocument.write(html);
-  iframe.contentDocument.close();
-  setTimeout(()=>{iframe.contentWindow.focus();iframe.contentWindow.print();setTimeout(()=>iframe.remove(),3000);},1000);
+  const pw=window.open('','_r58','width=480,height=800,toolbar=0,menubar=0,location=0,scrollbars=1,resizable=1,left=200,top=50');
+  if(pw){pw.document.open();pw.document.write(html);pw.document.close();}
+  else{
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:80mm;height:300mm;border:none';
+    document.body.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+    setTimeout(()=>{iframe.contentWindow.focus();iframe.contentWindow.print();setTimeout(()=>iframe.remove(),3000);},1000);
+  }
 }
 
 function _copyLineMsg(id){
