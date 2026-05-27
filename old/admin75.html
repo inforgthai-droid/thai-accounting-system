@@ -192,7 +192,6 @@ tbody tr:hover{background:#f0f9ff}
   <div id="content">
     <div id="p-dashboard" class="page active"></div>
     <div id="p-pos" class="page"></div>
-    <div id="p-rental" class="page"></div>
     <div id="p-products" class="page"></div>
     <div id="p-purchases" class="page"></div>
     <div id="p-sales" class="page"></div>
@@ -376,7 +375,7 @@ function openModal(title,body,footer='',opts={}){
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target.id==='modal-overlay')closeModal();});
 const MENU=[
-  {g:'ร้านค้า'},{key:'dashboard',label:'ภาพรวม',icon:'📊'},{key:'pos',label:'ขายหน้าร้าน (POS)',icon:'🛒'},{key:'rental',label:'เช่าอุปกรณ์',icon:'🏎️'},{key:'sales',label:'ประวัติการขาย',icon:'📑'},
+  {g:'ร้านค้า'},{key:'dashboard',label:'ภาพรวม',icon:'📊'},{key:'pos',label:'ขายหน้าร้าน (POS)',icon:'🛒'},{key:'sales',label:'ประวัติการขาย',icon:'📑'},
   {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚'},
   {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️'},
   {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾'},{key:'vat',label:'ภาษี VAT',icon:'📋'},{key:'payroll',label:'เงินเดือน',icon:'👥'},{key:'financial',label:'งบการเงิน',icon:'📈'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️'},
@@ -390,7 +389,7 @@ function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').
 function renderPage(key){
   const el=document.getElementById('p-'+key);
   if(!el)return;
-  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign};
+  const map={dashboard:renderDashboard,pos:renderPOS,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign};
   if(map[key])el.innerHTML=map[key]();
   if(key==='settings')setTimeout(renderAdminEmailList,50);
   if(key==='categories')setTimeout(renderCatList,50);
@@ -415,10 +414,6 @@ function renderDashboard(){
   const outStock=S.products.filter(p=>p.stock<=0);
   const pendingOrders=S.onlineOrders.filter(o=>o.status==='รอยืนยัน');
   const onlineRev=S.onlineOrders.filter(o=>o.status!=='ยกเลิก').reduce((a,b)=>a+(b.total||0),0);
-  // รายได้จากเช่า
-  const rentalRev=_rentals.filter(r=>r.status==='returned').reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);
-  const rentalActive=_rentals.filter(r=>r.status==='active').length;
-  const totalAllRev=allRev+onlineRev+rentalRev;
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">📊 ภาพรวม — ${todayTH()}</div>
   <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ภาพรวม</button>
@@ -426,8 +421,6 @@ function renderDashboard(){
   <div class="stat-grid">
     ${sc('ยอดขายวันนี้',''+fmt(todTotal),'#0ea5e9',todSales.length+' รายการ')}
     ${sc('รายได้ POS รวม',''+fmt(allRev),'#10b981',S.sales.length+' บิล')}
-    ${sc('รายได้จากเช่า',''+fmt(rentalRev),'#e85d04',rentalActive+' กำลังเช่า')}
-    ${sc('รายได้รวมทั้งหมด',''+fmt(totalAllRev),'#7c3aed','POS + Online + เช่า')}
     ${sc('กำไรขั้นต้น',''+fmt(profit),'#7c3aed',fmtM(allRev?profit/allRev*100:0)+'%')}
     ${sc('ออเดอร์ออนไลน์',''+fmt(onlineRev),'#0ea5e9',S.onlineOrders.length+' คำสั่งซื้อ')}
     ${sc('รอยืนยัน',pendingOrders.length+' รายการ','#f59e0b','ออเดอร์ใหม่')}
@@ -553,370 +546,6 @@ function _updatePOSGrid(){
 }
 
 // ===== POS =====
-
-// ══════════════════════════════════════════════════════════
-// RENTAL — ระบบเช่าอุปกรณ์
-// ══════════════════════════════════════════════════════════
-let _rentals=[], _rentalItems=[], _rentalFilter='active';
-
-async function loadRentals(){
-  const [rs,is]=await Promise.all([
-    db.collection('rental_contracts').orderBy('createdAt','desc').get(),
-    db.collection('rental_items').orderBy('name','asc').get()
-  ]);
-  _rentals=rs.docs.map(d=>({id:d.id,...d.data()}));
-  _rentalItems=is.docs.map(d=>({id:d.id,...d.data()}));
-}
-
-function renderRental(){
-  loadRentals().then(()=>_renderRentalPage());
-  return '<div style="padding:20px;color:var(--muted)">กำลังโหลด...</div>';
-}
-
-function _renderRentalPage(){
-  const el=document.getElementById('p-rental');
-  if(!el) return;
-  const f=_rentalFilter;
-  const active=_rentals.filter(r=>r.status==='active');
-  const returned=_rentals.filter(r=>r.status==='returned');
-  const overdue=active.filter(r=>r.returnDate&&r.returnDate<new Date().toISOString().slice(0,10));
-  const totalDep=active.reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.deposit||0),0),0);
-  const totalRev=returned.reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);
-
-  let list=f==='active'?active:f==='returned'?returned:f==='overdue'?overdue:_rentals;
-  const today=new Date().toISOString().slice(0,10);
-
-  el.innerHTML=`
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-    <div style="font-size:18px;font-weight:700">🏎️ เช่าอุปกรณ์</div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="_showRentalItemModal()">📦 จัดการอุปกรณ์</button>
-      <button class="btn btn-sm btn-primary" onclick="_showNewRentalModal()">+ สัญญาเช่าใหม่</button>
-    </div>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
-    ${[
-      ['กำลังเช่า',active.length+' รายการ','#e85d04'],
-      ['มัดจำที่ถือไว้',fmtM(totalDep),'#f59e0b'],
-      ['เกินกำหนดคืน',overdue.length+' รายการ','#ef4444'],
-      ['รายได้จากเช่า',fmtM(totalRev),'#10b981']
-    ].map(([l,v,c])=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:4px">${l}</div>
-      <div style="font-size:20px;font-weight:700;color:${c}">${v}</div>
-    </div>`).join('')}
-  </div>
-  <div style="display:flex;gap:4px;margin-bottom:12px;background:var(--surface);padding:6px;border-radius:10px;width:fit-content;border:1px solid var(--border)">
-    ${[['all','ทั้งหมด',_rentals.length],['active','กำลังเช่า',active.length],['overdue','เกินกำหนด',overdue.length],['returned','คืนแล้ว',returned.length]].map(([k,l,n])=>
-      `<button style="padding:6px 14px;border-radius:7px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;background:${f===k?'var(--accent)':'none'};color:${f===k?'#fff':k==='overdue'?'var(--danger)':'var(--muted)'}" onclick="_rentalFilter='${k}';_renderRentalPage()">${l} (${n})</button>`
-    ).join('')}
-  </div>
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">
-    ${list.length===0?`<div style="text-align:center;padding:60px;color:var(--muted)">ไม่มีรายการ</div>`:
-    `<table style="width:100%;border-collapse:collapse">
-      <thead><tr style="background:var(--surface2)">
-        ${['เลขที่','ผู้เช่า','โทรศัพท์','อุปกรณ์','วันเช่า','วันคืน','ค่าเช่า','มัดจำ','ชำระ','สถานะ',''].map(h=>`<th style="padding:10px 12px;text-align:left;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">${h}</th>`).join('')}
-      </tr></thead>
-      <tbody>${list.map(r=>{
-        const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
-        const fee=(r.items||[]).reduce((s,i)=>s+(i.rentalFee||0),0);
-        const over=r.status==='active'&&r.returnDate&&r.returnDate<today;
-        const badge=r.status==='returned'?`<span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700">คืนแล้ว</span>`:
-          over?`<span style="background:#fee2e2;color:#991b1b;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700">⚠️ เกิน</span>`:
-          `<span style="background:#dbeafe;color:#1e40af;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700">กำลังเช่า</span>`;
-        return `<tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:10px 12px;font-weight:700;color:var(--accent)">${r.contractNo||'-'}</td>
-          <td style="padding:10px 12px"><b>${r.renterName||'-'}</b></td>
-          <td style="padding:10px 12px">${r.renterPhone||'-'}</td>
-          <td style="padding:10px 12px;font-size:12px;max-width:160px">${(r.items||[]).map(i=>i.name+(i.qty>1?` x${i.qty}`:'')).join(', ')}</td>
-          <td style="padding:10px 12px">${r.rentalDate||'-'}</td>
-          <td style="padding:10px 12px;color:${over?'var(--danger)':'var(--text)';font-weight:${over?700:400}}">${r.returnDate||'-'}</td>
-          <td style="padding:10px 12px">${fmtM(fee)}</td>
-          <td style="padding:10px 12px;font-weight:700;color:var(--warning)">${fmtM(dep)}</td>
-          <td style="padding:10px 12px"><span style="background:${r.depositPayMethod==='cash'?'#d1fae5':'#dbeafe'};color:${r.depositPayMethod==='cash'?'#065f46':'#1e40af'};padding:2px 8px;border-radius:6px;font-size:11px">${r.depositPayMethod==='cash'?'💵 เงินสด':'📱 โอน'}</span></td>
-          <td style="padding:10px 12px">${badge}</td>
-          <td style="padding:10px 12px;white-space:nowrap">
-            ${r.status==='active'?`<button class="btn btn-xs" style="background:var(--success);color:#fff" onclick="_showReturnModal('${r.id}')">✓ รับคืน</button>`:''}
-            <button class="btn btn-xs btn-gray" onclick="_copyLineMsg('${r.id}')">📱</button>
-            <button class="btn btn-xs btn-gray" onclick="_showRentalReceipt('${r.id}')">🧾</button>
-            ${r.status==='returned'?`<button class="btn btn-xs btn-danger" onclick="_deleteRental('${r.id}')">ลบ</button>`:''}
-          </td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>`}
-  </div>`;
-}
-
-function _showNewRentalModal(){
-  const opts=_rentalItems.map(it=>`<option value="${it.id}" data-fee="${it.rentalFee||0}" data-dep="${it.deposit||0}">${it.name} (เช่า ${fmtM(it.rentalFee)} / มัดจำ ${fmtM(it.deposit)})</option>`).join('');
-  window.__rItems=[];
-  openModal('📋 สัญญาเช่าใหม่',`
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <div class="fm"><label class="fl">ชื่อผู้เช่า *</label><input class="fc" id="r-name" placeholder="ชื่อ-นามสกุล"></div>
-    <div class="fm"><label class="fl">โทรศัพท์ *</label><input class="fc" id="r-phone" placeholder="08x-xxx-xxxx"></div>
-    <div class="fm"><label class="fl">วันที่เช่า *</label><input class="fc" id="r-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
-    <div class="fm"><label class="fl">วันที่คืน *</label><input class="fc" id="r-return" type="date"></div>
-    <div class="fm"><label class="fl">ชำระมัดจำโดย</label>
-      <select class="fc" id="r-pay"><option value="cash">💵 เงินสด</option><option value="transfer">📱 โอนเงิน</option></select>
-    </div>
-    <div class="fm"><label class="fl">หมายเหตุ</label><input class="fc" id="r-note" placeholder="เช่น งานแข่ง..."></div>
-  </div>
-  <div style="margin-top:12px;background:var(--surface2);border-radius:8px;padding:12px">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px">รายการอุปกรณ์</div>
-    <div id="r-items-list"><div style="color:var(--muted);font-size:12px">ยังไม่มีรายการ</div></div>
-    <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:8px">
-      <select class="fc" id="r-item-sel" style="font-size:12px">${opts||'<option>ยังไม่มีอุปกรณ์</option>'}</select>
-      <input class="fc" id="r-item-qty" type="number" value="1" min="1" style="width:60px">
-      <button class="btn btn-gray btn-sm" onclick="_addRItem()">+ เพิ่ม</button>
-    </div>
-    <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;font-size:13px">
-      <div style="display:flex;justify-content:space-between">ค่าเช่ารวม: <b id="r-total-fee" style="color:var(--accent)">0</b></div>
-      <div style="display:flex;justify-content:space-between">มัดจำรวม: <b id="r-total-dep" style="color:var(--warning)">0</b></div>
-    </div>
-  </div>
-  `,`<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
-  <button class="btn btn-primary" onclick="_saveNewRental()">💾 บันทึก</button>`);
-}
-
-function _addRItem(){
-  const sel=document.getElementById('r-item-sel');
-  const qty=parseInt(document.getElementById('r-item-qty')?.value)||1;
-  if(!sel?.value) return;
-  const it=_rentalItems.find(i=>i.id===sel.value);
-  if(!it) return;
-  window.__rItems.push({itemId:it.id,name:it.name,qty,rentalFee:(it.rentalFee||0)*qty,deposit:(it.deposit||0)*qty});
-  _updateRItemsUI();
-}
-function _removeRItem(i){ window.__rItems.splice(i,1); _updateRItemsUI(); }
-function _updateRItemsUI(){
-  const el=document.getElementById('r-items-list');
-  if(!el) return;
-  el.innerHTML=window.__rItems.length?window.__rItems.map((it,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px">
-      <span style="flex:1;font-weight:600;font-size:13px">${it.name}</span>
-      <span style="font-size:12px;color:var(--muted)">x${it.qty}</span>
-      <span style="font-size:12px">เช่า <b style="color:var(--accent)">${fmtM(it.rentalFee)}</b></span>
-      <span style="font-size:12px">มัดจำ <b style="color:var(--warning)">${fmtM(it.deposit)}</b></span>
-      <button class="btn btn-xs btn-danger" onclick="_removeRItem(${i})">ลบ</button>
-    </div>`).join(''):'<div style="color:var(--muted);font-size:12px">ยังไม่มีรายการ</div>';
-  const tf=document.getElementById('r-total-fee');
-  const td=document.getElementById('r-total-dep');
-  if(tf) tf.textContent=fmtM(window.__rItems.reduce((s,i)=>s+i.rentalFee,0));
-  if(td) td.textContent=fmtM(window.__rItems.reduce((s,i)=>s+i.deposit,0));
-}
-
-async function _saveNewRental(){
-  const name=document.getElementById('r-name')?.value?.trim();
-  const phone=document.getElementById('r-phone')?.value?.trim();
-  const date=document.getElementById('r-date')?.value;
-  const ret=document.getElementById('r-return')?.value;
-  const pay=document.getElementById('r-pay')?.value;
-  const note=document.getElementById('r-note')?.value;
-  if(!name||!phone||!date||!ret){toast('กรุณากรอกข้อมูลให้ครบ','danger');return;}
-  if(!window.__rItems?.length){toast('กรุณาเพิ่มอุปกรณ์อย่างน้อย 1 รายการ','danger');return;}
-  const num=String(_rentals.length+1).padStart(4,'0');
-  const contractNo='RNT-'+date.replace(/-/g,'').slice(2)+'-'+num;
-  await db.collection('rental_contracts').add({
-    contractNo,renterName:name,renterPhone:phone,
-    rentalDate:date,returnDate:ret,depositPayMethod:pay,note,
-    items:window.__rItems,status:'active',createdAt:ts()
-  });
-  toast('บันทึกสัญญาเช่าสำเร็จ ✓','success');
-  closeModal();
-  await loadRentals();
-  _renderRentalPage();
-}
-
-function _showReturnModal(id){
-  const r=_rentals.find(x=>x.id===id);
-  if(!r) return;
-  const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
-  openModal('✓ รับอุปกรณ์คืน — '+r.contractNo,`
-  <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:12px">
-    <div style="font-weight:700;font-size:15px">${r.renterName} — ${r.renterPhone}</div>
-    <div style="font-size:12px;color:var(--muted);margin-top:4px">เช่า ${r.rentalDate} → คืน ${r.returnDate}</div>
-    <div style="margin-top:8px">${(r.items||[]).map(i=>`<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">${i.name} x${i.qty} — มัดจำ <b style="color:var(--warning)">${fmtM(i.deposit)}</b></div>`).join('')}</div>
-    <div style="margin-top:8px;font-weight:700">มัดจำรวม: <span style="color:var(--warning)">${fmtM(dep)}</span></div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <div class="fm"><label class="fl">วันที่รับคืน</label><input class="fc" id="ret-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
-    <div class="fm"><label class="fl">สภาพอุปกรณ์</label>
-      <select class="fc" id="ret-cond" onchange="_updRetDeposit(${dep})">
-        <option value="good">✅ ปกติ — คืนมัดจำเต็ม</option>
-        <option value="damaged">⚠️ เสียหายบางส่วน — หักบางส่วน</option>
-        <option value="lost">❌ สูญหาย/เสียหายมาก — หักทั้งหมด</option>
-      </select>
-    </div>
-  </div>
-  <div class="fm" id="ret-deduct-wrap" style="display:none">
-    <label class="fl">หักมัดจำ (บาท)</label>
-    <input class="fc" id="ret-deduct" type="number" value="0" min="0" max="${dep}" oninput="_updRetDeposit(${dep})">
-  </div>
-  <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-top:4px">
-    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>มัดจำทั้งหมด</span><span style="font-weight:700;color:var(--warning)">${fmtM(dep)}</span></div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>หักค่าเสียหาย</span><span id="ret-show-deduct" style="color:var(--danger)">0</span></div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1px solid var(--border);padding-top:8px"><span>คืนมัดจำ</span><span id="ret-show-return" style="color:var(--success)">${fmtM(dep)}</span></div>
-  </div>
-  <div class="fm" style="margin-top:10px"><label class="fl">หมายเหตุ</label><input class="fc" id="ret-note" placeholder="สภาพ, ความเสียหาย..."></div>
-  `,`<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
-  <button class="btn" style="background:var(--success);color:#fff" onclick="_confirmReturn('${id}',${dep})">✓ ยืนยันรับคืน</button>`);
-}
-
-function _updRetDeposit(dep){
-  const cond=document.getElementById('ret-cond')?.value;
-  const wrap=document.getElementById('ret-deduct-wrap');
-  if(wrap) wrap.style.display=cond==='damaged'?'block':'none';
-  let deduct=cond==='lost'?dep:cond==='damaged'?parseFloat(document.getElementById('ret-deduct')?.value||0):0;
-  const sd=document.getElementById('ret-show-deduct');
-  const sr=document.getElementById('ret-show-return');
-  if(sd) sd.textContent=fmtM(deduct);
-  if(sr) sr.textContent=fmtM(Math.max(0,dep-deduct));
-}
-
-async function _confirmReturn(id,dep){
-  const cond=document.getElementById('ret-cond')?.value;
-  let deduct=cond==='lost'?dep:cond==='damaged'?parseFloat(document.getElementById('ret-deduct')?.value||0):0;
-  await db.collection('rental_contracts').doc(id).update({
-    status:'returned',
-    actualReturnDate:document.getElementById('ret-date')?.value,
-    returnCondition:cond,depositDeduct:deduct,
-    depositReturned:Math.max(0,dep-deduct),
-    returnNote:document.getElementById('ret-note')?.value,
-    updatedAt:ts()
-  });
-  toast(`รับคืนสำเร็จ — คืนมัดจำ ${fmtM(Math.max(0,dep-deduct))} ✓`,'success');
-  closeModal();
-  await loadRentals();
-  _renderRentalPage();
-}
-
-function _showRentalReceipt(id){
-  const r=_rentals.find(x=>x.id===id);
-  if(!r) return;
-  const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
-  const fee=(r.items||[]).reduce((s,i)=>s+(i.rentalFee||0),0);
-  openModal('🧾 ใบรับมัดจำ — '+r.contractNo,`
-  <div style="background:#fff;color:#000;padding:24px;border-radius:8px;font-family:'Sarabun',sans-serif" id="r-receipt-print">
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:20px;font-weight:700">🏎️ Racing Garage</div>
-      <div style="font-size:13px;color:#666">ใบรับมัดจำการเช่าอุปกรณ์</div>
-      <div style="font-size:12px;color:#999">เลขที่: ${r.contractNo}</div>
-    </div>
-    <table style="width:100%;margin-bottom:12px">
-      <tr><td style="color:#666;width:100px;padding:3px 0">ผู้เช่า</td><td style="font-weight:700">${r.renterName}</td></tr>
-      <tr><td style="color:#666;padding:3px 0">โทรศัพท์</td><td>${r.renterPhone}</td></tr>
-      <tr><td style="color:#666;padding:3px 0">วันที่เช่า</td><td>${r.rentalDate}</td></tr>
-      <tr><td style="color:#666;padding:3px 0">วันที่คืน</td><td>${r.returnDate}</td></tr>
-      <tr><td style="color:#666;padding:3px 0">ชำระมัดจำ</td><td>${r.depositPayMethod==='cash'?'💵 เงินสด':'📱 โอนเงิน'}</td></tr>
-    </table>
-    <table style="width:100%;border-collapse:collapse;border-top:1px solid #ddd">
-      <thead><tr style="background:#f5f5f5">
-        <th style="padding:6px;text-align:left;font-size:12px">อุปกรณ์</th>
-        <th style="padding:6px;text-align:center;font-size:12px">จำนวน</th>
-        <th style="padding:6px;text-align:right;font-size:12px">ค่าเช่า</th>
-        <th style="padding:6px;text-align:right;font-size:12px">มัดจำ</th>
-      </tr></thead>
-      <tbody>${(r.items||[]).map(i=>`<tr>
-        <td style="padding:5px 6px">${i.name}</td>
-        <td style="padding:5px 6px;text-align:center">${i.qty}</td>
-        <td style="padding:5px 6px;text-align:right">${fmtM(i.rentalFee)}</td>
-        <td style="padding:5px 6px;text-align:right;font-weight:700">${fmtM(i.deposit)}</td>
-      </tr>`).join('')}</tbody>
-    </table>
-    <div style="border-top:2px solid #000;margin-top:10px;padding-top:8px">
-      <div style="display:flex;justify-content:space-between">ค่าเช่ารวม <span>${fmtM(fee)}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700">มัดจำรวม <span>${fmtM(dep)}</span></div>
-    </div>
-    ${r.status==='returned'?`<div style="background:#d1fae5;border-radius:8px;padding:10px;margin-top:10px;text-align:center">
-      <div style="font-weight:700;color:#065f46">✅ คืนของแล้ว — คืนมัดจำ ${fmtM(r.depositReturned)}</div>
-    </div>`:''}
-    <div style="text-align:center;margin-top:14px;font-size:11px;color:#999">ขอบคุณที่ใช้บริการ — Racing Garage</div>
-  </div>
-  `,`<button class="btn btn-gray" onclick="closeModal()">ปิด</button>
-  <button class="btn btn-primary" onclick="window.print()">🖨️ พิมพ์</button>`);
-}
-
-function _copyLineMsg(id){
-  const r=_rentals.find(x=>x.id===id);
-  if(!r) return;
-  const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
-  const msg=`🏎️ Racing Garage — แจ้งเตือนการเช่าอุปกรณ์\n\nสวัสดีคุณ ${r.renterName} ครับ/ค่ะ\n\n📋 เลขที่: ${r.contractNo}\n📅 วันเช่า: ${r.rentalDate}\n📅 วันคืน: ${r.returnDate}\n\nอุปกรณ์:\n${(r.items||[]).map(i=>`  • ${i.name} x${i.qty}`).join('\n')}\n\n💰 มัดจำ: ${fmtM(dep)} (${r.depositPayMethod==='cash'?'เงินสด':'โอนเงิน'})\n\nกรุณานำอุปกรณ์มาคืนตามวันที่นะครับ/ค่ะ 🙏\n— Racing Garage`;
-  navigator.clipboard?.writeText(msg).then(()=>toast('Copy ข้อความสำเร็จ — วางใน Line ได้เลย ✓','success'))
-  .catch(()=>{
-    openModal('📱 ข้อความสำหรับ Line',`<textarea readonly style="width:100%;height:280px;font-family:'Courier New',monospace;font-size:12px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);resize:none">${msg}</textarea>`,
-    `<button class="btn btn-gray" onclick="closeModal()">ปิด</button><button class="btn btn-primary" onclick="this.previousElementSibling.previousElementSibling.select();document.execCommand('copy');this.textContent='✓ Copied!'">📋 Copy</button>`);
-  });
-}
-
-function _showRentalItemModal(){
-  openModal('📦 จัดการอุปกรณ์ให้เช่า',`
-  <div style="margin-bottom:12px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <input class="fc" id="ni-name" placeholder="ชื่ออุปกรณ์ *">
-      <select class="fc" id="ni-cat">
-        <option value="ชุดแข่ง">🏁 ชุดแข่ง</option>
-        <option value="ถุงมือ">🧤 ถุงมือ</option>
-        <option value="รองเท้า">👟 รองเท้า</option>
-        <option value="หมวกกันน็อค">🪖 หมวกกันน็อค</option>
-        <option value="HANS">🔒 HANS</option>
-        <option value="อื่นๆ">📦 อื่นๆ</option>
-      </select>
-      <input class="fc" id="ni-fee" type="number" placeholder="ค่าเช่า/ครั้ง">
-      <input class="fc" id="ni-dep" type="number" placeholder="มัดจำ">
-      <input class="fc" id="ni-qty" type="number" value="1" min="1" placeholder="จำนวน">
-      <input class="fc" id="ni-note" placeholder="หมายเหตุ">
-    </div>
-    <button class="btn btn-primary btn-sm" onclick="_saveRentalItem()">+ เพิ่มอุปกรณ์</button>
-  </div>
-  <div style="background:var(--surface2);border-radius:8px;padding:10px;max-height:280px;overflow-y:auto">
-    ${_rentalItems.length===0?'<div style="color:var(--muted);text-align:center;padding:20px">ยังไม่มีอุปกรณ์</div>':
-    _rentalItems.map(it=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border)">
-      <span style="flex:1;font-weight:600">${it.name}</span>
-      <span style="font-size:12px;color:var(--muted)">${it.category}</span>
-      <span style="font-size:12px">เช่า ${fmtM(it.rentalFee)}</span>
-      <span style="font-size:12px;color:var(--warning)">มัดจำ ${fmtM(it.deposit)}</span>
-      <span style="font-size:12px;color:var(--muted)">x${it.qty||1}</span>
-      <button class="btn btn-xs btn-danger" onclick="_deleteRentalItem('${it.id}')">ลบ</button>
-    </div>`).join('')}
-  </div>
-  `,`<button class="btn btn-gray" onclick="closeModal()">ปิด</button>`);
-}
-
-async function _saveRentalItem(){
-  const name=document.getElementById('ni-name')?.value?.trim();
-  if(!name){toast('กรุณากรอกชื่ออุปกรณ์','danger');return;}
-  await db.collection('rental_items').add({
-    name,
-    category:document.getElementById('ni-cat')?.value,
-    rentalFee:parseFloat(document.getElementById('ni-fee')?.value||0),
-    deposit:parseFloat(document.getElementById('ni-dep')?.value||0),
-    qty:parseInt(document.getElementById('ni-qty')?.value||1),
-    note:document.getElementById('ni-note')?.value,
-    createdAt:ts()
-  });
-  toast('เพิ่มอุปกรณ์แล้ว ✓','success');
-  await loadRentals();
-  closeModal();
-  _showRentalItemModal();
-}
-
-async function _deleteRentalItem(id){
-  if(!confirm('ลบอุปกรณ์นี้?')) return;
-  await db.collection('rental_items').doc(id).delete();
-  toast('ลบแล้ว','info');
-  await loadRentals();
-  closeModal();
-  _showRentalItemModal();
-}
-
-async function _deleteRental(id){
-  if(!confirm('ลบรายการเช่านี้?')) return;
-  await db.collection('rental_contracts').doc(id).delete();
-  toast('ลบแล้ว','info');
-  await loadRentals();
-  _renderRentalPage();
-}
-// ══════════════════════════════════════════════════════════
-
 function renderPOS(){
   const q=S._posQ||'';
   const posCat=S._posCat||'all';
@@ -1689,12 +1318,11 @@ function renderSales(){
   </div>
 
   <!-- Stats -->
-  <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:1rem">
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1rem">
     ${sc('รายการทั้งหมด',`<div style="font-size:13px">${posCount} POS + ${ordCount} Online</div><div style="font-size:22px;font-weight:700">${all.length} บิล</div>`,'#0ea5e9')}
-    ${sc('รายได้ขายรวม',''+fmt(totalRev),'#10b981',df||dt?'ช่วงที่เลือก':'ทั้งหมด')}
-    ${(()=>{const rRev=_rentals.filter(r=>r.status==='returned').reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);return sc('รายได้จากเช่า',''+fmt(rRev),'#e85d04',_rentals.filter(r=>r.status==='returned').length+' สัญญา');})()}
-    ${(()=>{const rRev=_rentals.filter(r=>r.status==='returned').reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);return sc('รายได้รวมทั้งหมด',''+fmt(totalRev+rRev),'#7c3aed','ขาย + เช่า');})()}
-    ${sc('กำไรขั้นต้น',''+fmt(totalProfit),'#7c3aed',fmtM(totalSub?totalProfit/totalSub*100:0)+'%')}
+    ${sc('รายได้รวม',''+fmt(totalRev),'#10b981',df||dt?'ช่วงที่เลือก':'ทั้งหมด')}
+    ${sc('กำไรขั้นต้น',''+fmt(totalProfit),'#7c3aed','จาก POS เท่านั้น')}
+    ${sc('อัตรากำไร',fmtM(totalSub?totalProfit/totalSub*100:0)+'%','#f59e0b')}
   </div>
 
   <!-- Table -->
