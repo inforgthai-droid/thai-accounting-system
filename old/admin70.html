@@ -2737,10 +2737,7 @@ function renderStock(){
 
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">สต็อกสินค้า</div>
-  <div style="display:flex;gap:8px">
   <button class="btn btn-gray btn-sm" onclick="printPage()">พิมพ์รายงานสต็อก</button>
-  <button class="btn btn-sm" style="background:#e85d04;color:#fff" onclick="exportDemonTweeksWord()">📋 Export SKU หมด → Word</button>
-  </div>
   </div>
   <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
     ${sc('สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9')}
@@ -2831,95 +2828,6 @@ function _updateStockTable(){
   });
   wrap.innerHTML=tbl(['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 }
-
-async function exportDemonTweeksWord(){
-  // หาสินค้าหมดสต็อก และมี SKU Demon Tweeks
-  const outOfStock = S.products.filter(p => (p.stock||0) <= 0 && p.skuDemonTweeks);
-  if(!outOfStock.length){
-    toast('ไม่พบสินค้าหมดที่มี SKU Demon Tweeks','info');
-    return;
-  }
-
-  // จัดกลุ่มตามหมวดหมู่
-  const grouped = {};
-  outOfStock.forEach(p => {
-    const cat = p.category || 'ไม่มีหมวด';
-    if(!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(p);
-  });
-
-  // สร้าง Word content โดยใช้ docx library
-  toast('กำลังสร้างไฟล์ Word...','info');
-
-  // load docx.js จาก CDN ถ้ายังไม่มี
-  if(typeof docx === 'undefined'){
-    await new Promise((res,rej)=>{
-      const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js';
-      s.onload=res; s.onerror=rej;
-      document.head.appendChild(s);
-    });
-  }
-
-  const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = docx;
-
-  const children = [];
-
-  // หัวเรื่อง
-  children.push(new Paragraph({
-    children:[new TextRun({text:'SKU Demon Tweeks — สินค้าหมดสต็อก',bold:true,size:32,font:'Arial'})],
-    spacing:{after:200}
-  }));
-  children.push(new Paragraph({
-    children:[new TextRun({text:'วันที่ออก: '+new Date().toLocaleDateString('th-TH'),size:22,font:'Arial',color:'888888'})],
-    spacing:{after:400}
-  }));
-
-  // เรียงหมวดหมู่ตามชื่อ
-  const sortedCats = Object.keys(grouped).sort();
-
-  sortedCats.forEach(cat => {
-    // หัวหมวด
-    children.push(new Paragraph({
-      children:[new TextRun({text:cat,bold:true,size:26,font:'Arial',color:'C2410C'})],
-      spacing:{before:300,after:120},
-      border:{bottom:{style:'single',size:6,color:'E85D04',space:1}}
-    }));
-
-    // SKU แต่ละตัว
-    grouped[cat].forEach(p => {
-      children.push(new Paragraph({
-        children:[new TextRun({text:p.skuDemonTweeks,size:24,font:'Courier New'})],
-        spacing:{after:60}
-      }));
-    });
-
-    // บรรทัดว่าง
-    children.push(new Paragraph({children:[new TextRun('')],spacing:{after:160}}));
-  });
-
-  const doc = new Document({
-    sections:[{
-      properties:{
-        page:{
-          size:{width:11906,height:16838},
-          margin:{top:1440,right:1440,bottom:1440,left:1440}
-        }
-      },
-      children
-    }]
-  });
-
-  const blob = await Packer.toBlob(doc);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'DemonTweeks_SKU_'+new Date().toISOString().slice(0,10)+'.docx';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('ดาวน์โหลด Word สำเร็จ ✓','success');
-}
-
 async function saveSkuDemon(id,val){
   await updateFB('products',id,{skuDemonTweeks:val.trim()});
   const p=S.products.find(x=>x.id===id);
