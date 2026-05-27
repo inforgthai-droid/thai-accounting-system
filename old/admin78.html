@@ -832,8 +832,7 @@ function _showRentalReceipt(id){
     <div style="text-align:center;margin-top:14px;font-size:11px;color:#999">ขอบคุณที่ใช้บริการ — Racing Garage</div>
   </div>
   `,`<button class="btn btn-gray" onclick="closeModal()">ปิด</button>
-  <button class="btn btn-primary" onclick="_printRentalReceipt('${r.id}')">🖨️ พิมพ์ A5</button>
-  <button class="btn" style="background:#1a3a5c;color:#fff" onclick="_printRental58('${r.id}')">🖨️ 58mm</button>`);
+  <button class="btn btn-primary" onclick="_printRentalReceipt('${r.id}')">🖨️ พิมพ์</button>`);
 }
 
 function _printRentalReceipt(id){
@@ -898,113 +897,6 @@ function _printRentalReceipt(id){
   const w=window.open('','_blank','width=600,height=800');
   w.document.write(html);
   w.document.close();
-}
-
-
-function _printRental58(id){
-  const r=_rentals.find(x=>x.id===id);
-  if(!r) return;
-  const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
-  const fee=(r.items||[]).reduce((s,i)=>s+(i.rentalFee||0),0);
-  const shopUrl='https://www.racinggarage.net/';
-  const contractNo=r.contractNo||'';
-
-  const bodyHtml=`
-  <div style="text-align:center;padding-bottom:6px;border-bottom:1px dashed #000;margin-bottom:6px">
-    <div style="font-size:15px;font-weight:700;letter-spacing:.5px">RACING GARAGE</div>
-    <div style="font-size:9px;color:#555;margin-top:1px">29 ซอยรามอินทรา 39 แขวง 3 เขตบางเขน กทม 10220</div>
-    <div style="font-size:9px;color:#555">โทร: 089-140-0606</div>
-    <div style="font-size:11px;font-weight:700;margin-top:4px">ใบรับมัดจำเช่าอุปกรณ์</div>
-    <div style="font-size:9px;color:#888">RENTAL RECEIPT</div>
-  </div>
-  <table style="width:100%;font-size:10px;margin-bottom:6px">
-    <tr><td style="color:#555;width:45%">เลขที่</td><td style="font-weight:700">${contractNo}</td></tr>
-    <tr><td style="color:#555">วันที่เช่า</td><td>${r.rentalDate||'-'}</td></tr>
-    <tr><td style="color:#555">วันที่คืน</td><td style="font-weight:700;color:#c2410c">${r.returnDate||'-'}</td></tr>
-    <tr><td style="color:#555">ผู้เช่า</td><td style="font-weight:700">${r.renterName||'-'}</td></tr>
-    <tr><td style="color:#555">โทรศัพท์</td><td>${r.renterPhone||'-'}</td></tr>
-    <tr><td style="color:#555">ชำระมัดจำ</td><td>${r.depositPayMethod==='cash'?'เงินสด':'โอนเงิน'}</td></tr>
-    ${r.note?`<tr><td style="color:#555">หมายเหตุ</td><td>${r.note}</td></tr>`:''}
-  </table>
-  <div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:5px 0;margin-bottom:5px">
-    <div style="font-size:10px;font-weight:700;margin-bottom:3px">รายการอุปกรณ์</div>
-    ${(r.items||[]).map(i=>`
-    <div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:1px dotted #eee">
-      <div style="flex:1">
-        <div style="font-weight:600">${i.name}</div>
-        <div style="color:#666;font-size:9px">จำนวน x${i.qty}</div>
-      </div>
-      <div style="text-align:right;min-width:55px">
-        <div>เช่า ${fmtM(i.rentalFee)}</div>
-        <div style="font-weight:700;color:#c2410c">มัดจำ ${fmtM(i.deposit)}</div>
-      </div>
-    </div>`).join('')}
-  </div>
-  <table style="width:100%;font-size:11px;margin-bottom:6px">
-    <tr>
-      <td style="padding:2px 0">ค่าเช่ารวม</td>
-      <td style="text-align:right">${fmtM(fee)}</td>
-    </tr>
-    <tr style="border-top:1px solid #000">
-      <td style="padding:3px 0;font-size:13px;font-weight:700">มัดจำรวม</td>
-      <td style="text-align:right;font-size:13px;font-weight:700">${fmtM(dep)}</td>
-    </tr>
-    <tr><td colspan="2" style="font-size:9px;color:#888;padding-top:2px">
-      ${fmtTHWords(dep)}
-    </td></tr>
-  </table>
-  ${r.status==='returned'?`
-  <div style="text-align:center;background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:5px;margin-bottom:6px;font-size:10px">
-    <div style="font-weight:700;color:#166534">✅ คืนของแล้ว</div>
-    <div style="color:#15803d">คืนมัดจำ ${fmtM(r.depositReturned)} | ${r.actualReturnDate||''}</div>
-  </div>`:''}
-  <div style="text-align:center;margin-bottom:6px;font-size:9px;color:#666;border-top:1px dashed #ccc;padding-top:5px">
-    ขอบคุณที่ใช้บริการ / Thank you<br>
-    กรุณาเก็บใบนี้ไว้เป็นหลักฐาน
-  </div>
-  <div style="text-align:center;margin-top:4px;font-size:8px;color:#888;margin-bottom:4px">SCAN TO VERIFY RECEIPT</div>
-  <svg id="r-bc-print" style="display:block;margin:0 auto"></svg>
-  <div style="font-size:8px;color:#888;text-align:center;margin-top:2px">${contractNo}</div>
-  <div style="text-align:center;margin-top:6px;border-top:1px dashed #ccc;padding-top:5px">
-    <div style="font-size:8px;color:#888;margin-bottom:3px">SHOP ONLINE</div>
-    <div id="r-qr-print" style="display:flex;justify-content:center"></div>
-    <div style="font-size:8px;color:#888;margin-top:2px">www.racinggarage.net</div>
-  </div>`;
-
-  const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบเช่า '+contractNo+'</title>'
-    +'<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">'
-    +'<style>'
-    +'*{box-sizing:border-box;margin:0;padding:0}'
-    +'@page{size:58mm auto;margin:3mm}'
-    +'html,body{width:52mm;font-family:\'Sarabun\',sans-serif;font-size:11px;color:#000;background:#fff}'
-    +'table{width:100%;border-collapse:collapse}'
-    +'td{padding:1px 0;vertical-align:top}'
-    +'#r-qr-print img{display:block!important;margin:0 auto!important}'
-    +'#r-qr-print canvas{display:none!important}'
-    +'@media print{button{display:none!important}}'
-    +'</style></head><body>'
-    +bodyHtml
-    +'<scr'+'ipt src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></scr'+'ipt>'
-    +'<scr'+'ipt src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></scr'+'ipt>'
-    +'<scr'+'ipt>window.onload=function(){'
-    +'if(typeof JsBarcode!=="undefined"){try{JsBarcode("#r-bc-print","'+contractNo+'",{format:"CODE128",width:1.6,height:40,fontSize:0,textMargin:0,margin:2,background:"#fff",lineColor:"#000",displayValue:false});}catch(ex){}}'
-    +'var qw=document.getElementById("r-qr-print");'
-    +'if(qw&&typeof QRCode!=="undefined"){try{new QRCode(qw,{text:"'+shopUrl+'",width:100,height:100,colorDark:"#000",colorLight:"#fff",correctLevel:QRCode.CorrectLevel.M});}catch(ex){}}'
-    +'setTimeout(function(){window.print();},1000);'
-    +'}</scr'+'ipt>'
-    +'</body></html>';
-
-  const pw=window.open('','_r58','width=480,height=800,toolbar=0,menubar=0,location=0,scrollbars=1,resizable=1,left=200,top=50');
-  if(pw){pw.document.open();pw.document.write(html);pw.document.close();}
-  else{
-    const iframe=document.createElement('iframe');
-    iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:80mm;height:300mm;border:none';
-    document.body.appendChild(iframe);
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(html);
-    iframe.contentDocument.close();
-    setTimeout(()=>{iframe.contentWindow.focus();iframe.contentWindow.print();setTimeout(()=>iframe.remove(),3000);},1000);
-  }
 }
 
 function _copyLineMsg(id){
