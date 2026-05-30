@@ -6146,7 +6146,6 @@ async function loadShippingList(){
             <td style="padding:8px;font-size:11px;color:var(--muted)">${(r.shippedBy||'').split('@')[0]||'-'}</td>
             <td style="padding:8px">
               <button class="btn btn-primary btn-xs" onclick="viewShipping('${r.id}')">ดู</button>
-              <button class="btn btn-gray btn-xs" onclick="editShipping('${r.id}')">✏️ แก้ไข</button>
               <button class="btn btn-gray btn-xs" onclick="reprintShipping('${r.id}')">พิมพ์ซ้ำ</button>
             </td>
           </tr>`;
@@ -6251,51 +6250,6 @@ async function viewShipping(id){
   );
 }
 
-
-async function editShipping(id){
-  // ดึงข้อมูลจาก Firestore
-  const snap = await db.collection('shipping').doc(id).get();
-  if(!snap.exists){ toast('ไม่พบข้อมูล','danger'); return; }
-  const r = {id:snap.id,...snap.data()};
-
-  openModal('✏️ แก้ไขข้อมูลจัดส่ง — '+r.trackNo,`
-  <div style="background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted)">
-    Tracking No.: <span style="font-family:monospace;font-weight:700;color:var(--primary)">${r.trackNo||'-'}</span>
-  </div>
-  <div class="fm">
-    <label class="fl">ชื่อผู้รับ *</label>
-    <input class="fc" id="es-name" value="${(r.recipientName||'').replace(/"/g,'&quot;')}" placeholder="ชื่อ-นามสกุล">
-  </div>
-  <div class="fm">
-    <label class="fl">ที่อยู่ผู้รับ *</label>
-    <textarea class="fc" id="es-addr" rows="3" style="resize:vertical">${r.recipientAddr||''}</textarea>
-  </div>
-  <div class="fm">
-    <label class="fl">เบอร์โทรศัพท์</label>
-    <input class="fc" id="es-phone" value="${(r.recipientPhone||'').replace(/"/g,'&quot;')}" placeholder="08x-xxx-xxxx">
-  </div>
-  `,`
-  <button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
-  <button class="btn btn-primary" onclick="saveEditShipping('${id}')">💾 บันทึก</button>
-  `);
-}
-
-async function saveEditShipping(id){
-  const name = document.getElementById('es-name')?.value?.trim();
-  const addr = document.getElementById('es-addr')?.value?.trim();
-  const phone = document.getElementById('es-phone')?.value?.trim();
-  if(!name||!addr){ toast('กรุณากรอกชื่อและที่อยู่','danger'); return; }
-  await db.collection('shipping').doc(id).update({
-    recipientName: name,
-    recipientAddr: addr,
-    recipientPhone: phone,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  toast('บันทึกข้อมูลจัดส่งสำเร็จ ✓','success');
-  closeModal();
-  loadShippingList();
-}
-
 async function reprintShipping(id){
   const doc=await db.collection('shipping').doc(id).get();
   if(!doc.exists){toast('ไม่พบข้อมูล','error');return;}
@@ -6312,11 +6266,9 @@ async function reprintShipping(id){
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-@page{size:97mm auto;margin:0}
-html,body{width:89mm;font-family:'Sarabun',sans-serif;font-size:12px;color:#000;background:#fff;padding:4mm;display:block;overflow:hidden}
-html{height:auto!important}
-body{height:auto!important;page-break-after:avoid!important}
-.wrap{width:89mm;border:1.5px solid #000;page-break-inside:avoid;page-break-after:avoid}
+@page{size:97mm 147mm;margin:4mm}
+html,body{width:89mm;font-family:'Sarabun',sans-serif;font-size:12px;color:#000;background:#fff}
+.wrap{width:89mm;border:1.5px solid #000}
 .hdr{background:#1a1a2e;color:#fff;padding:5px 8px;display:flex;align-items:center;justify-content:space-between}
 .hdr-logo{font-size:15px;font-weight:800}.hdr-logo span{color:#e8172c}
 .sec{padding:6px 8px;border-bottom:1px solid #ddd}
@@ -6472,11 +6424,9 @@ async function printShippingLabel(){
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-@page{size:97mm auto;margin:0}
-html,body{width:89mm;font-family:'Sarabun',sans-serif;font-size:12px;color:#000;background:#fff;padding:4mm;display:block;overflow:hidden}
-html{height:auto!important}
-body{height:auto!important;page-break-after:avoid!important}
-.wrap{width:89mm;border:1.5px solid #000;padding:0;page-break-inside:avoid;page-break-after:avoid}
+@page{size:97mm 147mm;margin:4mm}
+html,body{width:89mm;font-family:'Sarabun',sans-serif;font-size:12px;color:#000;background:#fff}
+.wrap{width:89mm;border:1.5px solid #000;padding:0}
 .hdr{background:#1a1a2e;color:#fff;padding:5px 8px;display:flex;align-items:center;justify-content:space-between}
 .hdr-logo{font-size:15px;font-weight:800;letter-spacing:.5px}
 .hdr-logo span{color:#e8172c}
