@@ -3490,24 +3490,7 @@ function renderPurchases(){
       :'<div style="color:var(--muted);font-size:13px">ยังไม่มีสินค้า</div>'}
       </div>
     </div>
-    <!-- เอกสารแนบ -->
-    <div style="border:1px solid var(--border);border-radius:8px;padding:.8rem;margin-bottom:.8rem;margin-top:.6rem">
-      <div style="font-weight:600;color:var(--accent);margin-bottom:10px">📎 เอกสารแนบ (ไม่บังคับ)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px" id="po-new-docs">
-        ${['invoice|🧾 INVOICE|#7c3aed','shipping|📦 SHIPPING|#0ea5e9','tax|🏦 TAX INVOICE|#10b981'].map(d=>{
-          const[key,label,color]=d.split('|');
-          return`<div style="background:var(--surface2);border:1.5px dashed var(--border);border-radius:8px;padding:10px;text-align:center" id="new-doc-card-${key}">
-            <div style="font-size:11px;font-weight:700;color:${color};margin-bottom:6px">${label}</div>
-            <div style="font-size:10px;color:var(--muted);margin-bottom:6px" id="new-doc-name-${key}">ยังไม่มีไฟล์</div>
-            <label style="cursor:pointer">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="previewNewPODoc('${key}',this)">
-              <span class="btn btn-gray btn-xs" style="display:inline-flex">📤 เลือกไฟล์</span>
-            </label>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-    <button class="btn" id="pi-save-btn" onclick="savePurchase()">📥 บันทึก PO</button>
+    <button class="btn" id="pi-save-btn" onclick="savePurchase()" ${PI.length?'':'disabled'}>📥 บันทึกการซื้อเข้า</button>
   </div>
   <div class="sec-title">ประวัติการซื้อทั้งหมด</div>
   ${tbl(['เลขที่','วันที่','ซัพพลายเออร์','รายการ','ยอดรวม','สถานะ',''],rows,'ยังไม่มีประวัติ')}`;
@@ -3598,23 +3581,8 @@ function _updatePIList(){
   </table></div>
   <div style="text-align:right;font-weight:700;font-size:15px;margin-top:8px;color:var(--primary)">รวม: ${fmt(total)}</div>`;
 }
-
-// ===== NEW PO DOC PREVIEW =====
-window._newPODocs = {};
-function previewNewPODoc(key, input){
-  const file = input.files[0];
-  if(!file) return;
-  if(file.size > 5*1024*1024){ toast('ไฟล์ใหญ่เกิน 5MB','danger'); return; }
-  window._newPODocs[key] = file;
-  const nameEl = document.getElementById('new-doc-name-'+key);
-  const card = document.getElementById('new-doc-card-'+key);
-  const colors = {invoice:'#7c3aed',shipping:'#0ea5e9',tax:'#10b981'};
-  if(nameEl) nameEl.textContent = file.name;
-  if(card) card.style.borderColor = colors[key]||'var(--accent)';
-  toast(key.toUpperCase()+' พร้อมอัปโหลด ✓','success');
-}
-
 async function savePurchase(){
+  if(!PI.length)return;
   const supId=document.getElementById('purSup').value;
   const sup=S.suppliers.find(x=>x.id===supId);
   const total=PI.reduce((a,b)=>a+b.qty*b.cost,0);
@@ -3628,20 +3596,7 @@ async function savePurchase(){
     await batch.commit();
     S.purchases.push({id:pRef.id,...data});
     PI.forEach(item=>{const p=S.products.find(x=>x.id===item.pid);if(p){p.stock+=item.qty;p.cost=item.cost;}});
-    // อัปโหลดเอกสารแนบ (ถ้ามี)
-    const docFiles = window._newPODocs||{};
-    const docKeys = Object.keys(docFiles).filter(k=>docFiles[k]);
-    if(docKeys.length){
-      const docData = {};
-      for(const key of docKeys){
-        const file = docFiles[key];
-        const base64 = await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});
-        docData[key]=base64; docData[key+'_name']=file.name; docData[key+'_type']=file.type; docData[key+'_size']=file.size; docData[key+'_at']=ts();
-      }
-      await db.collection('purchase_docs').doc(pRef.id).set(docData,{merge:true});
-    }
-    window._newPODocs={};
-    PI=[];renderPage('purchases');toast('บันทึก '+docNo+' สำเร็จ ✓'+(docKeys.length?' (พร้อมเอกสาร '+docKeys.length+' ไฟล์)':''),'success');
+    PI=[];renderPage('purchases');toast('บันทึก '+docNo+' สำเร็จ ✓','success');
   }catch(e){toast('Error: '+e.message,'error');}
 }
 function viewPurchase(id){
