@@ -3456,7 +3456,7 @@ function renderPurchases(){
   </tr>`).join('');
   const total=PI.reduce((a,b)=>a+b.qty*b.cost,0);
   const rows=[...S.purchases].reverse().map(p=>[p.docNo||'',p.date||'',p.supplierName||'-',p.items?p.items.length+' รายการ':'-',''+fmt(p.total),badge('เสร็จสิ้น','green'),
-    `<button class="btn btn-primary btn-xs" onclick="viewPurchase('${p.id}')">ดู</button> <button class="btn btn-gray btn-xs" onclick="managePODocs('${p.id}','${p.docNo||''}')">📎 เอกสาร</button> <button class="btn btn-danger btn-xs" onclick="deletePurchase('${p.id}')">ลบ</button>`]);
+    `<button class="btn btn-primary btn-xs" onclick="viewPurchase('${p.id}')">ดู</button> <button class="btn btn-danger btn-xs" onclick="deletePurchase('${p.id}')">ลบ</button>`]);
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">🚚 ซื้อสินค้าเข้า</div>
   <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ประวัติการซื้อ</button>
@@ -3606,109 +3606,8 @@ function viewPurchase(id){
     <div><span class="fl">เลขที่</span><b>${p.docNo}</b></div><div><span class="fl">วันที่</span><b>${p.date}</b></div>
     <div><span class="fl">ซัพพลายเออร์</span><b>${p.supplierName}</b></div><div><span class="fl">รวม</span><b style="color:var(--primary)">${fmt(p.total)}</b></div></div>
     <div class="tbl"><table><thead><tr><th style="text-align:left">#</th><th style="text-align:left">รหัส</th><th style="text-align:left">สินค้า</th><th>จำนวน</th><th>ราคาต้นทุน</th><th>รวม</th></tr></thead><tbody>${rows}</tbody></table></div>`,
-  `<button class="btn btn-gray" onclick="managePODocs('${p.id}','${p.docNo||''}')">📎 เอกสาร</button><button class="btn btn-primary" onclick="closeModal()">ปิด</button>`);
+  `<button class="btn btn-primary" onclick="closeModal()">ปิด</button>`);
 }
-
-// ===== PO DOCUMENTS =====
-async function managePODocs(poId, docNo){
-  // โหลด docs ที่มีอยู่จาก Firestore
-  let docs = {};
-  try {
-    const snap = await db.collection('purchase_docs').doc(poId).get();
-    if(snap.exists) docs = snap.data();
-  } catch(e){}
-
-  function docCard(key, label, icon, color){
-    const hasFile = docs[key+'_name'];
-    return `<div style="background:var(--surface);border:1.5px solid ${hasFile?color:'var(--border)'};border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:20px">${icon}</span>
-        <div>
-          <div style="font-weight:700;font-size:13px">${label}</div>
-          <div style="font-size:11px;color:var(--muted)">${hasFile?docs[key+'_name']:'ยังไม่มีไฟล์'}</div>
-        </div>
-        ${hasFile?`<span style="margin-left:auto;background:${color};color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px">✓ มีไฟล์</span>`:''}
-      </div>
-      <div style="display:flex;gap:6px">
-        <label style="flex:1;cursor:pointer">
-          <input type="file" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="uploadPODoc('${poId}','${key}',this,'${docNo}')">
-          <span class="btn btn-gray btn-sm" style="width:100%;justify-content:center;display:flex">📤 ${hasFile?'เปลี่ยนไฟล์':'อัปโหลด'}</span>
-        </label>
-        ${hasFile?`<button class="btn btn-sm" style="background:${color};color:#fff;flex:1" onclick="downloadPODoc('${poId}','${key}')">📥 ดาวน์โหลด</button>`:''}
-      </div>
-    </div>`;
-  }
-
-  openModal(`📎 เอกสาร PO — ${docNo}`,`
-  <div style="display:grid;grid-template-columns:1fr;gap:12px" id="po-docs-grid">
-    ${docCard('invoice','INVOICE','🧾','#7c3aed')}
-    ${docCard('shipping','SHIPPING','📦','#0ea5e9')}
-    ${docCard('tax','TAX INVOICE','🏦','#10b981')}
-  </div>
-  <div id="po-upload-progress" style="display:none;margin-top:10px;text-align:center;color:var(--muted);font-size:13px">
-    ⏳ กำลังอัปโหลด...
-  </div>
-  `,`<button class="btn btn-gray" onclick="closeModal()">ปิด</button>`);
-}
-
-async function uploadPODoc(poId, key, input, docNo){
-  const file = input.files[0];
-  if(!file) return;
-  if(file.size > 5*1024*1024){ toast('ไฟล์ใหญ่เกิน 5MB','danger'); return; }
-
-  // แสดง progress
-  const prog = document.getElementById('po-upload-progress');
-  if(prog) prog.style.display='block';
-
-  try {
-    // แปลงเป็น base64
-    const base64 = await new Promise((res,rej)=>{
-      const r = new FileReader();
-      r.onload = ()=>res(r.result);
-      r.onerror = rej;
-      r.readAsDataURL(file);
-    });
-
-    // บันทึกลง Firestore
-    await db.collection('purchase_docs').doc(poId).set({
-      [key]: base64,
-      [key+'_name']: file.name,
-      [key+'_type']: file.type,
-      [key+'_size']: file.size,
-      [key+'_at']: ts()
-    }, {merge: true});
-
-    toast(`อัปโหลด ${key.toUpperCase()} สำเร็จ ✓`, 'success');
-    if(prog) prog.style.display='none';
-
-    // refresh modal
-    managePODocs(poId, docNo);
-  } catch(e){
-    toast('อัปโหลดล้มเหลว: '+e.message, 'danger');
-    if(prog) prog.style.display='none';
-  }
-}
-
-async function downloadPODoc(poId, key){
-  try {
-    const snap = await db.collection('purchase_docs').doc(poId).get();
-    if(!snap.exists){ toast('ไม่พบไฟล์','danger'); return; }
-    const data = snap.data();
-    const base64 = data[key];
-    const name = data[key+'_name'] || key+'.pdf';
-    if(!base64){ toast('ไม่พบไฟล์','danger'); return; }
-
-    // สร้าง download link
-    const a = document.createElement('a');
-    a.href = base64;
-    a.download = name;
-    a.click();
-    toast('ดาวน์โหลด '+name+' แล้ว ✓','success');
-  } catch(e){
-    toast('ดาวน์โหลดล้มเหลว: '+e.message,'danger');
-  }
-}
-
 async function deletePurchase(id){if(!confirm('ลบใบสั่งซื้อ? (สต็อกจะไม่ถูกคืน)'))return;await deleteFB('purchases',id);S.purchases=S.purchases.filter(x=>x.id!==id);renderPage('purchases');toast('ลบแล้ว','info');}
 
 // ===== SUPPLIERS =====
