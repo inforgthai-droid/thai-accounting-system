@@ -1211,15 +1211,6 @@ function renderPOS(){
         <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>${fmt(total)}</span></div>
         <div class="pos-row" style="color:#7c3aed;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>${fmt(afterDisc-totalCost)}</span></div>
         <div style="margin-bottom:8px">
-          <label class="fl">วันที่ขาย</label>
-          <input type="date" class="fc" id="pos-sale-date"
-            value="${S.posSaleDate||todayISO()}"
-            min="${(()=>{const d=new Date();d.setFullYear(d.getFullYear()-20);return d.toISOString().split('T')[0];})()} "
-            max="${(()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toISOString().split('T')[0];})()} "
-            onchange="S.posSaleDate=this.value"
-            style="font-size:13px;font-family:'Sarabun',sans-serif">
-        </div>
-        <div style="margin-bottom:8px">
           <label class="fl">ลูกค้า / หมายเหตุ</label>
           <input class="fc" value="${S.posNote}" onchange="S.posNote=this.value" placeholder="ลูกค้าทั่วไป">
         </div>
@@ -1340,15 +1331,6 @@ function updatePOSCart(){
     <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>${fmt(total)}</span></div>
     <div class="pos-row" style="color:#7c3aed;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>${fmt(afterDisc-totalCost)}</span></div>
     <div style="margin-bottom:8px">
-      <label class="fl">วันที่ขาย</label>
-      <input type="date" class="fc" id="pos-sale-date-2"
-        value="${S.posSaleDate||todayISO()}"
-        min="${(()=>{const d=new Date();d.setFullYear(d.getFullYear()-20);return d.toISOString().split('T')[0];})()} "
-        max="${(()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toISOString().split('T')[0];})()} "
-        onchange="S.posSaleDate=this.value;const o=document.getElementById('pos-sale-date');if(o)o.value=this.value;"
-        style="font-size:13px;font-family:'Sarabun',sans-serif">
-    </div>
-    <div style="margin-bottom:8px">
       <label class="fl">ลูกค้า / หมายเหตุ</label>
       <input class="fc" value="${S.posNote}" onchange="S.posNote=this.value" placeholder="ลูกค้าทั่วไป">
     </div>
@@ -1374,8 +1356,7 @@ async function checkout(){
     else{vatAmt=Math.round(afterDisc*vatR/100);total=afterDisc+vatAmt;}
   }
   const docNo=await nextNo('POS','sales');
-  const saleDate=document.getElementById('pos-sale-date')?.value||S.posSaleDate||todayISO();
-  const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',
+  const saleData={docNo,date:todayISO(),customerName:S.posNote||'ลูกค้าทั่วไป',
     items:S.cart.map(x=>({pid:x.pid,code:x.code,name:x.name,unit:x.unit,price:x.price,cost:x.cost,qty:x.qty,subtotal:x.price*x.qty})),
     subtotal:sub,discount:discAmt,vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total,totalCost,profit:afterDisc-totalCost};
   try{
