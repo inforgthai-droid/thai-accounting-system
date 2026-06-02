@@ -3471,8 +3471,7 @@ function renderStock(){
   const rows=list.map(p=>{
     const st=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
     const sc2=p.stock<=0?'red':p.stock<=(p.minStock||5)?'amber':'green';
-    const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border)" onerror="this.style.display='none'">`:''
-    return[`<div>${p.code||''}</div>${imgHtml}`,p.name,p.category||'-',p.unit||'-',
+    return[p.code,p.name,p.category||'-',p.unit||'-',
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
       p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
       `<input type="text" value="${p.skuDemonTweeks||''}" placeholder="กรอก SKU"
@@ -3567,8 +3566,7 @@ function _updateStockTable(){
   const rows=list.map(p=>{
     const st=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
     const sc2=p.stock<=0?'red':p.stock<=(p.minStock||5)?'amber':'green';
-    const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border)" onerror="this.style.display='none'">`:''
-    return[`<div>${p.code||''}</div>${imgHtml}`,p.name,p.category||'-',p.unit||'-',
+    return[p.code,p.name,p.category||'-',p.unit||'-',
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
       p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
       `<input type="text" value="${p.skuDemonTweeks||''}" placeholder="กรอก SKU"
