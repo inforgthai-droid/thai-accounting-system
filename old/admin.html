@@ -3479,7 +3479,7 @@ function renderStock(){
         onchange="saveSkuDemon('${p.id}',this.value)"
         onclick="this.select()">`,
       badge(st,sc2),
-      `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button> <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>`];
+      `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button>`];
   });
 
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
@@ -3574,7 +3574,7 @@ function _updateStockTable(){
         onchange="saveSkuDemon('${p.id}',this.value)"
         onclick="this.select()">`,
       badge(st,sc2),
-      `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button> <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>`];
+      `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button>`];
   });
   wrap.innerHTML=tbl(['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 }
@@ -3634,15 +3634,6 @@ async function saveSkuDemon(id,val){
   if(p) p.skuDemonTweeks=val.trim();
   toast('บันทึก SKU แล้ว ✓','success');
 }
-
-async function deleteProductFromStock(id, name){
-  if(!confirm('ลบสินค้า "'+name+'" ออกจากระบบ?\n\nการลบจะไม่สามารถกู้คืนได้')) return;
-  await db.collection('products').doc(id).delete();
-  S.products = S.products.filter(p=>p.id!==id);
-  toast('ลบสินค้าแล้ว ✓','success');
-  renderPage('stock');
-}
-
 function adjustStock(id){
   const p=S.products.find(x=>x.id===id);if(!p)return;
   openModal('🔧 ปรับสต็อก: '+p.name,`<div style="margin-bottom:1rem">สต็อกปัจจุบัน: <b style="font-size:16px;color:var(--primary)">${p.stock} ${p.unit}</b></div>
