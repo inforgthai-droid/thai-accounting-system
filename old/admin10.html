@@ -1613,16 +1613,19 @@ function printReceiptToWindow(sale, pw){
   *{box-sizing:border-box;margin:0;padding:0}
   @page{
     size:58mm auto;
-    margin:3mm 3mm;
+    margin:3mm;
   }
-  html,body{
+  html{
+    width:52mm;
+  }
+  body{
     width:52mm;
     font-family:'Sarabun',sans-serif;
     font-size:12px;
     color:#000;
     background:#fff;
+    padding:0;
   }
-  body{padding:0}
   .center{text-align:center}
   .bold{font-weight:700}
   .dash{border:none;border-top:1px dashed #000;margin:5px 0}
@@ -1634,6 +1637,7 @@ function printReceiptToWindow(sale, pw){
   @media print{
     html,body{width:52mm}
     button{display:none!important}
+    @page{margin:3mm}
   }
 </style>
 </head>
