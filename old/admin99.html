@@ -976,7 +976,8 @@ function _printRental58(id){
     +'<style>'
     +'*{box-sizing:border-box;margin:0;padding:0}'
     +'@page{size:58mm auto;margin:3mm}'
-    +'html,body{width:52mm;font-family:\'Sarabun\',sans-serif;font-size:11px;color:#000;background:#fff}'
+    +'html,body{width:52mm;font-family:\'Sarabun\',sans-serif;font-size:11px;color:#000;background:#fff;height:auto!important;page-break-after:avoid!important}'
+    +'*{page-break-inside:avoid}'
     +'table{width:100%;border-collapse:collapse}'
     +'td{padding:1px 0;vertical-align:top}'
     +'#r-qr-print img{display:block!important;margin:0 auto!important}'
@@ -1532,7 +1533,8 @@ function doPrint58(){
     +'<style>'
     +'*{box-sizing:border-box;margin:0;padding:0}'
     +'@page{size:58mm auto;margin:3mm}'
-    +'html,body{width:52mm;font-family:\'Sarabun\',sans-serif;font-size:12px;color:#000;background:#fff}'
+    +'html,body{width:52mm;font-family:\'Sarabun\',sans-serif;font-size:12px;color:#000;background:#fff;height:auto!important;page-break-after:avoid!important}'
+    +'*{page-break-inside:avoid}'
     +'table{width:100%;border-collapse:collapse}'
     +'td{padding:1px 0;vertical-align:top}'
     +'#qr-print img{display:block!important;margin:0 auto!important}'
@@ -1613,19 +1615,19 @@ function printReceiptToWindow(sale, pw){
   *{box-sizing:border-box;margin:0;padding:0}
   @page{
     size:58mm auto;
-    margin:3mm;
+    margin:3mm 3mm;
   }
-  html{
-    width:52mm;
-  }
-  body{
+  html,body{
     width:52mm;
     font-family:'Sarabun',sans-serif;
     font-size:12px;
     color:#000;
     background:#fff;
-    padding:0;
+    height:auto!important;
+    page-break-after:avoid!important;
   }
+  *{page-break-inside:avoid}
+  body{padding:0;page-break-after:avoid!important}
   .center{text-align:center}
   .bold{font-weight:700}
   .dash{border:none;border-top:1px dashed #000;margin:5px 0}
@@ -1637,7 +1639,6 @@ function printReceiptToWindow(sale, pw){
   @media print{
     html,body{width:52mm}
     button{display:none!important}
-    @page{margin:3mm}
   }
 </style>
 </head>
