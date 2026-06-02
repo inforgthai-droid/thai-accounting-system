@@ -3655,7 +3655,7 @@ function showImgZoom(url, name){
   document.body.appendChild(overlay);
 }
 
-async function deleteProductFromStock(id, name){
+function deleteProductFromStock(id, name){
   if(!confirm('ลบสินค้า "'+name+'" ออกจากระบบ?\n\nการลบจะไม่สามารถกู้คืนได้')) return;
   await db.collection('products').doc(id).delete();
   S.products = S.products.filter(p=>p.id!==id);
