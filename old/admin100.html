@@ -408,8 +408,8 @@ function renderPage(key){
 function renderDashboard(){
   const todSales=S.sales.filter(s=>s.date===todayISO());
   const todTotal=todSales.reduce((a,b)=>a+(b.total||0),0);
-  const allRev=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,b)=>a+(b.subtotal||0),0);
-  const allCost=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,b)=>a+(b.totalCost||0),0);
+  const allRev=S.sales.reduce((a,b)=>a+(b.subtotal||0),0);
+  const allCost=S.sales.reduce((a,b)=>a+(b.totalCost||0),0);
   const profit=allRev-allCost;
   const lowStock=S.products.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0);
   const outStock=S.products.filter(p=>p.stock<=0);
@@ -1794,15 +1794,13 @@ function renderSales(){
   if(df) all=all.filter(s=>(s.date||'')>=df);
   if(dt) all=all.filter(s=>(s.date||'')<=dt);
 
-  // ── Stats (ไม่นับบิลที่ยกเลิก) ──
-  const activeAll=all.filter(s=>s.status!=='ยกเลิก');
-  const totalRev=activeAll.reduce((a,b)=>a+(b.total||0),0);
-  const totalSub=activeAll.reduce((a,b)=>a+(b.subtotal||0),0);
-  const totalCost=activeAll.reduce((a,b)=>a+(b.totalCost||0),0);
+  // ── Stats ──
+  const totalRev=all.reduce((a,b)=>a+(b.total||0),0);
+  const totalSub=all.reduce((a,b)=>a+(b.subtotal||0),0);
+  const totalCost=all.reduce((a,b)=>a+(b.totalCost||0),0);
   const totalProfit=totalSub-totalCost;
-  const posCount=activeAll.filter(s=>s._ch==='pos').length;
-  const ordCount=activeAll.filter(s=>s._ch==='online').length;
-  const cancelCount=all.filter(s=>s.status==='ยกเลิก').length;
+  const posCount=all.filter(s=>s._ch==='pos').length;
+  const ordCount=all.filter(s=>s._ch==='online').length;
 
   // ── Table rows ──
   const rows=all.map(s=>{
@@ -1882,7 +1880,7 @@ function renderSales(){
 
   <!-- Stats -->
   <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:1rem">
-    ${sc('รายการทั้งหมด',`<div style="font-size:13px">${posCount} POS + ${ordCount} Online${cancelCount>0?` <span style="color:var(--danger);font-size:11px">(ยกเลิก ${cancelCount})</span>`:''}</div><div style="font-size:22px;font-weight:700">${posCount+ordCount} บิล</div>`,'#0ea5e9')}
+    ${sc('รายการทั้งหมด',`<div style="font-size:13px">${posCount} POS + ${ordCount} Online</div><div style="font-size:22px;font-weight:700">${all.length} บิล</div>`,'#0ea5e9')}
     ${sc('รายได้ขายรวม',''+fmt(totalRev),'#10b981',df||dt?'ช่วงที่เลือก':'ทั้งหมด')}
     ${(()=>{const rRev=_rentals.filter(r=>r.status==='returned').reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);return sc('รายได้จากเช่า',''+fmt(rRev),'#e85d04',_rentals.filter(r=>r.status==='returned').length+' สัญญา');})()}
     ${(()=>{const rRev=_rentals.filter(r=>r.status==='returned').reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);return sc('รายได้รวมทั้งหมด',''+fmt(totalRev+rRev),'#7c3aed','ขาย + เช่า');})()}
@@ -2285,7 +2283,7 @@ function printMonthlySales(){
   const dt = mon+'-'+String(lastDay).padStart(2,'0');
   const monthLabel = new Date(parseInt(yr), parseInt(mo)-1, 1).toLocaleDateString('th-TH',{year:'numeric',month:'long'});
 
-  let posRows=[...S.sales].filter(s=>s.status!=='ยกเลิก').map(s=>({...s,_ch:'pos'}));
+  let posRows=[...S.sales].map(s=>({...s,_ch:'pos'}));
   let ordRows=[...S.onlineOrders].filter(o=>o.status!=='ยกเลิก').map(o=>({
     docNo:o.orderNo||'-',date:o.date||todayISO(),customerName:o.customerName||'-',
     items:o.items||[],subtotal:o.subtotal||o.total||0,discount:o.discount||0,
@@ -2304,8 +2302,8 @@ function printMonthlySales(){
 
   if(!all.length){ toast('ไม่มีข้อมูลในเดือนนี้','info'); return; }
 
-  const totalRev=all.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+(s.total||0),0);
-  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+(s.subtotal||0)-(s.totalCost||0),0);
+  const totalRev=all.reduce((a,s)=>a+(s.total||0),0);
+  const totalProfit=all.filter(s=>s._ch==='pos').reduce((a,s)=>a+(s.subtotal||0)-(s.totalCost||0),0);
   const totalDisc=all.reduce((a,s)=>a+(s.discount||0),0);
   const c=S.company;
 
@@ -2434,7 +2432,7 @@ function printDailySales(){
   const c=S.company;
 
   // Filter same as current view
-  let posRows=[...S.sales].filter(s=>s.status!=='ยกเลิก').map(s=>({...s,_ch:'pos'}));
+  let posRows=[...S.sales].map(s=>({...s,_ch:'pos'}));
   let ordRows=[...S.onlineOrders].filter(o=>o.status!=='ยกเลิก').map(o=>({
     docNo:o.orderNo||'-',date:o.date||todayISO(),customerName:o.customerName||'-',
     items:o.items||[],subtotal:o.subtotal||o.total||0,discount:o.discount||0,
@@ -2446,8 +2444,8 @@ function printDailySales(){
   if(df) all=all.filter(s=>(s.date||'')>=df);
   if(dt) all=all.filter(s=>(s.date||'')<=dt);
 
-  const totalRev=all.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+(s.total||0),0);
-  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+(s.subtotal||0)-(s.totalCost||0),0);
+  const totalRev=all.reduce((a,s)=>a+(s.total||0),0);
+  const totalProfit=all.filter(s=>s._ch==='pos').reduce((a,s)=>a+(s.subtotal||0)-(s.totalCost||0),0);
   const dateLabel=df===dt?df:df+' ถึง '+dt;
 
   const html=`<!DOCTYPE html>
