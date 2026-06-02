@@ -3471,7 +3471,7 @@ function renderStock(){
   const rows=list.map(p=>{
     const st=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
     const sc2=p.stock<=0?'red':p.stock<=(p.minStock||5)?'amber':'green';
-    const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border);cursor:zoom-in" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`:''
+    const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border)" onerror="this.style.display='none'">`:''
     return[`<div>${p.code||''}</div>${imgHtml}`,p.name,p.category||'-',p.unit||'-',
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
       p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
@@ -3567,7 +3567,7 @@ function _updateStockTable(){
   const rows=list.map(p=>{
     const st=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
     const sc2=p.stock<=0?'red':p.stock<=(p.minStock||5)?'amber':'green';
-    const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border);cursor:zoom-in" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`:''
+    const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border)" onerror="this.style.display='none'">`:''
     return[`<div>${p.code||''}</div>${imgHtml}`,p.name,p.category||'-',p.unit||'-',
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
       p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
@@ -3637,25 +3637,7 @@ async function saveSkuDemon(id,val){
   toast('บันทึก SKU แล้ว ✓','success');
 }
 
-async 
-function showImgZoom(url, name){
-  url = decodeURIComponent(url);
-  name = decodeURIComponent(name);
-  // สร้าง overlay
-  const overlay = document.createElement('div');
-  overlay.id = 'img-zoom-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:zoom-out;animation:fadeIn .15s ease';
-  overlay.onclick = ()=>overlay.remove();
-  overlay.innerHTML = `
-    <div style="max-width:90vw;max-height:85vh;position:relative" onclick="event.stopPropagation()">
-      <img src="${url}" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.6);display:block">
-      <div style="text-align:center;margin-top:10px;color:#fff;font-size:13px;font-family:'Sarabun',sans-serif">${name}</div>
-      <button onclick="document.getElementById('img-zoom-overlay').remove()" style="position:absolute;top:-14px;right:-14px;background:#ef4444;border:none;border-radius:99px;width:28px;height:28px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
-    </div>`;
-  document.body.appendChild(overlay);
-}
-
-function deleteProductFromStock(id, name){
+async function deleteProductFromStock(id, name){
   if(!confirm('ลบสินค้า "'+name+'" ออกจากระบบ?\n\nการลบจะไม่สามารถกู้คืนได้')) return;
   await db.collection('products').doc(id).delete();
   S.products = S.products.filter(p=>p.id!==id);
