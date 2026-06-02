@@ -1815,7 +1815,6 @@ function renderSales(){
        +(!isCancelled?`<button class="btn btn-gray btn-xs" onclick="showPrintMenu('${s.id}',this)">พิมพ์ ▾</button> `
        +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `:'')
        +`<button class="btn btn-danger btn-xs" onclick="deleteSale('${s.id}')">ลบ</button>`
-       +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="confirmCancelSale('${s.id}')">ยกเลิก</button>`:'')
       :`<button class="btn btn-primary btn-xs" onclick="viewOnlineOrder('${s.id}')">ดู</button>`;
     return[
       `${chBadge}${cancelBadge} ${s.docNo||'-'}`,
@@ -1942,29 +1941,6 @@ function viewSale(id){
      <button class="btn btn-danger btn-sm" onclick="closeModal();cancelSale('${id}')">ยกเลิกการขาย</button>`:''}
      <button class="btn btn-gray btn-sm" onclick="closeModal()">ปิด</button>
    </div>`);
-}
-
-// ── ยกเลิกการขาย (confirm dialog) ──
-function confirmCancelSale(id){
-  const s = S.sales.find(x=>x.id===id);
-  if(!s) return;
-  const total = fmt(s.total||0);
-  const items = (s.items||[]).map(i=>i.name+' x'+i.qty).join(', ');
-  openModal('⚠️ ยืนยันยกเลิกการขาย',`
-  <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:14px">
-    <div style="font-size:15px;font-weight:700;margin-bottom:6px">${s.docNo}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">ลูกค้า: ${s.customerName||'ลูกค้าทั่วไป'}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">วันที่: ${s.date||'-'}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">สินค้า: ${items}</div>
-    <div style="font-size:15px;font-weight:700;color:var(--danger);margin-top:8px">ยอด: ${total}</div>
-  </div>
-  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b">
-    ⚠️ การยกเลิกจะ <b>คืนสต็อกสินค้าทั้งหมด</b> และทำเครื่องหมายบิลนี้ว่า "ยกเลิกแล้ว"
-  </div>
-  `,`
-  <button class="btn btn-gray" onclick="closeModal()">ปิด</button>
-  <button class="btn" style="background:#f59e0b;color:#fff" onclick="closeModal();cancelSale('${id}')">ยืนยันยกเลิก</button>
-  `);
 }
 
 // ── ยกเลิกการขาย ──
