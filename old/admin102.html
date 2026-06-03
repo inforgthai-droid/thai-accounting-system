@@ -3515,7 +3515,6 @@ function renderStock(){
   <div style="display:flex;gap:8px">
   <button class="btn btn-gray btn-sm" onclick="printPage()">พิมพ์รายงานสต็อก</button>
   <button class="btn btn-sm" style="background:#e85d04;color:#fff" onclick="exportDemonTweeksWord()">📋 Export SKU หมด → Word</button>
-  <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="orderDemonTweeks()">📧 สั่งสินค้า Demon Tweeks</button>
   </div>
   </div>
   <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
@@ -3607,87 +3606,6 @@ function _updateStockTable(){
       `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button> <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>`];
   });
   wrap.innerHTML=tbl(['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
-}
-
-
-function orderDemonTweeks(){
-  // ดึงสินค้าหมดสต็อก และมี SKU Demon Tweeks
-  const outOfStock = S.products.filter(p => (p.stock||0) <= 0 && p.skuDemonTweeks && p.skuDemonTweeks.trim());
-  if(!outOfStock.length){
-    toast('ไม่พบสินค้าหมดที่มี SKU Demon Tweeks','info');
-    return;
-  }
-
-  // จัดกลุ่มตามหมวด
-  const grouped = {};
-  outOfStock.forEach(p => {
-    const cat = p.category || 'ไม่มีหมวด';
-    if(!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(p);
-  });
-  const sortedCats = Object.keys(grouped).sort();
-
-  // สร้าง SKU list
-  const skuList = outOfStock.map(p => p.skuDemonTweeks.trim()).join('\n');
-
-  // สร้าง email
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2,'0');
-  const mm = String(today.getMonth()+1).padStart(2,'0');
-  const yyyy = today.getFullYear();
-  const subject = `ORDER ${dd}-${mm}-${yyyy}`;
-  const body = `Hi Jack,\n\nPlease find our order below:\n\n${skuList}\n\nSHIP BY DHL\n\nBest regards,\nRacing Garage`;
-  const gmailUrl = `https://mail.google.com/mail/?view=cm&to=JackG%40demon-tweeks.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-  // สร้าง SKU display แยกหมวด
-  const skuDisplay = sortedCats.map(cat =>
-    `<div style="margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:#0ea5e9;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">${cat}</div>
-      ${grouped[cat].map(p=>`<div style="font-family:monospace;font-size:12px;padding:2px 0;color:var(--text)">${p.skuDemonTweeks}</div>`).join('')}
-    </div>`
-  ).join('');
-
-  openModal(`📧 สั่งสินค้า Demon Tweeks — ${outOfStock.length} SKU`,`
-  <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-    <div>
-      <div style="font-weight:700;font-size:14px">พบ <span style="color:#ef4444">${outOfStock.length} SKU</span> ที่หมดสต็อก</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">จาก ${sortedCats.length} หมวดหมู่</div>
-    </div>
-    <span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700">ขั้นตอน 1-2 เสร็จ ✓</span>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-    <div style="background:var(--surface2);border-radius:8px;padding:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px">📋 SKU ทั้งหมด</div>
-      <div style="max-height:200px;overflow-y:auto">${skuDisplay}</div>
-    </div>
-    <div style="background:var(--surface2);border-radius:8px;padding:12px">
-      <div style="font-size:12px;font-weight:700;color:#0ea5e9;margin-bottom:8px">📧 Email ที่จะส่ง</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:4px">ถึง: <span style="color:var(--text);font-weight:600">JackG@demon-tweeks.com</span></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">หัวข้อ: <span style="color:var(--text);font-weight:600">${subject}</span></div>
-      <div style="background:var(--surface);border-radius:6px;padding:8px;font-size:11px;font-family:monospace;line-height:1.7;max-height:150px;overflow-y:auto;white-space:pre-wrap;color:var(--text)">Hi Jack,
-
-Please find our order below:
-
-${skuList}
-
-SHIP BY DHL
-
-Best regards,
-Racing Garage</div>
-    </div>
-  </div>
-
-  <div style="background:#fff7f0;border:1px solid #fed7aa;border-radius:8px;padding:10px;font-size:12px;color:#92400e;margin-bottom:4px">
-    ⚠️ กรุณาตรวจสอบรายการ SKU ก่อนส่ง Email — ส่งได้เฉพาะวันจันทร์-ศุกร์ ก่อน 12.00 น. เวลาไทย
-  </div>
-  `,`
-  <button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
-  <button class="btn" style="background:#10b981;color:#fff" onclick="
-    navigator.clipboard?.writeText(\`${skuList.replace(/`/g,'\\`')}\`).then(()=>toast('Copy SKU สำเร็จ ✓','success')).catch(()=>toast('ไม่สามารถ Copy ได้','danger'));
-  ">📋 Copy SKU</button>
-  <button class="btn" style="background:#0ea5e9;color:#fff" onclick="window.open('${gmailUrl}','_blank');closeModal()">📧 เปิด Gmail พร้อมส่ง</button>
-  `);
 }
 
 async function exportDemonTweeksWord(){
