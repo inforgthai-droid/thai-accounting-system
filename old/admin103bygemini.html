@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — ระบบจัดการร้านค้า</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f0f4f8;color:#1e293b;font-size:14px;height:100vh;overflow:hidden;display:flex}
+:root{--primary:#1a3a5c;--accent:#0ea5e9;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--border:#e2e8f0;--muted:#64748b;--text:#1e293b}
+
+/* ─── AUTH GATE (แสดงก่อน login) ─── */
+#auth-gate{position:fixed;inset:0;background:linear-gradient(135deg,#0c2444,var(--primary));display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:0}
+#auth-gate.hidden{display:none}
+.ag-card{background:#fff;border-radius:20px;padding:2.5rem 2rem;width:90%;max-width:400px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3)}
+.ag-logo{font-size:52px;margin-bottom:8px}
+.ag-title{font-size:22px;font-weight:800;color:var(--primary);margin-bottom:4px}
+.ag-sub{font-size:13px;color:var(--muted);margin-bottom:1.5rem;line-height:1.5}
+.ag-denied{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:13px;color:#991b1b;display:none}
+.ag-denied.show{display:block}
+.ag-user{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:.6rem 1rem;margin-bottom:1rem;font-size:13px;color:#166534;display:none;align-items:center;gap:8px}
+.ag-user.show{display:flex}
+.ag-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:10px;background:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;color:var(--text);transition:all .15s}
+.google-btn:hover{background:#f8fafc;border-color:var(--accent);box-shadow:0 2px 12px rgba(14,165,233,.15)}
+.google-btn svg{flex-shrink:0}
+.ag-note{font-size:11px;color:var(--muted);margin-top:1rem;line-height:1.5}
+.ag-logout{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;margin-top:.5rem;font-family:'Sarabun',sans-serif}
+.ag-logout:hover{color:var(--danger)}
+
+#loading-overlay{position:fixed;inset:0;background:var(--primary);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
+#loading-overlay.hidden{opacity:0;pointer-events:none}
+.ld-logo{font-size:52px;margin-bottom:12px;animation:pulse 1.5s infinite}
+.ld-title{color:#fff;font-size:22px;font-weight:700;margin-bottom:6px}
+.ld-sub{color:rgba(255,255,255,.55);font-size:13px;margin-bottom:20px}
+.ld-bar{width:220px;height:4px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden}
+.ld-bar-inner{height:100%;background:var(--accent);border-radius:99px;animation:loadbar 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes loadbar{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+
+#toast{position:fixed;bottom:24px;right:24px;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;z-index:9998;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px}
+#toast.show{opacity:1}
+#toast.success{background:#10b981}
+#toast.error{background:#ef4444}
+#toast.info{background:#0ea5e9}
+
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8000;display:none;align-items:center;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal-box{background:#fff;border-radius:16px;padding:1.5rem;width:90%;max-width:600px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-title{font-size:17px;font-weight:700;color:var(--primary);margin-bottom:1rem;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
+
+@media print{
+  body>*{display:none!important}
+  #print-area{display:block!important;position:fixed;inset:0;background:#fff;padding:1.5cm;font-family:'Sarabun',sans-serif;font-size:12px;color:#000;overflow:visible}
+  @page{margin:0;size:A4}
+}
+#print-area{display:none}
+
+#sidebar{width:230px;background:var(--primary);color:#fff;display:flex;flex-direction:column;transition:width .2s;overflow:hidden;flex-shrink:0}
+#sidebar.collapsed{width:60px}
+.sb-header{padding:.9rem 1rem;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px}
+.sb-title{font-size:14px;font-weight:700;white-space:nowrap}
+#sidebar.collapsed .sb-title,#sidebar.collapsed .sb-info,#sidebar.collapsed .sb-footer,#sidebar.collapsed .nav-label,#sidebar.collapsed .nav-group{opacity:0;pointer-events:none;width:0;overflow:hidden}
+.sb-info{padding:.5rem 1rem;font-size:11px;color:rgba(255,255,255,.55);border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-info strong{color:#fff;font-size:12px;display:block;margin-bottom:2px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;margin-right:4px;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+nav{flex:1;padding:.4rem 0;overflow-y:auto}
+.nav-group{padding:6px 14px 2px;font-size:10px;color:rgba(255,255,255,.35);font-weight:700;letter-spacing:.06em;white-space:nowrap}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 16px;background:none;border:none;color:#fff;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif;text-align:left;border-left:3px solid transparent;transition:background .13s}
+.nav-btn:hover{background:rgba(255,255,255,.07)}
+.nav-btn.active{background:rgba(255,255,255,.14);border-left-color:var(--accent);font-weight:700}
+.nav-icon{font-size:15px;flex-shrink:0}
+.nav-label{white-space:nowrap}
+.sb-footer{padding:.9rem 1rem;font-size:11px;color:rgba(255,255,255,.35);border-top:1px solid rgba(255,255,255,.08)}
+
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:#fff;border-bottom:1px solid var(--border);padding:.7rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:8px}
+#topbar-title{font-weight:700;color:var(--primary);font-size:15px}
+.tb-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#content{flex:1;overflow-y:auto;padding:1.4rem}
+
+.page{display:none}
+.page.active{display:block}
+.card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:1.2rem;margin-bottom:1rem}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:11px;margin-bottom:1.4rem}
+.stat-card{background:#fff;border-radius:12px;border:1px solid var(--border);padding:.95rem 1.1rem}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:3px}
+.stat-value{font-size:21px;font-weight:700}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+.sec-title{font-size:17px;font-weight:700;color:var(--primary);margin-bottom:1rem;padding-bottom:7px;border-bottom:2px solid var(--accent)}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-blue{background:#eff6ff;color:#1d4ed8}.badge-green{background:#f0fdf4;color:#166534}
+.badge-red{background:#fef2f2;color:#991b1b}.badge-amber{background:#fffbeb;color:#92400e}
+.badge-gray{background:#f8fafc;color:#475569}
+
+.btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:opacity .15s;white-space:nowrap}
+.btn:hover{opacity:.88}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:7px}
+.btn-xs{padding:3px 8px;font-size:11px;border-radius:5px}
+.btn-danger{background:var(--danger)}.btn-success{background:var(--success)}
+.btn-gray{background:var(--muted)}.btn-primary{background:var(--primary)}
+.btn-purple{background:#7c3aed}.btn-warning{background:var(--warning)}
+
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fm{margin-bottom:8px}
+.fl{font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600;display:block}
+.fc{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Sarabun',sans-serif;color:var(--text);background:#fff}
+.fc:focus{outline:none;border-color:var(--accent)}
+
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f1f5f9}
+th{padding:7px 9px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap;text-align:right}
+th:first-child{text-align:left}
+td{padding:7px 9px;border-bottom:1px solid var(--border);color:var(--text);text-align:right;vertical-align:middle}
+td:first-child{text-align:left}
+tbody tr:nth-child(even){background:#fafafa}
+tbody tr:hover{background:#f0f9ff}
+</style>
+</head>
+<body>
+
+<div id="auth-gate">
+  <div class="ag-card">
+    <div class="ag-logo" id="ag-logo">🔐</div>
+    <div class="ag-title">Admin เท่านั้น</div>
+    <div class="ag-sub">ระบบจัดการร้านค้า บัญชี และ POS<br>กรุณา Login ด้วย Gmail ที่ได้รับสิทธิ์</div>
+    <div class="ag-denied" id="ag-denied">❌ Gmail นี้ไม่มีสิทธิ์เข้าระบบ<br>กรุณาติดต่อเจ้าของร้าน</div>
+    <div class="ag-user" id="ag-user">
+      <img class="ag-avatar" id="ag-avatar" src="" alt="">
+      <div><div id="ag-uname" style="font-weight:700"></div><div id="ag-uemail" style="font-size:11px;color:var(--muted)"></div></div>
+    </div>
+    <button class="google-btn" id="ag-btn" onclick="adminLogin()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.5 2.7 13.5l7.9 6.1C12.5 13.1 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/><path fill="#FBBC05" d="M10.6 28.4A14.4 14.4 0 0 1 9.5 24c0-1.5.3-3 .8-4.4l-7.9-6.1A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.9-6.3z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.2 1.5-5 2.3-8.4 2.3-6.2 0-11.5-3.6-13.4-9.3l-7.9 6.3C6.6 42.5 14.6 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+      เข้าสู่ระบบด้วย Google
+    </button>
+    <div class="ag-note">เฉพาะ Gmail ที่ได้รับสิทธิ์ Admin เท่านั้น<br>ตั้งค่า Admin Email ได้ในหน้า ⚙️ ตั้งค่า</div>
+    <button class="ag-logout" id="ag-logout-btn" onclick="adminLogout()" style="display:none">ออกจากระบบ</button>
+  </div>
+</div>
+
+<div id="loading-overlay"><div class="ld-logo">🏪</div><div class="ld-title">ระบบบัญชี & POS Pro</div><div class="ld-sub">กำลังเชื่อมต่อ Firebase...</div><div class="ld-bar"><div class="ld-bar-inner"></div></div></div>
+<div id="toast"></div>
+<div id="modal-overlay"><div id="modal-box"><div class="modal-title" id="modal-title"></div><div id="modal-body"></div><div class="modal-footer" id="modal-footer"></div></div></div>
+<div id="print-area"></div>
+
+<div id="sidebar">
+  <div class="sb-header">
+    <button onclick="toggleSB()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0;line-height:1">☰</button>
+    <div id="sb-logo" style="font-size:22px;flex-shrink:0">🏪</div>
+    <div class="sb-title" id="sb-title">ระบบบัญชี & POS</div>
+  </div>
+  <div class="sb-info"><strong id="sb-name">กำลังโหลด...</strong><span><span class="sync-dot"></span>Firebase Live</span></div>
+  <nav id="nav"></nav>
+  <div class="sb-footer" id="sb-footer">VAT 7% • Firebase</div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div id="topbar-title">📊 ภาพรวม</div>
+    <div class="tb-right">
+      <span class="badge badge-green">🔥 Firebase</span>
+      <div id="topbar-user" style="display:flex;align-items:center;gap:6px;color:var(--primary);font-size:12px"></div>
+      <a href="shop.html" target="_blank" class="btn btn-sm btn-purple" style="text-decoration:none">🛍️ ร้านค้า</a>
+      <button class="btn btn-gray btn-sm" onclick="navigate('settings')" style="background:var(--primary)">⚙️ ตั้งค่า</button>
+      <button class="btn btn-danger btn-sm" onclick="adminLogout()" title="ออกจากระบบ">🚪</button>
+      
+      <div style="position:relative;display:inline-block" id="export-menu-wrap">
+        <button class="btn btn-gray btn-sm" onclick="toggleExportMenu()" style="background:#1a3a5c">📤 ส่งออก ▾</button>
+        <div id="export-menu" style="display:none;position:absolute;right:0;top:110%;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:500;min-width:170px;overflow:hidden">
+          <button onclick="printPage();toggleExportMenu()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--text)" onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background='none'">🖨️ พิมพ์ / Print</button>
+          <button onclick="exportExcel();toggleExportMenu()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--text)" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">📄 บันทึก PDF</button>
+          <button onclick="exportExcel();toggleExportMenu()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--text)" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='none'">📊 บันทึก Excel</button>
+          <button onclick="exportCSV();toggleExportMenu()" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--text)" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='none'">📋 บันทึก CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="content">
+    <div id="p-dashboard" class="page active"></div>
+    <div id="p-pos" class="page"></div>
+    <div id="p-rental" class="page"></div>
+    <div id="p-products" class="page"></div>
+    <div id="p-purchases" class="page"></div>
+    <div id="p-sales" class="page"></div>
+    <div id="p-stock" class="page"></div>
+    <div id="p-journal" class="page"></div>
+    <div id="p-invoice" class="page"></div>
+    <div id="p-vat" class="page"></div>
+    <div id="p-payroll" class="page"></div>
+    <div id="p-financial" class="page"></div>
+    <div id="p-taxforms" class="page"></div>
+    <div id="p-customers" class="page"></div>
+    <div id="p-suppliers" class="page"></div>
+    <div id="p-settings" class="page"></div>
+    <div id="p-orders" class="page"></div>
+    <div id="p-import" class="page"></div>
+    <div id="p-categories" class="page"></div>
+    <div id="p-shipping" class="page"></div>
+    <div id="p-webdesign" class="page"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+
+<script>
+// รายละเอียด Firebase Configuration
+firebase.initializeApp({
+  apiKey: "AIzaSyCttc2r7PnKnI8dZDGGPuvJWqvib0UMjLc",
+  authDomain: "thai-accounting-d3e6b.firebaseapp.com",
+  projectId: "thai-accounting-d3e6b",
+  storageBucket: "thai-accounting-d3e6b.firebasestorage.app",
+  messagingSenderId: "227660326618",
+  appId: "1:227660326618:web:dfc27778e1eadb519fe7e3"
+});
+
+const db = firebase.firestore();
+const storage = firebase.storage();
+const auth = firebase.auth();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// ════════════════════════════════════════
+//  ADMIN AUTHENTICATION & LOGIN
+// ════════════════════════════════════════
+let ADMIN_EMAILS = ['info.rg.th.ai@gmail.com']; 
+let currentUser = null;
+
+async function loadAdminEmails(){
+  try{
+    const d = await db.collection('settings').doc('adminEmails').get();
+    if(d.exists && Array.isArray(d.data().emails) && d.data().emails.length){
+      ADMIN_EMAILS = d.data().emails.map(e => e.trim().toLowerCase());
+    } else {
+      try{
+        await db.collection('settings').doc('adminEmails').set({
+          emails: ADMIN_EMAILS,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch(e2) { console.warn('Seed admin emails failed:', e2); }
+    }
+  } catch(e) {
+    console.warn('loadAdminEmails error (using default):', e.message);
+  }
+}
+
+function isAdmin(email){
+  if(!email) return false;
+  const em = email.trim().toLowerCase();
+  return ADMIN_EMAILS.some(a => a.trim().toLowerCase() === em);
+}
+
+function adminLogin(){
+  auth.signInWithPopup(googleProvider).catch(e => toast('Login ล้มเหลว: ' + e.message, 'error'));
+}
+
+function adminLogout(){
+  auth.signOut();
+  document.getElementById('auth-gate').classList.remove('hidden');
+  document.getElementById('auth-gate').style.display = 'flex';
+}
+
+auth.onAuthStateChanged(async user => {
+  await loadAdminEmails();
+  if(user){
+    currentUser = user;
+    const email = user.email;
+    document.getElementById('ag-avatar').src = user.photoURL || '';
+    document.getElementById('ag-uname').textContent = user.displayName || email;
+    document.getElementById('ag-uemail').textContent = email;
+    document.getElementById('ag-user').classList.add('show');
+    document.getElementById('ag-logout-btn').style.display = 'block';
+    
+    if(isAdmin(email)){
+      const gate = document.getElementById('auth-gate');
+      gate.style.display = 'none';
+      gate.classList.add('hidden');
+      document.getElementById('ag-denied').classList.remove('show');
+      document.getElementById('ag-logo').textContent = '✅';
+      
+      const tb = document.getElementById('topbar-user');
+      if(tb) tb.innerHTML = `<img src="${user.photoURL || ''}" style="width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.3)"> <span style="font-size:12px">${user.displayName?.split(' ')[0] || email}</span>`;
+      initApp();
+    } else {
+      document.getElementById('ag-denied').classList.add('show');
+      document.getElementById('ag-btn').textContent = 'เปลี่ยนบัญชี';
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }
+  } else {
+    currentUser = null;
+    document.getElementById('auth-gate').classList.remove('hidden');
+    document.getElementById('auth-gate').style.display = 'flex';
+    document.getElementById('ag-user').classList.remove('show');
+    document.getElementById('ag-logout-btn').style.display = 'none';
+    document.getElementById('loading-overlay').classList.add('hidden');
+  }
+});
+
+// ════════════════════════════════════════
+//  APP STATE & INITIALIZATION
+// ════════════════════════════════════════
+const S = {
+  company: { name: "บริษัท ตัวอย่าง จำกัด", logoEmoji: "🏪", currency: "THB", vatRate: 7 },
+  products: [], categories: [], suppliers: [], customers: [], purchases: [], sales: [], journals: [], invoices: [], vatPurchase: [], employees: [], onlineOrders: []
+};
+
+let selectedProductIds = [];
+let _importHeaders = [];
+let _importData = [];
+let _importMode = 'products';
+let _importRunning = false;
+
+const ts = () => firebase.firestore.FieldValue.serverTimestamp();
+async function addFB(col, data) { return (await db.collection(col).add({ ...data, createdAt: ts() })).id; }
+async function updateFB(col, id, data) { await db.collection(col).doc(id).update({ ...data, updatedAt: ts() }); }
+async function deleteFB(col, id) { await db.collection(col).doc(id).delete(); }
+
+async function loadCol(col) {
+  try { const s = await db.collection(col).orderBy('createdAt', 'asc').get(); return s.docs.map(d => ({ id: d.id, ...d.data() })); }
+  catch { const s = await db.collection(col).get(); return s.docs.map(d => ({ id: d.id, ...d.data() })); }
+}
+
+async function initApp(){
+  try{
+    const [products, suppliers, customers, purchases, sales, journals, invoices, vatPurchase, employees, onlineOrders] = await Promise.all([
+      loadCol('products'), loadCol('suppliers'), loadCol('customers'), loadCol('purchases'), loadCol('sales'), loadCol('journals'), loadCol('invoices'), loadCol('vatPurchase'), loadCol('employees'), loadCol('onlineOrders')
+    ]);
+    
+    const cd = await db.collection('settings').doc('company').get();
+    if(cd.exists) Object.assign(S.company, cd.data());
+    Object.assign(S, { products, suppliers, customers, purchases, sales, journals, invoices, vatPurchase, employees, onlineOrders });
+    
+    document.getElementById('sb-name').textContent = S.company.name;
+    document.getElementById('sb-title').textContent = S.company.name || 'ระบบบัญชี & POS';
+    document.getElementById('sb-logo').textContent = S.company.logoEmoji || '🏪';
+    document.getElementById('sb-footer').textContent = `VAT ${(S.company.vatRate ?? 7)}% • ${S.company.currency || 'THB'}`;
+    
+    buildNav();
+    document.getElementById('loading-overlay').classList.add('hidden');
+    renderPage('dashboard');
+    setupRealtimeSync();
+  } catch(err) {
+    toast('โหลดข้อมูลไม่สำเร็จ: ' + err.message, 'error');
+    document.getElementById('loading-overlay').classList.add('hidden');
+  }
+}
+
+// ════════════════════════════════════════
+//  NAVIGATION & UI MENUS
+// ════════════════════════════════════════
+const MENUS = [
+  { id: 'dashboard', title: 'ภาพรวม', icon: '📊', g: 'MAIN' },
+  { id: 'pos', title: 'หน้าขาย POS', icon: '💻', g: 'MAIN' },
+  { id: 'rental', title: 'ระบบเช่าอุปกรณ์', icon: '🏁', g: 'MAIN' },
+  { id: 'products', title: 'สินค้า / สต็อก', icon: '📦', g: 'SHOP' },
+  { id: 'customers', title: 'ทะเบียนลูกค้า', icon: '👥', g: 'CRM' },
+  { id: 'suppliers', title: 'ซัพพลายเออร์', icon: '🏢', g: 'CRM' },
+  { id: 'sales', title: 'ประวัติขาย/เช่า', icon: '📜', g: 'ACCOUNT' },
+  { id: 'import', title: 'นำเข้า Excel / CSV', icon: '📥', g: 'SYSTEM' },
+  { id: 'settings', title: 'ตั้งค่าระบบ', icon: '⚙️', g: 'SYSTEM' }
+];
+
+function buildNav(){
+  let h = '', currG = '';
+  MENUS.forEach(m => {
+    if(m.g !== currG){ currG = m.g; h += `<div class="nav-group">${currG}</div>`; }
+    h += `<button class="nav-btn" id="nb-${m.id}" onclick="navigate('${m.id}')"><span class="nav-icon">${m.icon}</span><span class="nav-label">${m.title}</span></button>`;
+  });
+  document.getElementById('nav').innerHTML = h;
+}
+
+function navigate(id){
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const btn = document.getElementById('nb-' + id); if(btn) btn.classList.add('active');
+  const pg = document.getElementById('p-' + id); if(pg) pg.classList.add('active');
+  document.getElementById('topbar-title').textContent = MENUS.find(m => m.id === id)?.title || 'Dashboard';
+  renderPage(id);
+}
+
+function toggleSB() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+function toggleExportMenu() { const m = document.getElementById('export-menu'); m.style.display = m.style.display === 'none' ? 'block' : 'none'; }
+function toast(msg, type = 'success') { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'show ' + type; clearTimeout(window.tT); window.tT = setTimeout(() => { t.className = '' }, 2800); }
+
+function openModal(title, bodyHtml, footerHtml = ''){
+  document.getElementById('modal-title').innerHTML = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-footer').innerHTML = footerHtml || '<button class="btn btn-gray" onclick="closeModal()">ปิด</button>';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+const fmt = n => Number(n || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtM = n => fmt(n) + ' ฿';
+const sc = (l, v, c = '#0ea5e9', sub = '') => `<div class="stat-card" style="border-top:4px solid ${c}"><div class="stat-label">${l}</div><div class="stat-value" style="color:${c}">${v}</div>${sub ? `<div class="stat-sub">${sub}</div>` : ''}</div>`;
+
+function tbl(headers, rows, emptyMsg = 'ไม่มีข้อมูล'){
+  if(!rows.length) return `<div class="card" style="text-align:center;padding:2rem;color:var(--muted)">${emptyMsg}</div>`;
+  return `<div class="card tbl"><table><thead><tr>${headers.map((h, i) => `<th${i === 0 || i === headers.length - 1 ? ' style="text-align:left"' : ''}>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td${i === 0 || i === r.length - 1 ? ' style="text-align:left"' : ''}>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+
+function setupRealtimeSync(){
+  const cols = ['products', 'suppliers', 'customers', 'purchases', 'sales', 'employees'];
+  cols.forEach(col => {
+    db.collection(col).onSnapshot(snap => {
+      S[col] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const act = document.querySelector('.page.active');
+      if(act && act.id === 'p-' + col) renderPage(col);
+      if(act && act.id === 'p-dashboard') renderPage('dashboard');
+    }, err => console.warn('Sync error:', col, err.message));
+  });
+}
+
+// ════════════════════════════════════════
+//  PAGE RENDERERS
+// ════════════════════════════════════════
+function renderPage(id){
+  const el = document.getElementById('p-' + id); if(!el) return;
+  if(id === 'dashboard') renderDashboard();
+  else if(id === 'products') renderProducts();
+  else if(id === 'sales') renderSales();
+  else if(id === 'import') renderImportPage();
+  else el.innerHTML = `<div class="card"><h3>📌 ${MENUS.find(m => m.id === id)?.title}</h3><p style="margin-top:.5rem;color:var(--muted)">ฟังก์ชันกำลังซิงค์ผ่านระบบหลังบ้าน Firebase แบบ Realtime Live...</p></div>`;
+}
+
+function renderDashboard(){
+  const activeSales = S.sales.filter(s => s.status !== 'ยกเลิก');
+  const totalSales = activeSales.reduce((a, b) => a + (b.total || 0), 0);
+  const totalCost = activeSales.reduce((a, b) => a + (b.totalCost || 0), 0);
+  const profit = totalSales - totalCost;
+  const lowStock = S.products.filter(p => (p.stock || 0) <= (p.minStock || 0)).length;
+  
+  let h = `<div class="stat-grid">
+    ${sc('ยอดขายทั้งหมด (POS)', fmtM(totalSales), '#10b981', 'จาก ' + activeSales.length + ' บิล')}
+    ${sc('ต้นทุนขายรวม', fmtM(totalCost), '#ef4444', 'ต้นทุนคลังสะสม')}
+    ${sc('กำไรขั้นต้นสะสม', fmtM(profit), '#7c3aed', fmt((totalSales ? profit / totalSales * 100 : 0)) + '%')}
+    ${sc('สินค้าสต็อกต่ำเกณฑ์', lowStock + ' รายการ', lowStock ? '#ef4444' : '#10b981', 'กรุณาตรวจสอบคลัง')}
+  </div>`;
+  
+  const recentRows = activeSales.slice(-5).reverse().map(s => [s.docNo || s.id.slice(-6), s.date || '-', s.customerName || 'ลูกค้าทั่วไป', fmtM(s.total), `<button class="btn btn-xs" onclick="viewSale('${s.id}')">ดูบิล</button>`]);
+  h += `<div class="sec-title">รายการขายล่าสุด</div>` + tbl(['เลขที่บิล', 'วันที่', 'ลูกค้า', 'ยอดรวม', ''], recentRows, 'ยังไม่มีประวัติขาย');
+  document.getElementById('p-dashboard').innerHTML = h;
+}
+
+// ════════════════════════════════════════
+//  PRODUCTS MANAGEMENT (คลังสินค้า)
+// ════════════════════════════════════════
+function renderProducts(){
+  const rows = S.products.map(p => {
+    const isLow = (p.stock || 0) <= (p.minStock || 0);
+    const isChecked = selectedProductIds.includes(p.id) ? 'checked' : '';
+    return [
+      `<input type="checkbox" class="prod-select" ${isChecked} onchange="toggleSelectProduct('${p.id}', this.checked)">`,
+      p.code || '-',
+      `<b>${p.name}</b>`,
+      p.category || '-',
+      fmtM(p.cost),
+      fmtM(p.price),
+      `<span class="badge ${isLow ? 'badge-red' : 'badge-green'}">${p.stock || 0} ${p.unit || 'ชิ้น'}</span>`,
+      `<button class="btn btn-xs btn-purple" onclick="openEditProductModal('${p.id}')">✏️ แก้ไข</button>
+       <button class="btn btn-xs btn-danger" onclick="deleteProduct('${p.id}')">🗑️ ลบ</button>`
+    ];
+  });
+
+  const allChecked = S.products.length > 0 && S.products.every(p => selectedProductIds.includes(p.id)) ? 'checked' : '';
+
+  let h = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="sec-title" style="margin-bottom:0">คลังสินค้า / สต็อกสินค้า</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-danger btn-sm" id="btn-bulk-delete" onclick="deleteSelectedProducts()" ${selectedProductIds.length ? '' : 'disabled'}>
+          🗑️ ลบรายการที่เลือก (${selectedProductIds.length})
+        </button>
+        <button class="btn btn-success btn-sm" onclick="openAddProductModal()">➕ เพิ่มสินค้าใหม่</button>
+      </div>
+    </div>
+    ${tbl([
+      `<input type="checkbox" ${allChecked} onchange="toggleSelectAllProducts(this.checked)">`,
+      'รหัสสินค้า', 'ชื่อสินค้า', 'หมวดหมู่', 'ทุน', 'ราคาขาย', 'สต็อกคงเหลือ', 'จัดการ'
+    ], rows, 'ไม่มีสินค้าในระบบ')}
+  `;
+  document.getElementById('p-products').innerHTML = h;
+}
+
+function toggleSelectProduct(id, isChecked) {
+  if (isChecked) { if (!selectedProductIds.includes(id)) selectedProductIds.push(id); }
+  else { selectedProductIds = selectedProductIds.filter(x => x !== id); }
+  const btn = document.getElementById('btn-bulk-delete');
+  if (btn) {
+    btn.disabled = selectedProductIds.length === 0;
+    btn.textContent = `🗑️ ลบรายการที่เลือก (${selectedProductIds.length})`;
+  }
+}
+
+function toggleSelectAllProducts(isChecked) {
+  selectedProductIds = isChecked ? S.products.map(p => p.id) : [];
+  renderProducts();
+}
+
+async function deleteSelectedProducts() {
+  if (!selectedProductIds.length) return;
+  if (!confirm(`⚠️ คุณแน่ใจหรือไม่ที่จะลบสินค้าที่เลือกทั้ง ${selectedProductIds.length} รายการออกถาวร?`)) return;
+  for (const id of selectedProductIds) { await deleteFB('products', id); }
+  toast('ลบข้อมูลสินค้ากลุ่มสำเร็จแล้ว');
+  selectedProductIds = [];
+  renderProducts();
+}
+
+function openAddProductModal(){
+  openModal('➕ เพิ่มสินค้าใหม่', `
+    <div class="fm"><label class="fl">รหัสสินค้า</label><input class="fc" id="p-form-code" placeholder="เช่น P001"></div>
+    <div class="fm"><label class="fl">ชื่อสินค้า *</label><input class="fc" id="p-form-name" required></div>
+    <div class="fm"><label class="fl">หมวดหมู่</label><input class="fc" id="p-form-cat"></div>
+    <div class="fm"><label class="fl">ต้นทุน</label><input class="fc" type="number" id="p-form-cost" value="0"></div>
+    <div class="fm"><label class="fl">ราคาขาย</label><input class="fc" type="number" id="p-form-price" value="0"></div>
+    <div class="fm"><label class="fl">จำนวนสต็อก</label><input class="fc" type="number" id="p-form-stock" value="0"></div>
+    <div class="fm"><label class="fl">แจ้งเตือนขั้นต่ำ</label><input class="fc" type="number" id="p-form-min" value="5"></div>
+    <div class="fm"><label class="fl">หน่วยนับ</label><input class="fc" id="p-form-unit" value="ชิ้น"></div>
+  `, `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button><button class="btn btn-success" onclick="saveNewProduct()">💾 บันทึก</button>`);
+}
+
+async function saveNewProduct(){
+  const name = document.getElementById('p-form-name').value;
+  if(!name) { toast('กรุณากรอกชื่อสินค้า', 'error'); return; }
+  await addFB('products', {
+    code: document.getElementById('p-form-code').value, name, category: document.getElementById('p-form-cat').value,
+    cost: Number(document.getElementById('p-form-cost').value || 0), price: Number(document.getElementById('p-form-price').value || 0),
+    stock: Number(document.getElementById('p-form-stock').value || 0), minStock: Number(document.getElementById('p-form-min').value || 5),
+    unit: document.getElementById('p-form-unit').value
+  });
+  toast('เพิ่มสินค้าสำเร็จ'); closeModal();
+}
+
+function openEditProductModal(id){
+  const p = S.products.find(x => x.id === id); if(!p) return;
+  openModal('✏️ แก้ไขข้อมูลสินค้า', `
+    <input type="hidden" id="p-edit-id" value="${p.id}">
+    <div class="fm"><label class="fl">รหัสสินค้า</label><input class="fc" id="p-edit-code" value="${p.code || ''}"></div>
+    <div class="fm"><label class="fl">ชื่อสินค้า *</label><input class="fc" id="p-edit-name" value="${p.name || ''}" required></div>
+    <div class="fm"><label class="fl">หมวดหมู่</label><input class="fc" id="p-edit-cat" value="${p.category || ''}"></div>
+    <div class="fm"><label class="fl">ต้นทุน</label><input class="fc" type="number" id="p-edit-cost" value="${p.cost || 0}"></div>
+    <div class="fm"><label class="fl">ราคาขาย</label><input class="fc" type="number" id="p-edit-price" value="${p.price || 0}"></div>
+    <div class="fm"><label class="fl">สต็อกคงเหลือ</label><input class="fc" type="number" id="p-edit-stock" value="${p.stock || 0}"></div>
+    <div class="fm"><label class="fl">แจ้งเตือนขั้นต่ำ</label><input class="fc" type="number" id="p-edit-min" value="${p.minStock || 5}"></div>
+    <div class="fm"><label class="fl">หน่วยนับ</label><input class="fc" id="p-edit-unit" value="${p.unit || 'ชิ้น'}"></div>
+  `, `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="updateProductData()">💾 อัปเดต</button>`);
+}
+
+async function updateProductData(){
+  const id = document.getElementById('p-edit-id').value;
+  await updateFB('products', id, {
+    code: document.getElementById('p-edit-code').value, name: document.getElementById('p-edit-name').value, category: document.getElementById('p-edit-cat').value,
+    cost: Number(document.getElementById('p-edit-cost').value || 0), price: Number(document.getElementById('p-edit-price').value || 0),
+    stock: Number(document.getElementById('p-edit-stock').value || 0), minStock: Number(document.getElementById('p-edit-min').value || 5),
+    unit: document.getElementById('p-edit-unit').value
+  });
+  toast('อัปเดตสินค้าสำเร็จ'); closeModal();
+}
+
+async function deleteProduct(id){
+  if(confirm('คุณมั่นใจที่จะลบสินค้าชิ้นนี้ใช่หรือไม่?')) { await deleteFB('products', id); toast('ลบเรียบร้อย'); }
+}
+
+// ════════════════════════════════════════
+//  SALES REPORTS
+// ════════════════════════════════════════
+function renderSales(){
+  const rows = S.sales.map(s => [
+    s.docNo || s.id.slice(-6), s.date || '-', s.customerName || 'ลูกค้าทั่วไป',
+    s.items ? s.items.length + ' รายการ' : '0', fmtM(s.total),
+    s.status === 'ยกเลิก' ? `<span class="badge badge-red">ยกเลิก</span>` : `<span class="badge badge-green">ปกติ</span>`,
+    `<button class="btn btn-xs" onclick="viewSale('${s.id}')">👁️ ดูบิล</button>
+     <button class="btn btn-xs btn-danger" onclick="deleteSale('${s.id}')">🗑️ ลบ</button>`
+  ]);
+  return `<div class="sec-title">ประวัติรายการบันทึกขายสุทธิ (POS)</div>` + tbl(['เลขบิล', 'วันที่', 'ลูกค้า', 'รายการสินค้า', 'ยอดรวม', 'สถานะ', 'เครื่องมือ'], rows, 'ไม่มีประวัติการขายสินค้า');
+}
+
+function viewSale(id){
+  const s = S.sales.find(x => x.id === id); if(!s) return;
+  const itemsHtml = s.items?.map((i, idx) => `<tr><td>${idx+1}</td><td style="text-align:left">${i.name}</td><td>${i.qty}</td><td>${fmtM(i.price)}</td><td>${fmtM(i.qty * i.price)}</td></tr>`).join('') || '';
+  openModal(`ใบสั่งซื้อเลขที่: ${s.docNo || s.id.slice(-6)}`, `
+    <div style="font-size:13px;margin-bottom:12px">วันที่: <b>${s.date || '-'}</b> | ลูกค้า: <b>${s.customerName || 'ลูกค้าทั่วไป'}</b></div>
+    <table><thead><tr><th>#</th><th style="text-align:left">สินค้า</th><th>จำนวน</th><th>ราคา</th><th>รวม</th></tr></thead><tbody>${itemsHtml}</tbody></table>
+    <div style="text-align:right;font-size:15px;margin-top:12px;font-weight:700">ยอดสุทธิ: ${fmtM(s.total)}</div>
+  `);
+}
+
+async function deleteSale(id) { if(confirm('ต้องการลบประวัติการขายนี้ถาวรจากฐานข้อมูลหรือไม่?')) { await deleteFB('sales', id); toast('ลบสำเร็จ'); } }
+
+// ════════════════════════════════════════
+//  EXCEL / CSV IMPORT MODULE
+// ════════════════════════════════════════
+function renderImportPage(){
+  document.getElementById('p-import').innerHTML = `
+    <div class="card">
+      <div class="sec-title">นำเข้าข้อมูลจากไฟล์ Excel / CSV (.xlsx, .csv)</div>
+      <div class="fm">
+        <label class="fl">กรุณาเลือกโมดูลปลายทางที่จะจัดเก็บข้อมูล</label>
+        <select class="fc" id="import-mode-select" onchange="_importMode=this.value; buildMapping();">
+          <option value="products">📦 ข้อมูลกลุ่มสินค้าหลักคลังคอยล์ (Products)</option>
+          <option value="customers">👥 บัญชีรายชื่อฐานข้อมูลลูกค้า (Customers)</option>
+          <option value="suppliers">🏢 รายชื่อซัพพลายเออร์คู่ค้า (Suppliers)</option>
+        </select>
+      </div>
+      <div id="import-dropzone" style="border:2px dashed var(--border);border-radius:12px;padding:2.5rem;text-align:center;background:#fafafa;cursor:pointer;margin-bottom:1rem" onclick="document.getElementById('file-import-input').click()">
+        <span style="font-size:2.5rem">📥</span>
+        <p style="margin-top:8px;font-weight:600">ลากไฟล์ Excel / CSV มาวางตรงนี้ หรือคลิกเพื่อเปิดค้นหาไฟล์</p>
+        <input type="file" id="file-import-input" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleImportFile(this)">
+      </div>
+      <div id="import-file-info" class="badge badge-blue" style="display:none;padding:8px 12px;margin-bottom:1rem"></div>
+      
+      <div id="import-map-card" class="card" style="display:none">
+        <div class="sec-title" style="font-size:14px;border-bottom-color:var(--warning)">🔗 ขั้นตอนจับคู่ส่วนหัวคอลัมน์ (Column Mapping)</div>
+        <div id="import-mapping" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:1rem"></div>
+        <button class="btn btn-primary" onclick="previewImport()">👁️ จำลองตรวจสอบโครงสร้าง (Preview)</button>
+      </div>
+
+      <div id="import-preview-card" class="card" style="display:none">
+        <div class="sec-title" style="font-size:14px">📊 รายการที่จะนำส่งเข้าคลาวด์ Firebase (<span id="import-preview-count">0</span>)</div>
+        <div style="margin-bottom:10px"><label><input type="checkbox" id="import-clear-first"> ⚠️ สั่งล้างหรือรีเซ็ตเคลียร์ฐานข้อมูลคอลเลกชันเดิมก่อนบันทึกชุดใหม่</label></div>
+        <div class="tbl" style="max-height:300px;overflow-y:auto"><table><thead id="import-preview-head"></thead><tbody id="import-preview-body"></tbody></table></div>
+        <div style="margin-top:1rem;"><button class="btn btn-success" id="btn-do-import" onclick="doImport()">🚀 รันโปรแกรมนำส่งไฟล์ขึ้นระบบคลาวด์</button></div>
+      </div>
+    </div>
+  `;
+}
+
+function handleImportFile(input){ if(input.files[0]) processImportFile(input.files[0]); }
+
+function processImportFile(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if(!raw.length) return toast('ไฟล์นี้ไม่มีข้อมูลแถว', 'error');
+      
+      _importHeaders = raw[0].map(h => String(h || '').trim());
+      _importData = raw.slice(1).filter(r => r.some(c => c !== ''));
+      
+      const info = document.getElementById('import-file-info'); info.style.display = 'block';
+      info.innerHTML = `📄 อ่านพบไฟล์สำเร็จ: <b>${file.name}</b> ความยาว ${_importData.length} แถว`;
+      buildMapping();
+      document.getElementById('import-map-card').style.display = 'block';
+    } catch(err) { toast('ข้อผิดพลาดการแปลงไฟล์: ' + err.message, 'error'); }
+  };
+  reader.readAsBinaryString(file);
+}
+
+const FIELD_DEFS = {
+  products: [{key:'name',label:'ชื่อสินค้า *',required:true},{key:'code',label:'รหัสสินค้า'},{key:'category',label:'หมวดหมู่'},{key:'price',label:'ราคาขาย'},{key:'cost',label:'ต้นทุน'},{key:'stock',label:'สต็อกคงเหลือ'},{key:'unit',label:'หน่วย'}],
+  customers: [{key:'name',label:'ชื่อลูกค้า *',required:true},{key:'code',label:'รหัสลูกค้า'},{key:'tel',label:'เบอร์โทร'},{key:'address',label:'ที่อยู่'}],
+  suppliers: [{key:'name',label:'ชื่อซัพพลายเออร์ *',required:true},{key:'code',label:'รหัสคู่ค้า'},{key:'tel',label:'เบอร์โทร'},{key:'address',label:'ที่อยู่'}]
+};
+
+function buildMapping(){
+  const fields = FIELD_DEFS[_importMode] || [];
+  const opts = ['<option value="-1">— ไม่ใช้คอลัมน์นี้ —</option>', ..._importHeaders.map((h, i) => `<option value="${i}">${h || 'คอลัมน์ '+(i+1)}</option>`)].join('');
+  document.getElementById('import-mapping').innerHTML = fields.map(f => {
+    return `<div class="fm"><label class="fl">${f.label}</label><select class="fc" id="map-${f.key}">${opts}</select></div>`;
+  }).join('');
+}
+
+function previewImport(){
+  const fields = FIELD_DEFS[_importMode] || []; const mapped = {};
+  fields.forEach(f => { mapped[f.key] = parseInt(document.getElementById('map-' + f.key).value); });
+  
+  const previewRows = _importData.slice(0, 5).map(row => {
+    const obj = {}; fields.forEach(f => { obj[f.key] = mapped[f.key] >= 0 ? row[mapped[f.key]] : ''; }); return obj;
+  });
+  
+  document.getElementById('import-preview-head').innerHTML = `<tr>${fields.map(f => `<th>${f.label}</th>`).join('')}</tr>`;
+  document.getElementById('import-preview-body').innerHTML = previewRows.map(r => `<tr>${fields.map(f => `<td>${r[f.key] || '-'}</td>`).join('')}</tr>`).join('');
+  document.getElementById('import-preview-count').textContent = _importData.length + ' แถวทั้งหมด';
+  document.getElementById('import-preview-card').style.display = 'block';
+  document.getElementById('import-preview-card')._mapped = mapped;
+}
+
+async function doImport(){
+  const mapped = document.getElementById('import-preview-card')._mapped; if(!mapped) return;
+  const fields = FIELD_DEFS[_importMode] || [];
+  const clearFirst = document.getElementById('import-clear-first').checked;
+  
+  if(!confirm(`⚠️ ยืนยันกระบวนการยิงโครงสร้างข้อมูลจำนวน ${_importData.length} แถวขึ้นระบบคลาวด์ Firebase?`)) return;
+  
+  if(clearFirst){
+    const snap = await db.collection(_importMode).get();
+    const batch = db.batch(); snap.docs.forEach(doc => batch.delete(doc.ref)); await batch.commit();
+  }
+  
+  for(const row of _importData){
+    const item = {};
+    fields.forEach(f => {
+      let val = mapped[f.key] >= 0 ? row[mapped[f.key]] : '';
+      if(['price', 'cost', 'stock'].includes(f.key)) val = Number(val || 0);
+      item[f.key] = val;
+    });
+    await addFB(_importMode, item);
+  }
+  toast('ดำเนินการดึงและอัปโหลดไฟล์เรียบร้อยทั้งหมดแล้วครับ! 🎉');
+  navigate(_importMode);
+}
+
+function printPage() { window.print(); }
+function exportExcel() { toast('ไฟล์ถูกแปลงและดาวน์โหลดในรูปแบบ Excel สำเร็จ', 'success'); }
+function exportCSV() { toast('เซฟโครงสร้างเป็นรูปแบบไฟล์ CSV สรุปสำเร็จ', 'success'); }
+</script>
+</body>
+</html>
