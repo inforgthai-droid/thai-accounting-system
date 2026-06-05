@@ -2558,7 +2558,7 @@ function renderProducts(){
 
   const rows=list.map(p=>[
     `<input type="checkbox" class="prod-chk" data-id="${p.id}" onchange="updateBulkProdBar()" style="width:16px;height:16px;cursor:pointer">`,
-    `<div>${p.code||''}</div>${p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border);cursor:zoom-in" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`:''}`,
+    p.code,
     `<div style="font-weight:600">${p.name}</div>${p.description?`<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${p.description}</div>`:''}`,
     p.category||'-',p.unit||'-',
     ''+fmt(p.cost),''+fmt(p.price),
@@ -2698,7 +2698,7 @@ function _updateProdTable(){
   if(!wrap) return;
   const rows=list.map(p=>[
     `<input type="checkbox" class="prod-chk" data-id="${p.id}" onchange="updateBulkProdBar()" style="width:16px;height:16px;cursor:pointer">`,
-    `<div>${p.code||''}</div>${p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border);cursor:zoom-in" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`:''}`,
+    p.code,
     `<div style="font-weight:600">${p.name}</div>${p.description?`<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${p.description}</div>`:''}`,
     p.category||'-',p.unit||'-',
     ''+fmt(p.cost),''+fmt(p.price),
