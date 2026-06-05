@@ -2557,7 +2557,6 @@ function renderProducts(){
   if(catFilter) list=list.filter(p=>p.category===catFilter);
 
   const rows=list.map(p=>[
-    `<input type="checkbox" class="prod-chk" data-id="${p.id}" onchange="updateBulkProdBar()" style="width:16px;height:16px;cursor:pointer">`,
     p.code,
     `<div style="font-weight:600">${p.name}</div>${p.description?`<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${p.description}</div>`:''}`,
     p.category||'-',p.unit||'-',
@@ -2570,13 +2569,6 @@ function renderProducts(){
 
   return`
   <div class="sec-title">📦 รายการสินค้า</div>
-
-  <!-- Bulk Delete Bar -->
-  <div id="bulk-prod-bar" style="display:none;align-items:center;gap:10px;padding:8px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:10px;margin-bottom:.75rem">
-    <span id="bulk-prod-count" style="font-weight:700;color:#856404"></span>
-    <button class="btn btn-danger btn-sm" onclick="bulkDeleteProducts()">🗑️ ลบที่เลือก</button>
-    <button class="btn btn-gray btn-sm" onclick="document.querySelectorAll('.prod-chk').forEach(c=>c.checked=false);updateBulkProdBar()">ยกเลิก</button>
-  </div>
 
   <!-- Toolbar -->
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
@@ -2636,7 +2628,7 @@ function renderProducts(){
 
   <!-- Table -->
   <div id="prod-table-wrap">
-    ${tbl(['<input type="checkbox" id="prod-chk-all" onchange="toggleAllProducts(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า')}
+    ${tbl(['รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า')}
   </div>`;
 }
 
@@ -2697,7 +2689,6 @@ function _updateProdTable(){
   const wrap=document.getElementById('prod-table-wrap');
   if(!wrap) return;
   const rows=list.map(p=>[
-    `<input type="checkbox" class="prod-chk" data-id="${p.id}" onchange="updateBulkProdBar()" style="width:16px;height:16px;cursor:pointer">`,
     p.code,
     `<div style="font-weight:600">${p.name}</div>${p.description?`<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${p.description}</div>`:''}`,
     p.category||'-',p.unit||'-',
@@ -2707,7 +2698,7 @@ function _updateProdTable(){
     `<span style="color:var(--success);font-weight:600">${fmt((p.price||0)-(p.cost||0))}</span>`,
     `<button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>`
   ]);
-  wrap.innerHTML=tbl(['<input type="checkbox" id="prod-chk-all" onchange="toggleAllProducts(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า');
+  wrap.innerHTML=tbl(['รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า');
 }
 
 // ─── Product Export/Import helpers ───
@@ -3489,66 +3480,6 @@ function fileToBase64Compressed(file){
 }
 async function deleteProduct(id){if(!confirm('ลบสินค้านี้?'))return;await deleteFB('products',id);S.products=S.products.filter(x=>x.id!==id);renderPage('products');toast('ลบแล้ว','info');}
 
-// ─── Bulk Delete — Products ───
-function toggleAllProducts(cb){
-  document.querySelectorAll('.prod-chk').forEach(c=>c.checked=cb.checked);
-  updateBulkProdBar();
-}
-function updateBulkProdBar(){
-  const sel=document.querySelectorAll('.prod-chk:checked');
-  const bar=document.getElementById('bulk-prod-bar');
-  if(!bar)return;
-  if(sel.length>0){
-    bar.style.display='flex';
-    document.getElementById('bulk-prod-count').textContent=sel.length+' รายการที่เลือก';
-  } else {
-    bar.style.display='none';
-    const all=document.getElementById('prod-chk-all');
-    if(all) all.checked=false;
-  }
-}
-async function bulkDeleteProducts(){
-  const sel=[...document.querySelectorAll('.prod-chk:checked')].map(c=>c.dataset.id);
-  if(!sel.length)return;
-  if(!confirm('ลบ '+sel.length+' รายการที่เลือก?\nไม่สามารถกู้คืนได้'))return;
-  for(const id of sel){
-    await deleteFB('products',id);
-    S.products=S.products.filter(x=>x.id!==id);
-  }
-  toast('ลบ '+sel.length+' รายการแล้ว','success');
-  renderPage('products');
-}
-
-// ─── Bulk Delete — Stock ───
-function toggleAllStock(cb){
-  document.querySelectorAll('.stock-chk').forEach(c=>c.checked=cb.checked);
-  updateBulkStockBar();
-}
-function updateBulkStockBar(){
-  const sel=document.querySelectorAll('.stock-chk:checked');
-  const bar=document.getElementById('bulk-stock-bar');
-  if(!bar)return;
-  if(sel.length>0){
-    bar.style.display='flex';
-    document.getElementById('bulk-stock-count').textContent=sel.length+' รายการที่เลือก';
-  } else {
-    bar.style.display='none';
-    const all=document.getElementById('stock-chk-all');
-    if(all) all.checked=false;
-  }
-}
-async function bulkDeleteStock(){
-  const sel=[...document.querySelectorAll('.stock-chk:checked')].map(c=>c.dataset.id);
-  if(!sel.length)return;
-  if(!confirm('ลบ '+sel.length+' รายการที่เลือก?\nไม่สามารถกู้คืนได้'))return;
-  for(const id of sel){
-    await db.collection('products').doc(id).delete();
-    S.products=S.products.filter(p=>p.id!==id);
-  }
-  toast('ลบ '+sel.length+' รายการแล้ว','success');
-  renderPage('stock');
-}
-
 // ===== STOCK =====
 function renderStock(){
   const q=S._stockQ||'';
@@ -3568,8 +3499,7 @@ function renderStock(){
     const st=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
     const sc2=p.stock<=0?'red':p.stock<=(p.minStock||5)?'amber':'green';
     const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border);cursor:zoom-in" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`:''
-    return[`<input type="checkbox" class="stock-chk" data-id="${p.id}" onchange="updateBulkStockBar()" style="width:16px;height:16px;cursor:pointer">`,
-      `<div>${p.code||''}</div>${imgHtml}`,p.name,p.category||'-',p.unit||'-',
+    return[`<div>${p.code||''}</div>${imgHtml}`,p.name,p.category||'-',p.unit||'-',
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
       p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
       `<input type="text" value="${p.skuDemonTweeks||''}" placeholder="กรอก SKU"
@@ -3624,16 +3554,9 @@ function renderStock(){
     <div style="font-size:12px;color:var(--muted)" id="stock-count">${list.length}/${S.products.length} รายการ</div>
   </div>
 
-  <!-- Bulk Delete Bar -->
-  <div id="bulk-stock-bar" style="display:none;align-items:center;gap:10px;padding:8px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:10px;margin-bottom:.75rem">
-    <span id="bulk-stock-count" style="font-weight:700;color:#856404"></span>
-    <button class="btn btn-danger btn-sm" onclick="bulkDeleteStock()">🗑️ ลบที่เลือก</button>
-    <button class="btn btn-gray btn-sm" onclick="document.querySelectorAll('.stock-chk').forEach(c=>c.checked=false);updateBulkStockBar()">ยกเลิก</button>
-  </div>
-
   <!-- Table -->
   <div id="stock-table-wrap">
-    ${tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า')}
+    ${tbl(['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า')}
   </div>`;
 }
 
@@ -3673,8 +3596,7 @@ function _updateStockTable(){
     const st=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
     const sc2=p.stock<=0?'red':p.stock<=(p.minStock||5)?'amber':'green';
     const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border);cursor:zoom-in" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`:''
-    return[`<input type="checkbox" class="stock-chk" data-id="${p.id}" onchange="updateBulkStockBar()" style="width:16px;height:16px;cursor:pointer">`,
-      `<div>${p.code||''}</div>${imgHtml}`,p.name,p.category||'-',p.unit||'-',
+    return[`<div>${p.code||''}</div>${imgHtml}`,p.name,p.category||'-',p.unit||'-',
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
       p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
       `<input type="text" value="${p.skuDemonTweeks||''}" placeholder="กรอก SKU"
@@ -3684,7 +3606,7 @@ function _updateStockTable(){
       badge(st,sc2),
       `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button> <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>`];
   });
-  wrap.innerHTML=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
+  wrap.innerHTML=tbl(['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 }
 
 
