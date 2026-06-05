@@ -304,7 +304,7 @@ auth.onAuthStateChanged(async user=>{
     document.getElementById('loading-overlay').classList.add('hidden');
   }
 });
-const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:true,posVatMode:'inclusive',_posCat:'all',posPayMethod:'cash'};
+const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:true,posVatMode:'inclusive',_posCat:'all'};
 let PI=[];
 const SEED={
   products:[{code:'P001',name:'กระดาษ A4',unit:'รีม',cost:95,price:120,stock:50,minStock:10,category:'เครื่องเขียน'},{code:'P002',name:'ปากกาลูกลื่น',unit:'ด้าม',cost:8,price:15,stock:100,minStock:20,category:'เครื่องเขียน'},{code:'P003',name:'แฟ้มเอกสาร',unit:'อัน',cost:35,price:55,stock:30,minStock:5,category:'อุปกรณ์'},{code:'P004',name:'หมึกพิมพ์',unit:'กล่อง',cost:450,price:650,stock:8,minStock:3,category:'คอมพิวเตอร์'}],
@@ -1224,15 +1224,6 @@ function renderPOS(){
           <label class="fl">ลูกค้า / หมายเหตุ</label>
           <input class="fc" value="${S.posNote}" onchange="S.posNote=this.value" placeholder="ลูกค้าทั่วไป">
         </div>
-        <div style="margin-bottom:10px">
-          <label class="fl" style="margin-bottom:4px">รูปแบบชำระเงิน</label>
-          <div style="display:flex;gap:6px">
-            <button onclick="S.posPayMethod='cash';updatePOSCart()"
-              style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='cash'?'#10b981':'#334155'};background:${S.posPayMethod==='cash'?'#d1fae5':'transparent'};color:${S.posPayMethod==='cash'?'#065f46':'var(--text)'}">💵 เงินสด/โอน</button>
-            <button onclick="S.posPayMethod='credit';updatePOSCart()"
-              style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='credit'?'#6366f1':'#334155'};background:${S.posPayMethod==='credit'?'#ede9fe':'transparent'};color:${S.posPayMethod==='credit'?'#4338ca':'var(--text)'}">💳 บัตรเครดิต</button>
-          </div>
-        </div>
         <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
           onclick="checkout()" ${S.cart.length?'':'disabled'}>💳 ชำระเงิน ${fmt(total)}</button>
       </div>
@@ -1255,7 +1246,7 @@ function cartSetPrice(i,v){
   updatePOSCart();
 }
 function cartRemove(i){S.cart.splice(i,1);updatePOSCart();}
-function cartClear(){S.cart=[];S.posDiscount=0;S.posNote='';S.posPayMethod='cash';updatePOSCart();}
+function cartClear(){S.cart=[];S.posDiscount=0;S.posNote='';updatePOSCart();}
 
 function updatePOSCart(){
   // อัปเดตเฉพาะ cart panel ไม่ re-render ทั้งหน้า POS
@@ -1362,15 +1353,6 @@ function updatePOSCart(){
       <label class="fl">ลูกค้า / หมายเหตุ</label>
       <input class="fc" value="${S.posNote}" onchange="S.posNote=this.value" placeholder="ลูกค้าทั่วไป">
     </div>
-    <div style="margin-bottom:10px">
-      <label class="fl" style="margin-bottom:4px">รูปแบบชำระเงิน</label>
-      <div style="display:flex;gap:6px">
-        <button onclick="S.posPayMethod='cash';updatePOSCart()"
-          style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='cash'?'#10b981':'#334155'};background:${S.posPayMethod==='cash'?'#d1fae5':'transparent'};color:${S.posPayMethod==='cash'?'#065f46':'var(--text)'}">💵 เงินสด/โอน</button>
-        <button onclick="S.posPayMethod='credit';updatePOSCart()"
-          style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='credit'?'#6366f1':'#334155'};background:${S.posPayMethod==='credit'?'#ede9fe':'transparent'};color:${S.posPayMethod==='credit'?'#4338ca':'var(--text)'}">💳 บัตรเครดิต</button>
-      </div>
-    </div>
     <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
       onclick="checkout()" ${S.cart.length?'':'disabled'}>💳 ชำระเงิน ${fmt(total)}</button>
     ${S.cart.length?`
@@ -1394,8 +1376,7 @@ async function checkout(){
   }
   const docNo=await nextNo('POS','sales');
   const saleDate=document.getElementById('pos-sale-date')?.value||S.posSaleDate||todayISO();
-  const payMethod=S.posPayMethod||'cash';
-  const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',payMethod,
+  const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',
     items:S.cart.map(x=>({pid:x.pid,code:x.code,name:x.name,unit:x.unit,price:x.price,cost:x.cost,qty:x.qty,subtotal:x.price*x.qty})),
     subtotal:sub,discount:discAmt,vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total,totalCost,profit:afterDisc-totalCost};
   try{
@@ -1468,7 +1449,6 @@ function showReceiptModal(sale){
       </table>
       <hr style="border:none;border-top:1px dashed #000;margin:5px 0">
       <div style="text-align:center;font-size:10px;color:#555;margin-bottom:4px">${bahtText(sale.total)}</div>
-      <div style="text-align:center;font-size:11px;font-weight:700;margin-bottom:4px">${sale.payMethod==='credit'?'💳 บัตรเครดิต':'💵 เงินสด / โอนเงิน'}</div>
       <div style="text-align:center;margin-top:8px;padding-top:6px;border-top:1px dashed #000">
         <div style="font-weight:700;font-size:13px">${c.receiptFooter||'ขอบคุณที่ใช้บริการ'}</div>
         ${c.receiptFooter2?`<div style="font-size:11px;color:#555">${c.receiptFooter2}</div>`:''}
@@ -1937,7 +1917,6 @@ function viewSale(id){
       <div><span style="color:var(--muted)">วันที่:</span> <b>${s.date}</b></div>
       <div><span style="color:var(--muted)">ลูกค้า:</span> <b>${s.customerName||'-'}</b></div>
       <div><span style="color:var(--muted)">สถานะ:</span> ${statusBadge}</div>
-      <div><span style="color:var(--muted)">ชำระด้วย:</span> <b>${s.payMethod==='credit'?'💳 บัตรเครดิต':'💵 เงินสด/โอน'}</b></div>
     </div>
     <div class="tbl"><table style="font-size:12px">
       <thead><tr>
@@ -2217,7 +2196,7 @@ th.r{text-align:right}th.c{text-align:center}
     <div style="font-size:13px;line-height:1.8">
       <div>เลขที่: <b>${s.docNo}</b></div>
       <div>วันที่: <b>${s.date}</b></div>
-      <div>ชำระด้วย: <b>${s.payMethod==='credit'?'💳 บัตรเครดิต':'💵 เงินสด/โอน'}</b></div>
+      <div>ชำระด้วย: <b>เงินสด (POS)</b></div>
     </div>
   </div>
 </div>
@@ -6232,7 +6211,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
         <div>เลขที่: <b>${docNo}</b></div>
         <div>วันที่: <b>${todayISO()}</b></div>
         <div>พนักงาน: <b>${currentUser?.displayName||currentUser?.email||'-'}</b></div>
-        <div>ชำระด้วย: <b>${(S.posPayMethod||'cash')==='credit'?'💳 บัตรเครดิต':'💵 เงินสด/โอน'}</b></div>
+        <div>ชำระด้วย: <b>เงินสด</b></div>
         ${S.posNote&&S.posNote!==name?`<div>หมายเหตุ: ${S.posNote}</div>`:''}
       </div>
     </div>
