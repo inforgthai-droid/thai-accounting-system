@@ -3673,7 +3673,7 @@ function renderStock(){
   <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="orderDemonTweeks()">📧 สั่งสินค้า Demon Tweeks</button>
   </div>
   </div>
-  <div class="stat-grid" id="stock-stat-grid" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
     ${sc('สินค้าทั้งหมด'+catLabel,catList.length+' ชนิด','#0ea5e9')}
     ${sc('มูลค่าสต็อก'+catLabel,''+fmt(totalVal),'#7c3aed')}
     ${sc('ใกล้หมด'+catLabel,catList.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0).length+' ชนิด','#f59e0b')}
@@ -3743,19 +3743,6 @@ function _updateStockTable(){
 
   const cnt=document.getElementById('stock-count');
   if(cnt) cnt.textContent=list.length+'/'+S.products.length+' รายการ';
-
-  // อัปเดต stat cards ตามหมวดที่เลือก
-  const statGrid=document.getElementById('stock-stat-grid');
-  if(statGrid){
-    const catList=S._stockCat?S.products.filter(p=>p.category===S._stockCat):S.products;
-    const catLabel=S._stockCat?` — ${S._stockCat}`:'';
-    const mv=catList.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
-    statGrid.innerHTML=
-      sc('สินค้าทั้งหมด'+catLabel,catList.length+' ชนิด','#0ea5e9')+
-      sc('มูลค่าสต็อก'+catLabel,''+fmt(mv),'#7c3aed')+
-      sc('ใกล้หมด'+catLabel,catList.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0).length+' ชนิด','#f59e0b')+
-      sc('หมดสต็อก'+catLabel,catList.filter(p=>p.stock<=0).length+' ชนิด','#ef4444');
-  }
 
   // Update tab active states
   document.querySelectorAll('[onclick*="_stockStatus"]').forEach(btn=>{
