@@ -3665,7 +3665,7 @@ function renderStock(){
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">สต็อกสินค้า</div>
   <div style="display:flex;gap:8px">
-  <button class="btn btn-gray btn-sm" onclick="openStockPrintDialog()">พิมพ์รายงานสต็อก</button>
+  <button class="btn btn-gray btn-sm" onclick="printPage()">พิมพ์รายงานสต็อก</button>
   <button class="btn btn-sm" style="background:#e85d04;color:#fff" onclick="exportDemonTweeksWord()">📋 Export SKU หมด → Word</button>
   <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="orderDemonTweeks()">📧 สั่งสินค้า Demon Tweeks</button>
   </div>
@@ -7248,79 +7248,6 @@ const PRINT_TITLES={
 };
 
 // สร้าง HTML หัวกระดาษ
-function openStockPrintDialog(){
-  openModal('🖨️ พิมพ์รายงานสต็อก',`
-    <div style="display:flex;flex-direction:column;gap:12px;padding:4px 0">
-      <button class="btn btn-primary" style="padding:14px;font-size:15px;justify-content:flex-start;gap:12px" onclick="closeModal();printStockReport('instock')">
-        <span style="font-size:20px">📦</span>
-        <div style="text-align:left">
-          <div style="font-weight:700">สต็อกสินค้าที่มีอยู่</div>
-          <div style="font-size:12px;opacity:.8;margin-top:2px">เฉพาะสินค้าที่คงเหลือ > 0</div>
-        </div>
-      </button>
-      <button class="btn btn-gray" style="padding:14px;font-size:15px;justify-content:flex-start;gap:12px;border:1px solid #e5e7eb" onclick="closeModal();printStockReport('all')">
-        <span style="font-size:20px">📋</span>
-        <div style="text-align:left">
-          <div style="font-weight:700">สต็อกสินค้าทั้งหมด</div>
-          <div style="font-size:12px;opacity:.8;margin-top:2px">รวมสินค้าหมดสต็อกด้วย</div>
-        </div>
-      </button>
-    </div>
-  `,`<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>`);
-}
-
-function printStockReport(mode){
-  const c=S.company;
-  const now=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  const allP=S.products;
-  const instockP=allP.filter(p=>(p.stock||0)>0);
-  const list=mode==='instock'?instockP:allP;
-  const label=mode==='instock'?'สต็อกสินค้าที่มีอยู่':'สต็อกสินค้าทั้งหมด';
-  const mv=list.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
-  const hdr=`<div class="ph"><div class="ph-logo">${c.logoUrl?`<img src="${c.logoUrl}" style="width:56px;height:56px;object-fit:cover;border-radius:8px">`:(c.logoEmoji||'🏪')}</div><div class="ph-name">${c.name||'ร้านค้า'}</div>`+
-    `<div class="ph-info">${[c.address,c.tel?'โทร '+c.tel:'',c.taxId?'เลขภาษี '+c.taxId:''].filter(Boolean).join(' | ')}</div>`+
-    `<div class="ph-title">📄 ${label}</div><div class="ph-date">${now}</div></div>`;
-  let body=pStats([
-    ['สินค้าในรายงาน',list.length+' ชนิด','#0ea5e9'],
-    ['มูลค่าสต็อก',''+fmt(mv),'#7c3aed'],
-    ['ใกล้หมด',list.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length+' ชนิด','#f59e0b'],
-    ['หมดสต็อก',list.filter(p=>(p.stock||0)<=0).length+' ชนิด','#ef4444']
-  ]);
-  body+=pTable(
-    ['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','สถานะ'],
-    list.map(p=>[p.code,p.name,p.category||'-',p.unit||'-',p.stock,p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),(p.stock||0)<=0?'หมด':(p.stock||0)<=(p.minStock||5)?'ใกล้หมด':'ปกติ'])
-  );
-  const pw=window.open('','_blank','width=900,height=750,scrollbars=yes');
-  if(!pw){alert('กรุณาอนุญาต Popup ในเบราว์เซอร์เพื่อพิมพ์ครับ');return;}
-  pw.document.open();
-  pw.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">');
-  pw.document.write('<title>'+label+'</title>');
-  pw.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">');
-  pw.document.write('<style>');
-  pw.document.write('*{box-sizing:border-box;margin:0;padding:0}');
-  pw.document.write('body{font-family:Sarabun,sans-serif;font-size:13px;color:#000;background:#fff;padding:1.5cm}');
-  pw.document.write('.ph{text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:12px;margin-bottom:16px}');
-  pw.document.write('.ph-logo{font-size:28px}.ph-name{font-size:19px;font-weight:700;color:#1a3a5c;margin:4px 0}');
-  pw.document.write('.ph-info{font-size:11px;color:#555}.ph-title{font-size:15px;font-weight:700;color:#0ea5e9;margin-top:8px}');
-  pw.document.write('.ph-date{font-size:11px;color:#888;margin-top:2px}');
-  pw.document.write('.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}');
-  pw.document.write('.stat{border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center}');
-  pw.document.write('.stat-label{font-size:10px;color:#888;margin-bottom:3px}.stat-value{font-size:15px;font-weight:700}');
-  pw.document.write('table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1rem}');
-  pw.document.write('th{background:#1a3a5c;color:#fff;padding:7px 8px;text-align:left;font-size:11px}');
-  pw.document.write('th.r,td.r{text-align:right}');
-  pw.document.write('td{padding:6px 8px;border-bottom:1px solid #eee;font-size:12px}');
-  pw.document.write('tr:nth-child(even) td{background:#f9f9f9}');
-  pw.document.write('.footer{text-align:center;margin-top:1.5rem;padding-top:1rem;border-top:1px dashed #ccc;font-size:11px;color:#888}');
-  pw.document.write('@page{size:A4;margin:0}@media print{body{padding:1cm}}');
-  pw.document.write('</style></head><body>');
-  pw.document.write(hdr+body);
-  pw.document.write('<div class="footer">'+c.name+' | '+now+'</div>');
-  pw.document.write('<script>window.onload=function(){window.print();}<\/script>');
-  pw.document.write('</body></html>');
-  pw.document.close();
-}
-
 function printPage(){
   const title=PRINT_TITLES[currentPage]||'รายงาน';
   const c=S.company;
