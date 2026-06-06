@@ -3635,10 +3635,8 @@ async function confirmBulkAdjust(){
 function renderStock(){
   const q=S._stockQ||'';
   const statusF=S._stockStatus||'all';
-  const catList=S._stockCat?S.products.filter(p=>p.category===S._stockCat):S.products;
-  const totalVal=catList.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+  const totalVal=S.products.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
   const cats=[...new Set(S.products.map(p=>p.category).filter(Boolean))].sort();
-  const catLabel=S._stockCat?` — ${S._stockCat}`:'';
 
   // Filter list
   let list=S.products;
@@ -3674,10 +3672,10 @@ function renderStock(){
   </div>
   </div>
   <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
-    ${sc('สินค้าทั้งหมด'+catLabel,catList.length+' ชนิด','#0ea5e9')}
-    ${sc('มูลค่าสต็อก'+catLabel,''+fmt(totalVal),'#7c3aed')}
-    ${sc('ใกล้หมด'+catLabel,catList.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0).length+' ชนิด','#f59e0b')}
-    ${sc('หมดสต็อก'+catLabel,catList.filter(p=>p.stock<=0).length+' ชนิด','#ef4444')}
+    ${sc('สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9')}
+    ${sc('มูลค่าสต็อก',''+fmt(totalVal),'#7c3aed')}
+    ${sc('ใกล้หมด',S.products.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0).length+' ชนิด','#f59e0b')}
+    ${sc('หมดสต็อก',S.products.filter(p=>p.stock<=0).length+' ชนิด','#ef4444')}
   </div>
 
   <!-- Search + Filter -->
