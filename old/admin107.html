@@ -3575,59 +3575,50 @@ function bulkAdjustStock(){
   if(!ids.length)return;
   const list=ids.map(id=>{
     const p=S.products.find(x=>x.id===id);
-    return p?`<tr style="border-bottom:1px solid #e5e7eb">
-      <td style="padding:5px 8px;font-weight:600;color:var(--primary);font-size:13px">${p.code||''}</td>
-      <td style="padding:5px 8px;font-size:13px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.name||''}">${p.name||''}</td>
-      <td style="padding:5px 8px;text-align:center;color:#888;font-size:12px">${p.stock||0} ${p.unit||''}</td>
+    return p?`<tr>
+      <td style="padding:4px 8px;font-weight:600;color:var(--primary)">${p.code||''}</td>
+      <td style="padding:4px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name||''}</td>
+      <td style="padding:4px 8px;text-align:center"><input type="number" class="fc bulk-adj-qty" data-id="${id}" data-unit="${p.unit||''}" value="${p.stock||0}" style="width:90px;text-align:center;padding:4px 6px;font-size:13px"></td>
+      <td style="padding:4px 8px;text-align:center;color:#888;font-size:12px">${p.unit||''}</td>
     </tr>`:'';
   }).join('');
   openModal(`🔧 ปรับสต็อก ${ids.length} รายการ`,`
-    <div style="background:var(--surface);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <div style="flex:1;min-width:160px">
-        <div style="font-size:12px;color:#888;margin-bottom:4px">ตั้งสต็อกใหม่เป็น</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="number" id="bulkAdjQty" min="0" value="0"
-            style="width:100px;font-size:22px;font-weight:700;text-align:center;padding:6px 8px;border:2px solid var(--primary);border-radius:8px;background:var(--bg);color:var(--text)"
-            oninput="document.getElementById('bulkAdjPreview').textContent=this.value||0">
-          <span style="font-size:14px;color:#888">สำหรับทุกรายการ</span>
-        </div>
-      </div>
-      <div style="background:var(--primary);color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;text-align:center;min-width:110px">
-        <div style="font-size:11px;opacity:.8">จะปรับ</div>
-        <div style="font-size:20px;font-weight:700" id="bulkAdjPreview">0</div>
-        <div style="font-size:11px;opacity:.8">${ids.length} รายการ</div>
-      </div>
-    </div>
-    <div style="font-size:12px;color:#888;margin-bottom:6px">รายการที่จะถูกปรับ</div>
-    <div style="max-height:280px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px">
+    <div style="font-size:13px;color:#888;margin-bottom:10px">กรอกจำนวนสต็อกใหม่ของแต่ละรายการ</div>
+    <div style="max-height:360px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px">
       <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:var(--surface);font-size:11px;color:#888;position:sticky;top:0">
-          <th style="padding:5px 8px;text-align:left">รหัส</th>
-          <th style="padding:5px 8px;text-align:left">ชื่อสินค้า</th>
-          <th style="padding:5px 8px;text-align:center">สต็อกเดิม</th>
+        <thead><tr style="background:var(--surface);font-size:12px;color:#888;position:sticky;top:0">
+          <th style="padding:6px 8px;text-align:left">รหัส</th>
+          <th style="padding:6px 8px;text-align:left">ชื่อสินค้า</th>
+          <th style="padding:6px 8px;text-align:center">สต็อกใหม่</th>
+          <th style="padding:6px 8px;text-align:center">หน่วย</th>
         </tr></thead>
         <tbody>${list}</tbody>
       </table>
     </div>
     <div class="fm" style="margin-top:12px"><label class="fl">หมายเหตุ</label><input class="fc" id="bulkAdjNote" placeholder="ตรวจนับสต็อก / ปรับปรุง"></div>
-  `,`<button class="btn btn-primary" onclick="confirmBulkAdjust()">✓ บันทึก</button>
+  `,`<button class="btn btn-primary" onclick="confirmBulkAdjust()">บันทึก</button>
    <button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>`);
 }
 
 async function confirmBulkAdjust(){
-  const qty=parseFloat(document.getElementById('bulkAdjQty').value)||0;
   const note=document.getElementById('bulkAdjNote').value||'ปรับสต็อก Bulk';
-  const ids=[...document.querySelectorAll('.stock-chk:checked')].map(c=>c.dataset.id);
-  if(!ids.length)return;
+  const inputs=[...document.querySelectorAll('.bulk-adj-qty')];
+  if(!inputs.length)return;
   const batch=db.batch();
-  for(const id of ids){
+  let count=0;
+  for(const inp of inputs){
+    const id=inp.dataset.id;
+    const qty=parseFloat(inp.value)||0;
+    const p=S.products.find(x=>x.id===id);
+    if(!p)continue;
     batch.update(db.collection('products').doc(id),{stock:qty,updatedAt:ts()});
     const idx=S.products.findIndex(x=>x.id===id);
     if(idx>=0) S.products[idx].stock=qty;
+    count++;
   }
   await batch.commit();
   closeModal();
-  toast(`ปรับสต็อกเป็น ${qty} — ${ids.length} รายการสำเร็จ ✓`,'success');
+  toast(`ปรับสต็อก ${count} รายการสำเร็จ ✓`,'success');
   renderPage('stock');
 }
 
