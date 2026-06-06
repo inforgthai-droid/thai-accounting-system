@@ -3644,7 +3644,6 @@ function renderStock(){
   if(statusF==='low') list=list.filter(p=>p.stock>0&&p.stock<=(p.minStock||5));
   if(statusF==='out') list=list.filter(p=>p.stock<=0);
   if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
-  if(statusF==='price0') list=list.filter(p=>!(p.price>0));
   if(S._stockCat) list=list.filter(p=>p.category===S._stockCat);
 
   const rows=list.map(p=>{
@@ -3688,11 +3687,11 @@ function renderStock(){
       autocomplete="off">
     <!-- Status filter tabs -->
     <div style="display:flex;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px;flex-shrink:0">
-      ${[['all','ทั้งหมด',S.products.length],['ok','ปกติ',S.products.filter(p=>p.stock>(p.minStock||5)).length],['low','ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length],['out','หมด',S.products.filter(p=>p.stock<=0).length],['price0','ราคา 0',S.products.filter(p=>!(p.price>0)).length]].map(([key,label,cnt])=>
+      ${[['all','ทั้งหมด',S.products.length],['ok','ปกติ',S.products.filter(p=>p.stock>(p.minStock||5)).length],['low','ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length],['out','หมด',S.products.filter(p=>p.stock<=0).length]].map(([key,label,cnt])=>
         `<button onclick="S._stockStatus='${key}';stockFilter()"
           style="padding:5px 12px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .13s;
           background:${statusF===key?'#fff':'transparent'};
-          color:${statusF===key?(key==='out'?'var(--danger)':key==='low'?'var(--warning)':key==='price0'?'#7c3aed':'var(--success)'):'#888'};
+          color:${statusF===key?(key==='out'?'var(--danger)':key==='low'?'var(--warning)':'var(--success)'):'#888'};
           box-shadow:${statusF===key?'0 1px 4px rgba(0,0,0,.1)':'none'}">${label}
           <span style="font-size:10px;background:${statusF===key?'var(--accent)':'#e2e8f0'};color:${statusF===key?'#fff':'#888'};border-radius:99px;padding:0 5px;margin-left:2px">${cnt}</span>
         </button>`).join('')}
@@ -3737,7 +3736,6 @@ function _updateStockTable(){
   if(statusF==='out') list=list.filter(p=>p.stock<=0);
   if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
   if(S._stockCat) list=list.filter(p=>p.category===S._stockCat);
-  if(statusF==='price0') list=list.filter(p=>!(p.price>0));
 
   const cnt=document.getElementById('stock-count');
   if(cnt) cnt.textContent=list.length+'/'+S.products.length+' รายการ';
