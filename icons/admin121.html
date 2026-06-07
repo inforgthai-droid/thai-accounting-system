@@ -953,6 +953,15 @@ function _printRentalReceipt(id){
   </div>
   <scr`+'ipt>setTimeout(function(){window.print();},600);</scr'+'ipt>'+`
   
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(r => console.log('[SW] registered:', r.scope))
+      .catch(e => console.warn('[SW] failed:', e));
+  });
+}
+</script>
 </body></html>`;
   const w=window.open('','_blank','width=600,height=800');
   w.document.write(html);
@@ -7624,14 +7633,14 @@ function pStats(stats){
 // ===== START =====
 // initApp() จะถูกเรียกโดยอัตโนมัติหลัง Auth ตรวจสอบสิทธิ์แล้ว
 </script>
+</body>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
-      .then(() => console.log('[SW] registered'))
+      .then(r => console.log('[SW] registered'))
       .catch(e => console.warn('[SW] failed:', e));
   });
 }
 </script>
-</body>
 </html>
