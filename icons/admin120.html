@@ -282,6 +282,7 @@ const db=firebase.firestore();
 const storage=firebase.storage();
 const auth=firebase.auth();
 const googleProvider=new firebase.auth.GoogleAuthProvider();
+const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 // ════════════════════════════════════════
 //  ADMIN AUTH
@@ -316,12 +317,23 @@ function isAdmin(email){
 }
 
 function adminLogin(){
-  auth.signInWithPopup(googleProvider).catch(e=>toast('Login ล้มเหลว: '+e.message,'error'));
+  if(isMobile){
+    auth.signInWithRedirect(googleProvider).catch(e=>toast('Login ล้มเหลว: '+e.message,'error'));
+  } else {
+    auth.signInWithPopup(googleProvider).catch(e=>toast('Login ล้มเหลว: '+e.message,'error'));
+  }
 }
 function adminLogout(){
   auth.signOut();
   document.getElementById('auth-gate').classList.remove('hidden');
   document.getElementById('auth-gate').style.display='flex';
+}
+
+// รับผลหลัง redirect กลับมา (มือถือ)
+if(isMobile){
+  auth.getRedirectResult().catch(e=>{
+    if(e.code!=='auth/no-auth-event') toast('Login ล้มเหลว: '+e.message,'error');
+  });
 }
 
 auth.onAuthStateChanged(async user=>{
@@ -7633,7 +7645,6 @@ function pStats(stats){
 // ===== START =====
 // initApp() จะถูกเรียกโดยอัตโนมัติหลัง Auth ตรวจสอบสิทธิ์แล้ว
 </script>
-</body>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -7643,4 +7654,5 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+</body>
 </html>
