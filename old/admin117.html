@@ -220,11 +220,6 @@ tbody tr:hover{background:#f0f9ff}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
 <script>
-var CAT_ICON_LIST = [
-  '🔥','👖','🧤','🧦','👟','⛑️','🏎️','🎭','🛡️','💺',
-  '🔩','🔴','🔧','⚙️','🔘','📷','🏷️','🧯','⚡','🏆',
-  '🏁','📦','🛞','🪝','🔑','🎯','🏅','🚀','💡','🔬'
-];
 firebase.initializeApp({apiKey:"AIzaSyCttc2r7PnKnI8dZDGGPuvJWqvib0UMjLc",authDomain:"thai-accounting-d3e6b.firebaseapp.com",projectId:"thai-accounting-d3e6b",storageBucket:"thai-accounting-d3e6b.firebasestorage.app",messagingSenderId:"227660326618",appId:"1:227660326618:web:dfc27778e1eadb519fe7e3"});
 const db=firebase.firestore();
 const storage=firebase.storage();
@@ -5793,7 +5788,11 @@ function downloadTemplate(type){
 // หมวดหมู่เก็บใน Firestore collection 'categories'
 // แต่ละ doc: { name, icon, description, order, visible, color }
 
-
+var CAT_ICON_LIST = [
+  '🔥','👖','🧤','🧦','👟','⛑️','🏎️','🎭','🛡️','💺',
+  '🔩','🔴','🔧','⚙️','🔘','📷','🏷️','🧯','⚡','🏆',
+  '🏁','📦','🛞','🪝','🔑','🎯','🏅','🚀','💡','🔬'
+];
 
 function renderCategories(){
   const fromProds=[...new Set(S.products.map(p=>p.category).filter(Boolean))].sort();
