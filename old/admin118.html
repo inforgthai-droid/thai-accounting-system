@@ -2,14 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Racing Garage Admin</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a3a5c">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="RG Admin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — ระบบจัดการร้านค้า</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -142,52 +136,6 @@ tbody tr:hover{background:#f0f9ff}
 .product-card.out{opacity:.5;cursor:not-allowed;pointer-events:none}
 .product-name{font-weight:700;font-size:12px;margin-bottom:3px;color:var(--primary)}
 .product-price{font-size:14px;font-weight:700;color:var(--success)}
-
-/* ═══════════════════════════════════════════
-   MOBILE RESPONSIVE — PWA
-   ═══════════════════════════════════════════ */
-@media (max-width: 768px) {
-  body { overflow: auto !important; flex-direction: column !important; }
-  #sidebar {
-    position: fixed !important; bottom: 0 !important; left: 0 !important;
-    width: 100% !important; height: auto !important; z-index: 1000 !important;
-    flex-direction: row !important; overflow-x: auto !important;
-    padding: 4px 0 !important; border-top: 1px solid #334155 !important;
-    border-right: none !important;
-  }
-  #sidebar .sidebar-brand { display: none !important; }
-  #sidebar .sidebar-user { display: none !important; }
-  #sidebar nav { display: flex !important; flex-direction: row !important; width: 100% !important; }
-  #sidebar nav a, #sidebar nav button {
-    flex: 1 !important; flex-direction: column !important;
-    font-size: 9px !important; padding: 4px 2px !important;
-    border-radius: 0 !important; min-width: 48px !important;
-    text-align: center !important; white-space: nowrap !important;
-  }
-  #sidebar .sidebar-section { display: none !important; }
-  #main {
-    margin-left: 0 !important; margin-bottom: 68px !important;
-    height: auto !important; min-height: 100vh !important;
-    overflow: auto !important; padding: 10px !important;
-  }
-  .page-header { flex-wrap: wrap !important; gap: 6px !important; }
-  .btn { font-size: 12px !important; padding: 6px 10px !important; }
-  .btn-xs { font-size: 11px !important; padding: 4px 7px !important; }
-  #pos-layout { flex-direction: column !important; }
-  #pos-products { width: 100% !important; height: auto !important; max-height: 55vh !important; overflow-y: auto !important; }
-  #pos-summary { width: 100% !important; border-left: none !important; border-top: 1px solid var(--border) !important; }
-  #pos-product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
-  .pos-card { padding: 8px !important; }
-  .pos-card-name { font-size: 11px !important; }
-  .pos-card-price { font-size: 14px !important; }
-  table { font-size: 11px !important; }
-  th, td { padding: 5px 6px !important; }
-  .tbl-wrap { overflow-x: auto !important; }
-  .stat-cards { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-  .stat-card { padding: 10px !important; }
-  .modal-content { width: 96vw !important; max-height: 90vh !important; overflow-y: auto !important; margin: 5vh auto !important; }
-  .hide-mobile { display: none !important; }
-}
 </style>
 </head>
 <body>
@@ -952,17 +900,7 @@ function _printRentalReceipt(id){
     <button onclick="window.print()" style="padding:8px 24px;background:#e85d04;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:'Sarabun',sans-serif;cursor:pointer;font-weight:700">🖨️ พิมพ์</button>
   </div>
   <scr`+'ipt>setTimeout(function(){window.print();},600);</scr'+'ipt>'+`
-  
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(r => console.log('[SW] registered:', r.scope))
-      .catch(e => console.warn('[SW] failed:', e));
-  });
-}
-</script>
-</body></html>`;
+  </body></html>`;
   const w=window.open('','_blank','width=600,height=800');
   w.document.write(html);
   w.document.close();
@@ -7632,15 +7570,6 @@ function pStats(stats){
 
 // ===== START =====
 // initApp() จะถูกเรียกโดยอัตโนมัติหลัง Auth ตรวจสอบสิทธิ์แล้ว
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(r => console.log('[SW] registered'))
-      .catch(e => console.warn('[SW] failed:', e));
-  });
-}
 </script>
 </body>
 </html>

@@ -1,0 +1,26 @@
+{
+  "name": "Racing Garage Admin",
+  "short_name": "RG Admin",
+  "description": "ระบบจัดการร้าน Racing Garage",
+  "start_url": "/thai-accounting-system/admin.html",
+  "scope": "/thai-accounting-system/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c2444",
+  "theme_color": "#1a3a5c",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
