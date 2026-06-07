@@ -411,7 +411,7 @@ function renderDashboard(){
   const todTotal=todSales.reduce((a,b)=>a+(b.total||0),0);
   const allRev=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,b)=>a+(b.subtotal||0),0);
   const allCost=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,b)=>a+(b.totalCost||0),0);
-  const profit=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const profit=allRev-allCost;
   const lowStock=S.products.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0);
   const outStock=S.products.filter(p=>p.stock<=0);
   const pendingOrders=S.onlineOrders.filter(o=>o.status==='รอยืนยัน');
@@ -1393,13 +1393,6 @@ function updatePOSCart(){
     <button onclick="openFullReceipt()" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;background:#eff6ff;color:var(--accent);border:1.5px solid var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">ใบเสร็จเต็มรูปแบบ / ใบกำกับภาษี</button>
     <button onclick="openShippingLabel({itemsText:S.cart.map(i=>i.name+' x'+i.qty).join(', ')})" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">จัดส่งสินค้า</button>`:''}`;
 }
-function calcNetProfit(total, totalCost, payMethod, shopeeRate){
-  // ถ้าเป็น Shopee: กำไร = ยอดที่รับจริง - ต้นทุน = (total * rate) - totalCost
-  // ถ้าไม่ใช่: กำไร = total - totalCost  (ใช้ afterDisc จริงๆ แต่ total ≈ afterDisc+vat)
-  const rate = shopeeRate || {'shopee_pay':0.75,'shopee_spaylater':0.71,'shopee_cc':0.78,'shopee_cc_install':0.73}[payMethod] || null;
-  if(rate) return Math.round(total * rate) - totalCost;
-  return total - totalCost;
-}
 async function checkout(){
   if(!S.cart.length)return;
   const sub=S.cart.reduce((a,b)=>a+b.price*b.qty,0);
@@ -1423,7 +1416,7 @@ async function checkout(){
   const netRevenue=shopeeRate?Math.round(total*shopeeRate):total;
   const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',payMethod,shopeeRate,netRevenue,
     items:S.cart.map(x=>({pid:x.pid,code:x.code,name:x.name,unit:x.unit,price:x.price,cost:x.cost,qty:x.qty,subtotal:x.price*x.qty})),
-    subtotal:sub,discount:discAmt,vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total,totalCost,profit:calcNetProfit(total,totalCost,payMethod,shopeeRate)};
+    subtotal:sub,discount:discAmt,vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total,totalCost,profit:afterDisc-totalCost};
   try{
     const batch=db.batch();
     const sRef=db.collection('sales').doc();
@@ -1846,7 +1839,7 @@ function renderSales(){
   const totalRev=activeAll.reduce((a,b)=>a+(b.total||0),0);
   const totalSub=activeAll.reduce((a,b)=>a+(b.subtotal||0),0);
   const totalCost=activeAll.reduce((a,b)=>a+(b.totalCost||0),0);
-  const totalProfit=activeAll.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const totalProfit=totalSub-totalCost;
   const posCount=activeAll.filter(s=>s._ch==='pos').length;
   const ordCount=activeAll.filter(s=>s._ch==='online').length;
   const cancelCount=all.filter(s=>s.status==='ยกเลิก').length;
@@ -1858,7 +1851,7 @@ function renderSales(){
       ?`<span style="font-size:10px;background:#dbeafe;color:#1d4ed8;border-radius:4px;padding:1px 6px;font-weight:700">POS</span>`
       :`<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:4px;padding:1px 6px;font-weight:700">Online</span>`;
     const cancelBadge=isCancelled?`<span style="font-size:10px;background:#fef2f2;color:var(--danger);border-radius:4px;padding:1px 6px;font-weight:700;margin-left:3px">ยกเลิก</span>`:'';
-    const profit=s._ch==='pos'&&!isCancelled?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):0;
+    const profit=s._ch==='pos'&&!isCancelled?(s.subtotal||0)-(s.totalCost||0):0;
     const actions=s._ch==='pos'
       ?`<button class="btn btn-primary btn-xs" onclick="viewSale('${s.id}')">ดู</button> `
        +(!isCancelled?`<button class="btn btn-gray btn-xs" onclick="showPrintMenu('${s.id}',this)">พิมพ์ ▾</button> `
@@ -1982,7 +1975,7 @@ function viewSale(id){
       ${(s.discount||0)>0?`<div>ส่วนลด: <b style="color:var(--danger)">-${fmt(s.discount)}</b></div>`:''}
       ${(s.vat||0)>0?`<div>VAT: <b>${fmt(s.vat)}</b></div>`:''}
       <div style="font-size:16px;font-weight:700;color:var(--primary)">ยอดสุทธิ: ${fmt(s.total)}</div>
-      <div style="color:#7c3aed;font-weight:700">กำไรขั้นต้น: ${fmt(calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null))}</div>
+      <div style="color:#7c3aed;font-weight:700">กำไรขั้นต้น: ${fmt((s.subtotal||0)-(s.totalCost||0))}</div>
     </div>
     ${isCancelled?`<div style="background:#fef2f2;border-left:3px solid var(--danger);padding:8px 12px;border-radius:6px;font-size:12px;color:var(--danger);margin-top:8px">รายการนี้ถูกยกเลิกแล้ว ${s.cancelNote?'('+s.cancelNote+')':''}</div>`:''}`,
   `<div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -2353,7 +2346,7 @@ function printMonthlySales(){
   if(!all.length){ toast('ไม่มีข้อมูลในเดือนนี้','info'); return; }
 
   const totalRev=all.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+(s.total||0),0);
-  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+(s.subtotal||0)-(s.totalCost||0),0);
   const totalDisc=all.reduce((a,s)=>a+(s.discount||0),0);
   const c=S.company;
 
@@ -2364,7 +2357,7 @@ function printMonthlySales(){
     if(!byDay[d]) byDay[d]={count:0,rev:0,profit:0};
     byDay[d].count++;
     byDay[d].rev+=s.total||0;
-    byDay[d].profit+=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):0;
+    byDay[d].profit+=s._ch==='pos'?(s.subtotal||0)-(s.totalCost||0):0;
   });
 
   const html=`<!DOCTYPE html>
@@ -2432,7 +2425,7 @@ tr:nth-child(even) td{background:#f8fafc}
       const ds=byDay[d];
       rows+=`<tr class="day-hdr"><td colspan="5" style="padding:5px 8px">${d} — ${daySales.length} บิล</td><td></td><td style="text-align:right;padding:5px 8px">${fmt(ds.rev)}</td><td></td><td></td><td style="text-align:right;padding:5px 8px;color:#7c3aed">${fmt(ds.profit)}</td></tr>`;
       daySales.forEach((s,i)=>{
-        const profit=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):0;
+        const profit=s._ch==='pos'?(s.subtotal||0)-(s.totalCost||0):0;
         rows+=`<tr>
           <td style="color:#888">${i+1}</td>
           <td style="font-weight:600">${s.docNo||'-'}</td>
@@ -2495,7 +2488,7 @@ function printDailySales(){
   if(dt) all=all.filter(s=>(s.date||'')<=dt);
 
   const totalRev=all.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+(s.total||0),0);
-  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+(s.subtotal||0)-(s.totalCost||0),0);
   const dateLabel=df===dt?df:df+' ถึง '+dt;
 
   const html=`<!DOCTYPE html>
@@ -2557,7 +2550,7 @@ tr:nth-child(even){background:#f8fafc}
   </tr></thead>
   <tbody>
     ${all.map((s,i)=>{
-      const profit=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):0;
+      const profit=s._ch==='pos'?(s.subtotal||0)-(s.totalCost||0):0;
       return`<tr>
         <td style="color:#888">${i+1}</td>
         <td style="font-weight:600">${s.docNo||'-'}</td>
