@@ -1396,7 +1396,7 @@ function updatePOSCart(){
 function calcNetProfit(total, totalCost, payMethod, shopeeRate){
   // ถ้าเป็น Shopee: กำไร = ยอดที่รับจริง - ต้นทุน = (total * rate) - totalCost
   // ถ้าไม่ใช่: กำไร = total - totalCost  (ใช้ afterDisc จริงๆ แต่ total ≈ afterDisc+vat)
-  const rate = shopeeRate || {'shopee_pay':0.75,'shopee_spaylater':0.71,'shopee_cc':0.78,'shopee_cc_install':0.73,'credit':0.9735}[payMethod] || null;
+  const rate = shopeeRate || {'shopee_pay':0.75,'shopee_spaylater':0.71,'shopee_cc':0.78,'shopee_cc_install':0.73}[payMethod] || null;
   if(rate) return Math.round(total * rate) - totalCost;
   return total - totalCost;
 }
