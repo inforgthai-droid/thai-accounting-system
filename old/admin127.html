@@ -596,27 +596,7 @@ function posScanKey(e, inp){
 function posSearch(val){
   S._posQ=val;
   _updatePOSGrid();
-  _updatePOSDropdown(val);
-}
-
-function _updatePOSDropdown(val){
-  const drop = document.getElementById('pos-search-dropdown');
-  if(!drop) return;
-  if(!val || val.length < 1){ drop.style.display='none'; return; }
-  const q = val.toLowerCase();
-  let prods = S.products.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q)).slice(0,8);
-  if(prods.length===0){ drop.style.display='none'; return; }
-  drop.innerHTML = prods.map(p=>`
-    <div onclick="addToCart('${p.id}');document.getElementById('pos-search-input-r').value='';_updatePOSDropdown('')"
-      style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0f4f8;display:flex;justify-content:space-between;align-items:center"
-      onmouseover="this.style.background='#f0f4f8'" onmouseout="this.style.background='#fff'">
-      <div>
-        <div style="font-weight:700;font-size:13px;color:#1e293b">${p.name}</div>
-        <div style="font-size:11px;color:#64748b">${p.code} · ${p.category||''}</div>
-      </div>
-      <div style="font-weight:700;color:#e85d04;font-size:13px">${p.price?.toLocaleString()||0}</div>
-    </div>`).join('');
-  drop.style.display='block';
+  // ไม่ต้อง setFocus — input ยังอยู่ DOM เดิม ไม่ถูก re-create
 }
 
 function _updatePOSGrid(){
@@ -1176,36 +1156,6 @@ async function _deleteRental(id){
 // ══════════════════════════════════════════════════════════
 
 
-// ─── POS Search Dropdown (mobile right panel) ───
-function posSearchRight(val){
-  posSearch(val);
-  const box = document.getElementById('pos-search-dropdown');
-  if(!box) return;
-  if(!val || val.trim()===''){box.style.display='none';return;}
-  const q = val.trim().toLowerCase();
-  const results = S.products.filter(p=>
-    (p.name||'').toLowerCase().includes(q) ||
-    (p.code||'').toLowerCase().includes(q) ||
-    (p.skuDemonTweeks||'').toLowerCase().includes(q)
-  ).slice(0,10);
-  if(results.length===0){box.style.display='none';return;}
-  box.style.display='block';
-  box.innerHTML = results.map(p=>`
-    <div onclick="addToCart('${p.id}');document.getElementById('pos-search-input-r').value='';posSearchRight('')"
-      style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #f0f4f8;cursor:pointer"
-      onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background='#fff'">
-      ${p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0" onerror="this.style.display='none'">`:'<div style="width:36px;height:36px;background:#f0f4f8;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>'}
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
-        <div style="font-size:11px;color:var(--muted)">${p.code||''} ${p.category?'· '+p.category:''}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-weight:700;color:var(--accent);font-size:13px">${fmt(p.price||0)}</div>
-        <div style="font-size:10px;color:${(p.stock||0)<=0?'var(--danger)':'var(--success)'}">${(p.stock||0)<=0?'หมด':'เหลือ '+(p.stock||0)}</div>
-      </div>
-    </div>`).join('');
-}
-
 // ─── POS Camera Barcode Scanner ───
 let posScannerStream = null;
 let posScannerInterval = null;
@@ -1349,7 +1299,7 @@ function renderPOS(){
         <div style="display:flex;gap:6px;align-items:center">
           <input class="fc" placeholder="ค้นหาสินค้า / สแกน Barcode..."
             style="font-size:13px;flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-family:'Sarabun',sans-serif;outline:none"
-            oninput="posSearchRight(this.value)"
+            oninput="posSearch(this.value)"
             onkeydown="posScanKey(event,this)"
             onfocus="this.style.borderColor='var(--accent)'"
             onblur="this.style.borderColor='var(--border)'"
@@ -1358,8 +1308,6 @@ function renderPOS(){
           <button onclick="openPOSScanner()" title="สแกนบาร์โค้ด"
             style="padding:8px 12px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0">📷</button>
         </div>
-        <!-- Dropdown ผลค้นหา -->
-        <div id="pos-search-dropdown" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-top:4px;max-height:280px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.12);z-index:999;position:relative"></div>
       </div>
       <div class="pos-cart-header"><span>🛒 ตะกร้า (${S.cart.length} รายการ)</span>
         <button class="btn btn-danger btn-xs" onclick="cartClear()">ล้าง</button></div>

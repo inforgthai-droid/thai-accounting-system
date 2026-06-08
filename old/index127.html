@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Racing Garage — ยินดีต้อนรับ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;min-height:100vh;background:#0c1829;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;position:relative}
+
+/* ─── BG ANIMATION ─── */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.bg-circle{position:absolute;border-radius:50%;opacity:.12;animation:float 8s ease-in-out infinite}
+.c1{width:500px;height:500px;background:radial-gradient(circle,#0ea5e9,transparent);top:-150px;left:-150px;animation-delay:0s}
+.c2{width:400px;height:400px;background:radial-gradient(circle,#7c3aed,transparent);bottom:-100px;right:-100px;animation-delay:-3s}
+.c3{width:300px;height:300px;background:radial-gradient(circle,#10b981,transparent);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-6s}
+@keyframes float{0%,100%{transform:scale(1) translate(0,0)}50%{transform:scale(1.1) translate(20px,-20px)}}
+.c3{animation:float2 10s ease-in-out infinite}
+@keyframes float2{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-40%,-60%) scale(1.15)}}
+
+/* ─── STARS ─── */
+.stars{position:fixed;inset:0;z-index:0}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) var(--delay,0s) ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.1;transform:scale(1)}50%{opacity:.8;transform:scale(1.3)}}
+
+/* ─── CARD ─── */
+.wrap{position:relative;z-index:1;text-align:center;padding:2rem 1.2rem;max-width:700px;width:100%}
+.logo{font-size:64px;margin-bottom:.5rem;animation:logopop .6s cubic-bezier(.36,1.56,.64,1)}
+@keyframes logopop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.store-name{font-size:clamp(28px,6vw,48px);font-weight:800;letter-spacing:-.5px;margin-bottom:.4rem;background:linear-gradient(135deg,#fff 0%,#7dd3fc 50%,#a78bfa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tagline{font-size:15px;color:rgba(255,255,255,.55);margin-bottom:2.5rem;font-weight:400}
+
+/* ─── MENU CARDS ─── */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+@media(max-width:480px){.cards{grid-template-columns:1fr;max-width:320px;margin:0 auto 1.5rem}}
+.mcard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2rem 1.5rem;cursor:pointer;text-decoration:none;color:#fff;transition:all .22s;display:flex;flex-direction:column;align-items:center;gap:.7rem;backdrop-filter:blur(12px);position:relative;overflow:hidden}
+.mcard::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--c1),var(--c2));opacity:0;transition:opacity .22s}
+.mcard:hover{transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,0,0,.4);border-color:rgba(255,255,255,.25)}
+.mcard:hover::before{opacity:.12}
+.mcard:active{transform:translateY(-2px)}
+.mcard-ico{font-size:48px;position:relative;z-index:1;transition:transform .22s}
+.mcard:hover .mcard-ico{transform:scale(1.15)}
+.mcard-title{font-size:20px;font-weight:800;position:relative;z-index:1}
+.mcard-desc{font-size:13px;color:rgba(255,255,255,.55);position:relative;z-index:1;line-height:1.5}
+.mcard-arrow{font-size:20px;position:relative;z-index:1;opacity:.4;transition:all .22s}
+.mcard:hover .mcard-arrow{opacity:1;transform:translateX(4px)}
+
+.shop-card{--c1:#0ea5e9;--c2:#06b6d4}
+.admin-card{--c1:#7c3aed;--c2:#6d28d9}
+
+/* ─── FOOTER ─── */
+.ft{font-size:12px;color:rgba(255,255,255,.25);margin-top:.5rem}
+.ft a{color:rgba(255,255,255,.35);text-decoration:none}
+.ft a:hover{color:rgba(255,255,255,.6)}
+
+/* ─── BADGE ─── */
+.badge-new{position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;border-radius:99px;padding:2px 10px;font-size:10px;font-weight:700;letter-spacing:.04em;z-index:2}
+
+/* ─── OPEN STATUS ─── */
+.status-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:1.5rem}
+.dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}}
+.status-tx{font-size:13px;color:rgba(255,255,255,.6)}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="bg-circle c1"></div>
+  <div class="bg-circle c2"></div>
+  <div class="bg-circle c3"></div>
+</div>
+<div class="stars" id="stars"></div>
+
+<div class="wrap">
+  <div class="logo" id="logo">🏪</div>
+  <div class="store-name" id="store-name">ร้านค้าออนไลน์</div>
+  <div class="tagline" id="tagline">กรุณาเลือกหน้าที่ต้องการ</div>
+
+  <div class="status-bar">
+    <div class="dot"></div>
+    <div class="status-tx">เปิดให้บริการ • Firebase Live</div>
+  </div>
+
+  <div class="cards">
+    <a href="shop.html" class="mcard shop-card">
+      <div class="badge-new">🛍️ SHOP</div>
+      <div class="mcard-ico">🛒</div>
+      <div class="mcard-title">ร้านค้าออนไลน์</div>
+      <div class="mcard-desc">ดูสินค้า เลือกซื้อ<br>ชำระเงินออนไลน์</div>
+      <div class="mcard-arrow">→</div>
+    </a>
+    <a href="admin.html" class="mcard admin-card">
+      <div class="mcard-ico">🔐</div>
+      <div class="mcard-title">จัดการร้าน</div>
+      <div class="mcard-desc">สำหรับ Admin เท่านั้น<br>POS • บัญชี • ออเดอร์</div>
+      <div class="mcard-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="ft">
+    Powered by <a href="https://firebase.google.com" target="_blank">Firebase</a> &nbsp;•&nbsp; 
+    ระบบบัญชี & POS Pro
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+// Generate stars
+const starsEl=document.getElementById('stars');
+for(let i=0;i<80;i++){
+  const s=document.createElement('div');
+  s.className='star';
+  const size=Math.random()*2.5+1;
+  s.style.cssText=`width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:-${Math.random()*6}s`;
+  starsEl.appendChild(s);
+}
+
+// Load company info
+firebase.initializeApp({
+  apiKey:"AIzaSyCttc2r7PnKnI8dZDGGPuvJWqvib0UMjLc",
+  authDomain:"thai-accounting-d3e6b.firebaseapp.com",
+  projectId:"thai-accounting-d3e6b",
+  storageBucket:"thai-accounting-d3e6b.firebasestorage.app",
+  messagingSenderId:"227660326618",
+  appId:"1:227660326618:web:dfc27778e1eadb519fe7e3"
+});
+const db=firebase.firestore();
+
+db.collection('settings').doc('company').get().then(d=>{
+  if(!d.exists)return;
+  const c=d.data();
+  if(c.logoEmoji) document.getElementById('logo').textContent=c.logoEmoji;
+  if(c.name){
+    document.getElementById('store-name').textContent=c.name;
+    document.title=c.name+' — ยินดีต้อนรับ';
+  }
+  if(c.address||c.tel){
+    const info=[c.address,c.tel].filter(Boolean).join(' • ');
+    document.getElementById('tagline').textContent=info;
+  }
+}).catch(()=>{});
+</script>
+</body>
+</html>
