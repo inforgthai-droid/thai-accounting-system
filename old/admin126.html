@@ -1179,8 +1179,7 @@ async function openPOSScanner(){
           if(barcodes.length > 0){
             const code = barcodes[0].rawValue;
             closePOSScanner();
-            const inp = document.getElementById('pos-search-input') || document.getElementById('pos-search-input-r');
-            if(inp) inp.value = code;
+            document.getElementById('pos-search-input').value = code;
             posSearch(code);
             toast('สแกนได้: '+code,'success');
           }
@@ -1295,20 +1294,6 @@ function renderPOS(){
       </div>
     </div>
     <div class="pos-right">
-      <div style="padding:8px 8px 4px 8px;border-bottom:1px solid var(--border)">
-        <div style="display:flex;gap:6px;align-items:center">
-          <input class="fc" placeholder="ค้นหาสินค้า / สแกน Barcode..."
-            style="font-size:13px;flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-family:'Sarabun',sans-serif;outline:none"
-            oninput="posSearch(this.value)"
-            onkeydown="posScanKey(event,this)"
-            onfocus="this.style.borderColor='var(--accent)'"
-            onblur="this.style.borderColor='var(--border)'"
-            autocomplete="off"
-            id="pos-search-input-r">
-          <button onclick="openPOSScanner()" title="สแกนบาร์โค้ด"
-            style="padding:8px 12px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;flex-shrink:0">📷</button>
-        </div>
-      </div>
       <div class="pos-cart-header"><span>🛒 ตะกร้า (${S.cart.length} รายการ)</span>
         <button class="btn btn-danger btn-xs" onclick="cartClear()">ล้าง</button></div>
       <div class="pos-cart-items">${cartHTML}</div>
