@@ -1202,46 +1202,49 @@ function posSearchRight(val){
 }
 
 // ─── POS Camera Barcode Scanner ───
-function openPOSScanner(){
-  // ใช้ input file capture — ทำงานได้บนมือถือทุก browser
-  let inp = document.getElementById('pos-camera-input');
-  if(!inp){
-    inp = document.createElement('input');
-    inp.type = 'file';
-    inp.accept = 'image/*';
-    inp.capture = 'environment';
-    inp.id = 'pos-camera-input';
-    inp.style.display = 'none';
-    document.body.appendChild(inp);
-    inp.addEventListener('change', async function(){
-      if(!this.files || !this.files[0]) return;
-      const file = this.files[0];
-      // ถ้า BarcodeDetector รองรับ — decode จากรูป
-      if('BarcodeDetector' in window){
+let posScannerStream = null;
+let posScannerInterval = null;
+
+async function openPOSScanner(){
+  const wrap = document.getElementById('pos-scanner-wrap');
+  const video = document.getElementById('pos-scanner-video');
+  if(!wrap || !video) return;
+  try {
+    posScannerStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} }
+    });
+    video.srcObject = posScannerStream;
+    wrap.style.display = 'block';
+    // ใช้ BarcodeDetector ถ้า browser รองรับ
+    if('BarcodeDetector' in window){
+      const detector = new BarcodeDetector({formats:['code_128','ean_13','ean_8','qr_code','code_39','upc_a','upc_e']});
+      posScannerInterval = setInterval(async()=>{
         try{
-          const img = await createImageBitmap(file);
-          const detector = new BarcodeDetector({formats:['code_128','ean_13','ean_8','qr_code','code_39','upc_a','upc_e','itf']});
-          const barcodes = await detector.detect(img);
+          const barcodes = await detector.detect(video);
           if(barcodes.length > 0){
             const code = barcodes[0].rawValue;
-            const si = document.getElementById('pos-search-input-r') || document.getElementById('pos-search-input');
-            if(si){ si.value = code; posSearchRight ? posSearchRight(code) : posSearch(code); }
+            closePOSScanner();
+            const inp = document.getElementById('pos-search-input') || document.getElementById('pos-search-input-r');
+            if(inp) inp.value = code;
+            posSearch(code);
             toast('สแกนได้: '+code,'success');
-          } else {
-            toast('ไม่พบบาร์โค้ดในรูป — ลองถ่ายใหม่ให้ชัดขึ้น','warning');
           }
-        }catch(e){ toast('สแกนไม่สำเร็จ: '+e.message,'error'); }
-      } else {
-        toast('browser ไม่รองรับสแกนบาร์โค้ด','error');
-      }
-      this.value = '';
-    });
+        }catch(e){}
+      }, 300);
+    } else {
+      toast('browser นี้ไม่รองรับสแกนอัตโนมัติ — ใช้กล้อง Barcode scanner แทนได้เลยครับ','info');
+    }
+  } catch(e){
+    toast('ไม่สามารถเข้าถึงกล้องได้: '+e.message,'error');
   }
-  inp.click();
 }
 
 function closePOSScanner(){
   const wrap = document.getElementById('pos-scanner-wrap');
+  const video = document.getElementById('pos-scanner-video');
+  if(posScannerInterval){ clearInterval(posScannerInterval); posScannerInterval=null; }
+  if(posScannerStream){ posScannerStream.getTracks().forEach(t=>t.stop()); posScannerStream=null; }
+  if(video) video.srcObject = null;
   if(wrap) wrap.style.display = 'none';
 }
 
@@ -1319,7 +1322,11 @@ function renderPOS(){
             style="padding:9px 13px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:18px;cursor:pointer;flex-shrink:0">📷</button>
         </div>
         <!-- Camera Scanner Modal -->
-
+        <div id="pos-scanner-wrap" style="display:none;margin-top:8px;border-radius:8px;overflow:hidden;position:relative">
+          <video id="pos-scanner-video" style="width:100%;max-height:200px;object-fit:cover;background:#000" autoplay playsinline muted></video>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60%;height:2px;background:rgba(255,80,0,.7);box-shadow:0 0 8px #e85d04"></div>
+          <button onclick="closePOSScanner()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:13px">✕ ปิด</button>
+        </div>
         <div id="pos-cat-sub" style="margin-top:5px;font-size:12px;color:var(--muted);display:${posCat!=='all'?'block':'none'}">
           ${posCat!=='all'?`หมวด: <strong style="color:var(--accent)">${posCat}</strong>
             <button onclick="setPOSCat('all')" style="background:none;border:none;color:var(--danger);font-size:11px;cursor:pointer;margin-left:4px">✕ ล้าง</button>
