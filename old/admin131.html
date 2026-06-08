@@ -1248,64 +1248,6 @@ function closePOSScanner(){
   if(wrap) wrap.style.display = 'none';
 }
 
-// ── Scanner สำหรับหน้า Products ──
-function openProdScanner(){
-  let inp = document.getElementById('prod-camera-input');
-  if(!inp){
-    inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
-    inp.id = 'prod-camera-input'; inp.style.display = 'none';
-    document.body.appendChild(inp);
-    inp.addEventListener('change', async function(){
-      if(!this.files || !this.files[0]) return;
-      if('BarcodeDetector' in window){
-        try{
-          const img = await createImageBitmap(this.files[0]);
-          const detector = new BarcodeDetector({formats:['code_128','ean_13','ean_8','qr_code','code_39','upc_a','upc_e','itf']});
-          const barcodes = await detector.detect(img);
-          if(barcodes.length > 0){
-            const code = barcodes[0].rawValue;
-            const si = document.getElementById('prod-search-input');
-            if(si){ si.value = code; prodSearch(code); }
-            toast('สแกนได้: '+code,'success');
-          } else { toast('ไม่พบบาร์โค้ดในรูป','warning'); }
-        }catch(e){ toast('สแกนไม่สำเร็จ: '+e.message,'error'); }
-      } else { toast('browser ไม่รองรับสแกนบาร์โค้ด','error'); }
-      this.value = '';
-    });
-  }
-  inp.click();
-}
-
-// ── Scanner สำหรับหน้า Stock ──
-function openStockScanner(){
-  let inp = document.getElementById('stock-camera-input');
-  if(!inp){
-    inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
-    inp.id = 'stock-camera-input'; inp.style.display = 'none';
-    document.body.appendChild(inp);
-    inp.addEventListener('change', async function(){
-      if(!this.files || !this.files[0]) return;
-      if('BarcodeDetector' in window){
-        try{
-          const img = await createImageBitmap(this.files[0]);
-          const detector = new BarcodeDetector({formats:['code_128','ean_13','ean_8','qr_code','code_39','upc_a','upc_e','itf']});
-          const barcodes = await detector.detect(img);
-          if(barcodes.length > 0){
-            const code = barcodes[0].rawValue;
-            const si = document.getElementById('stock-search-input');
-            if(si){ si.value = code; stockSearch(code); }
-            toast('สแกนได้: '+code,'success');
-          } else { toast('ไม่พบบาร์โค้ดในรูป','warning'); }
-        }catch(e){ toast('สแกนไม่สำเร็จ: '+e.message,'error'); }
-      } else { toast('browser ไม่รองรับสแกนบาร์โค้ด','error'); }
-      this.value = '';
-    });
-  }
-  inp.click();
-}
-
 function renderPOS(){
   const q=S._posQ||'';
   const posCat=S._posCat||'all';
@@ -2904,7 +2846,6 @@ function renderProducts(){
       onkeydown="prodScanKey(event,this)"
       style="width:260px;padding:7px 10px;font-size:13px"
       autocomplete="off">
-    <button onclick="openProdScanner()" style="padding:7px 10px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0" title="สแกนบาร์โค้ด">📷</button>
     <!-- Category filter -->
     <select class="fc" id="prod-cat-select" style="padding:7px 10px;font-size:13px"
       onchange="S._prodCat=this.value;prodFilter()">
@@ -3984,9 +3925,8 @@ function renderStock(){
       placeholder="ค้นหาชื่อ รหัส หมวด..."
       value="${q}"
       oninput="stockSearch(this.value)"
-      style="width:185px;padding:7px 10px;font-size:13px;flex-shrink:0"
+      style="width:220px;padding:7px 10px;font-size:13px;flex-shrink:0"
       autocomplete="off">
-    <button onclick="openStockScanner()" style="padding:7px 10px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0" title="สแกนบาร์โค้ด">📷</button>
     <!-- Status filter tabs -->
     <div style="display:flex;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px;flex-shrink:0">
       ${[['all','ทั้งหมด',S.products.length],['ok','ปกติ',S.products.filter(p=>p.stock>(p.minStock||5)).length],['low','ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length],['out','หมด',S.products.filter(p=>p.stock<=0).length],['price0','ราคา 0',S.products.filter(p=>!(p.price>0)).length]].map(([key,label,cnt])=>
