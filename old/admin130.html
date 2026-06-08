@@ -1698,8 +1698,6 @@ function showReceiptModal(sale){
     <div style="text-align:center;margin-bottom:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <button onclick="doPrint58()" class="btn" style="font-size:14px;padding:10px 24px">พิมพ์ใบเสร็จ 58mm</button>
       <button onclick="printSaleA4('${sale.id}')" class="btn btn-gray" style="font-size:14px;padding:10px 24px">พิมพ์ A4</button>
-      <button onclick="sendPrintJob('${sale.id}','58mm')" class="btn" style="font-size:14px;padding:10px 18px;background:#e85d04;color:#fff">🏠 สั่งพิมพ์ที่บ้าน 58mm</button>
-      <button onclick="sendPrintJob('${sale.id}','a4')" class="btn" style="font-size:14px;padding:10px 18px;background:#1a3a5c;color:#fff">🏠 สั่งพิมพ์ที่บ้าน A4</button>
       <button onclick="closeModal()" class="btn btn-gray" style="font-size:14px;padding:10px 18px">ปิด</button>
     </div>
     ${receiptHtml}`;
@@ -2311,34 +2309,6 @@ async function saveSaleEdit(id){
     renderPage('sales');
   }catch(e){toast('เกิดข้อผิดพลาด: '+e.message,'error');}
 }
-async function sendPrintJob(saleId, printerType){
-  const sale = S.sales.find(x=>x.id===saleId);
-  if(!sale){ toast('ไม่พบข้อมูลบิล','error'); return; }
-  try {
-    await db.collection('printJobs').add({
-      saleId: saleId,
-      docNo: sale.docNo||'',
-      printerType: printerType, // '58mm' หรือ 'a4'
-      status: 'pending',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      saleData: {
-        docNo: sale.docNo,
-        date: sale.date,
-        customerName: sale.customerName||'ลูกค้าทั่วไป',
-        items: sale.items||[],
-        subtotal: sale.subtotal||0,
-        discount: sale.discount||0,
-        vat: sale.vat||0,
-        total: sale.total||0,
-        payMethod: sale.payMethod||'cash'
-      }
-    });
-    toast('ส่งคำสั่งพิมพ์ไปที่บ้านแล้ว ✓','success');
-  } catch(e) {
-    toast('ส่งคำสั่งพิมพ์ไม่สำเร็จ: '+e.message,'error');
-  }
-}
-
 function printSaleById(id){const s=S.sales.find(x=>x.id===id);if(s)printReceipt(s);}
 
 // ── Print menu dropdown (58mm or A4) ──
