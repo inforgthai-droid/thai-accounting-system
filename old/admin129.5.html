@@ -76,7 +76,6 @@ nav{flex:1;padding:.4rem 0;overflow-y:auto}
 .nav-btn.active{background:rgba(255,255,255,.14);border-left-color:var(--accent);font-weight:700}
 .nav-icon{font-size:15px;flex-shrink:0}
 .nav-label{white-space:nowrap}
-.nav-short{display:none;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px;text-align:center}
 .sb-footer{padding:.9rem 1rem;font-size:11px;color:rgba(255,255,255,.35);border-top:1px solid rgba(255,255,255,.08)}
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 #topbar{background:#fff;border-bottom:1px solid var(--border);padding:.7rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -165,8 +164,6 @@ tbody tr:hover{background:#f0f9ff}
     border-radius: 0 !important; min-width: 48px !important;
     text-align: center !important; white-space: nowrap !important;
   }
-  #sidebar nav button .nav-label { display: none !important; }
-  #sidebar nav button .nav-short { display: block !important; }
   #sidebar .sidebar-section { display: none !important; }
   #main {
     margin-left: 0 !important; margin-bottom: 68px !important;
@@ -442,15 +439,15 @@ function openModal(title,body,footer='',opts={}){
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target.id==='modal-overlay')closeModal();});
 const MENU=[
-  {g:'ร้านค้า'},{key:'dashboard',label:'ภาพรวม',icon:'📊',short:'ภาพรวม'},{key:'pos',label:'ขายหน้าร้าน (POS)',icon:'🛒',short:'ขายหน้าร้าน'},{key:'rental',label:'เช่าอุปกรณ์',icon:'🏎️',short:'เช่า'},{key:'sales',label:'ประวัติการขาย',icon:'📑',short:'ประวัติ'},
-  {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦',short:'สินค้า'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️',short:'หมวดหมู่'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭',short:'สต็อก'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚',short:'ซื้อเข้า'},
-  {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢',short:'ลูกค้า'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️',short:'ซัพพลาย'},
-  {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
-  {g:'ร้านค้าออนไลน์'},{key:'orders',label:'ออเดอร์ออนไลน์',icon:'🛍️',short:'ออเดอร์'},{key:'shipping',label:'จัดส่งสินค้า',icon:'📦',short:'จัดส่ง'},{key:'webdesign',label:'ตกแต่งร้านค้า',icon:'🎨',short:'ตกแต่ง'},
+  {g:'ร้านค้า'},{key:'dashboard',label:'ภาพรวม',icon:'📊'},{key:'pos',label:'ขายหน้าร้าน (POS)',icon:'🛒'},{key:'rental',label:'เช่าอุปกรณ์',icon:'🏎️'},{key:'sales',label:'ประวัติการขาย',icon:'📑'},
+  {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚'},
+  {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️'},
+  {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾'},{key:'vat',label:'ภาษี VAT',icon:'📋'},{key:'payroll',label:'เงินเดือน',icon:'👥'},{key:'financial',label:'งบการเงิน',icon:'📈'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️'},
+  {g:'ร้านค้าออนไลน์'},{key:'orders',label:'ออเดอร์ออนไลน์',icon:'🛍️'},{key:'shipping',label:'จัดส่งสินค้า',icon:'📦'},{key:'webdesign',label:'ตกแต่งร้านค้า',icon:'🎨'},
   {g:'ระบบ'},{key:'import',label:'Import Excel',icon:'📂'},{key:'settings',label:'ตั้งค่าระบบ',icon:'⚙️'},
 ];
 let currentPage='dashboard',sidebarOpen=true;
-function buildNav(){document.getElementById('nav').innerHTML=MENU.map(m=>m.g?`<div class="nav-group">${m.g}</div>`:`<button class="nav-btn${currentPage===m.key?' active':''}" onclick="navigate('${m.key}')"><span class="nav-icon">${m.icon}</span><span class="nav-label">${m.label}</span><span class="nav-short">${m.short||m.label}</span></button>`).join('');}
+function buildNav(){document.getElementById('nav').innerHTML=MENU.map(m=>m.g?`<div class="nav-group">${m.g}</div>`:`<button class="nav-btn${currentPage===m.key?' active':''}" onclick="navigate('${m.key}')"><span class="nav-icon">${m.icon}</span><span class="nav-label">${m.label}</span></button>`).join('');}
 function navigate(key){currentPage=key;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('p-'+key).classList.add('active');const m=MENU.find(x=>x.key===key);document.getElementById('topbar-title').textContent=(m?.icon||'')+' '+(m?.label||'');buildNav();renderPage(key);}
 function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').classList.toggle('collapsed',!sidebarOpen);}
 function renderPage(key){
@@ -1701,8 +1698,6 @@ function showReceiptModal(sale){
     <div style="text-align:center;margin-bottom:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
       <button onclick="doPrint58()" class="btn" style="font-size:14px;padding:10px 24px">พิมพ์ใบเสร็จ 58mm</button>
       <button onclick="printSaleA4('${sale.id}')" class="btn btn-gray" style="font-size:14px;padding:10px 24px">พิมพ์ A4</button>
-      <button onclick="sendPrintJob('${sale.id}','58mm')" class="btn" style="font-size:14px;padding:10px 18px;background:#e85d04;color:#fff">🏠 สั่งพิมพ์ที่บ้าน 58mm</button>
-      <button onclick="sendPrintJob('${sale.id}','a4')" class="btn" style="font-size:14px;padding:10px 18px;background:#1a3a5c;color:#fff">🏠 สั่งพิมพ์ที่บ้าน A4</button>
       <button onclick="closeModal()" class="btn btn-gray" style="font-size:14px;padding:10px 18px">ปิด</button>
     </div>
     ${receiptHtml}`;
@@ -2314,34 +2309,6 @@ async function saveSaleEdit(id){
     renderPage('sales');
   }catch(e){toast('เกิดข้อผิดพลาด: '+e.message,'error');}
 }
-async function sendPrintJob(saleId, printerType){
-  const sale = S.sales.find(x=>x.id===saleId);
-  if(!sale){ toast('ไม่พบข้อมูลบิล','error'); return; }
-  try {
-    await db.collection('printJobs').add({
-      saleId: saleId,
-      docNo: sale.docNo||'',
-      printerType: printerType, // '58mm' หรือ 'a4'
-      status: 'pending',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      saleData: {
-        docNo: sale.docNo,
-        date: sale.date,
-        customerName: sale.customerName||'ลูกค้าทั่วไป',
-        items: sale.items||[],
-        subtotal: sale.subtotal||0,
-        discount: sale.discount||0,
-        vat: sale.vat||0,
-        total: sale.total||0,
-        payMethod: sale.payMethod||'cash'
-      }
-    });
-    toast('ส่งคำสั่งพิมพ์ไปที่บ้านแล้ว ✓','success');
-  } catch(e) {
-    toast('ส่งคำสั่งพิมพ์ไม่สำเร็จ: '+e.message,'error');
-  }
-}
-
 function printSaleById(id){const s=S.sales.find(x=>x.id===id);if(s)printReceipt(s);}
 
 // ── Print menu dropdown (58mm or A4) ──
