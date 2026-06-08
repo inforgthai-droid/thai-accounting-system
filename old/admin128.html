@@ -321,7 +321,11 @@ function isAdmin(email){
 }
 
 function adminLogin(){
-  auth.signInWithPopup(googleProvider).catch(e=>toast('Login ล้มเหลว: '+e.message,'error'));
+  if(isMobile){
+    auth.signInWithRedirect(googleProvider).catch(e=>toast('Login ล้มเหลว: '+e.message,'error'));
+  } else {
+    auth.signInWithPopup(googleProvider).catch(e=>toast('Login ล้มเหลว: '+e.message,'error'));
+  }
 }
 function adminLogout(){
   auth.signOut();
@@ -329,6 +333,7 @@ function adminLogout(){
   document.getElementById('auth-gate').style.display='flex';
 }
 
+auth.getRedirectResult().catch(()=>{});
 auth.onAuthStateChanged(async user=>{
   await loadAdminEmails();
   console.log('[Auth] user:', user?.email, '| ADMIN_EMAILS:', ADMIN_EMAILS, '| isAdmin:', isAdmin(user?.email));
