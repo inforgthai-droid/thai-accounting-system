@@ -69,19 +69,6 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 
 /* PROMO */
 .promo-bar{background:var(--red);padding:8px;text-align:center;font-family:var(--font);font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase}
-.cat-hero-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 20px;background:#111;border-bottom:2px solid #222;max-width:1440px;margin:0 auto}
-.cat-hero-item{position:relative;border-radius:10px;overflow:hidden;cursor:pointer;aspect-ratio:4/3;background:#1a1a1a;border:1px solid #2a2a2a;transition:transform .2s,border-color .2s}
-.cat-hero-item:hover{transform:translateY(-3px);border-color:var(--red)}
-.cat-hero-item img{width:100%;height:100%;object-fit:cover;display:block;opacity:.85;transition:opacity .2s}
-.cat-hero-item:hover img{opacity:1}
-.cat-hero-item .chi-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 60%,transparent 100%)}
-.cat-hero-item .chi-label{position:absolute;bottom:0;left:0;right:0;padding:10px 10px 8px;font-family:var(--font);font-weight:700;font-size:12px;color:#fff;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px}
-.cat-hero-item .chi-label .chi-icon{font-size:16px}
-.cat-hero-item .chi-label .chi-arrow{margin-left:auto;font-size:11px;opacity:.7}
-.cat-hero-item .chi-count{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;font-family:var(--font)}
-.cat-hero-wrap{background:#111;border-bottom:2px solid #1a1a1a}
-@media(max-width:768px){.cat-hero-grid{grid-template-columns:repeat(3,1fr);gap:8px;padding:10px}}
-@media(max-width:480px){.cat-hero-grid{grid-template-columns:repeat(2,1fr)}}
 
 /* CATEGORY HERO BANNER */
 .cat-banner{display:none;position:relative;height:160px;overflow:hidden;background:linear-gradient(135deg,#0f0f0f,#1a0505)}
@@ -408,11 +395,6 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
 <!-- PROMO BAR -->
 <div class="promo-bar" id="promo-bar"> Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide</div>
 
-<!-- CATEGORY HERO GRID -->
-<div class="cat-hero-wrap" id="cat-hero-wrap">
-  <div class="cat-hero-grid" id="cat-hero-grid"></div>
-</div>
-
 <!-- CATEGORY BANNER -->
 <div class="cat-banner" id="cat-banner">
   <div class="cat-banner-bg" id="cat-banner-icon"></div>
@@ -585,7 +567,6 @@ function setLang(l){
   $('btn-th').classList.toggle('on',l==='th');
   $('btn-en').classList.toggle('on',l==='en');
   applyLang();doFilter();buildSidebar();buildNav();
-  buildCatHeroGrid();
 }
 function applyLang(){
   $('sinput').placeholder=t('search_ph');
@@ -676,14 +657,14 @@ async function init(){
     // Apply shopDesign from admin
     if(sd.exists) applyShopDesign(sd.data());
 
-    applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
+    applyBrand();buildNav();buildSidebar();doFilter();applyLang();
     if($('price-max')){
       const maxP=Math.max(...PRODS.map(p=>p.price||0),500000);
       $('price-max').max=maxP;PRICE_MAX=maxP;updatePriceFilter(maxP);
     }
     toast(LANG==='th'?'โหลดสินค้า '+PRODS.length+' รายการ':'Loaded '+PRODS.length+' products','ok');
   }catch(e){
-    applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
+    applyBrand();buildNav();buildSidebar();doFilter();applyLang();
     if(location.protocol==='file:')toast('กรุณาเปิดจาก GitHub Pages','err',6000);
     else toast('Error: '+e.message,'err');
   }finally{hideLd();}
@@ -744,28 +725,6 @@ function buildNav(){
   $('nav-inner').innerHTML=`<button class="nav-btn${CAT==='all'?' on':''}" onclick="setcat('all',this)">${t('all')}</button>`
     +cats.map(c=>`<button class="nav-btn${CAT===c.name?' on':''}" onclick="setcat('${c.name}',this)" style="${CAT===c.name?'border-color:'+c.color+';color:'+c.color:''}">${c.name}</button>`).join('');
 }
-function buildCatHeroGrid(){
-  const wrap=document.getElementById('cat-hero-wrap');
-  const grid=document.getElementById('cat-hero-grid');
-  if(!grid) return;
-  // ใช้ CATS จาก Firestore หรือสร้างจาก products
-  const cats=CATS.length?CATS.slice(0,5):[...new Set(PRODS.map(p=>p.category).filter(Boolean))].slice(0,5).map(n=>({name:n,icon:CAT_ICONS[n]||'📦',color:'#e11d48',image:''}));
-  grid.innerHTML=cats.map(c=>{
-    const count=PRODS.filter(p=>p.category===c.name&&p.stock>0).length;
-    const img=c.image||c.imageUrl||'';
-    return `<div class="cat-hero-item" onclick="setcat('${c.name}',null);document.getElementById('cat-hero-wrap').scrollIntoView&&window.scrollTo(0,0)">
-      ${img?`<img src="${img}" alt="${c.name}" onerror="this.style.display='none'">`:''}
-      <div class="chi-overlay"></div>
-      ${count>0?`<div class="chi-count">${count}</div>`:''}
-      <div class="chi-label">
-        <span class="chi-icon">${c.icon||'📦'}</span>
-        <span>${c.name}</span>
-        <span class="chi-arrow">›</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
 function setcat(c,el){
   CAT=c;BRAND_FILTER='';
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
