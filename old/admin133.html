@@ -195,126 +195,27 @@ tbody tr:hover{background:#f0f9ff}
   .modal-content { width: 96vw !important; max-height: 90vh !important; overflow-y: auto !important; margin: 5vh auto !important; }
   .hide-mobile { display: none !important; }
 
-  /* ── Responsive Card Table: prod-table-wrap & stock-table-wrap ── */
-  #prod-table-wrap .tbl,
-  #stock-table-wrap .tbl { overflow-x: visible !important; }
-
-  #prod-table-wrap table,
-  #stock-table-wrap table { display: block; }
-
-  #prod-table-wrap thead,
-  #stock-table-wrap thead { display: none !important; }
-
-  #prod-table-wrap tbody,
-  #stock-table-wrap tbody { display: flex; flex-direction: column; gap: 10px; }
-
-  #prod-table-wrap tr,
-  #stock-table-wrap tr {
-    display: grid !important;
-    grid-template-columns: auto 1fr !important;
-    gap: 0 !important;
-    background: #fff !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 12px !important;
-    padding: 10px 12px !important;
-    position: relative !important;
+  /* ── Mobile Card Layout for Products & Stock ── */
+  .mob-card-list { display: flex; flex-direction: column; gap: 10px; }
+  .mob-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; position: relative;
   }
-  #prod-table-wrap tr:nth-child(even),
-  #stock-table-wrap tr:nth-child(even) { background: #fff !important; }
-
-  #prod-table-wrap td,
-  #stock-table-wrap td {
-    display: flex !important;
-    flex-direction: column !important;
-    text-align: left !important;
-    padding: 4px 6px !important;
-    border-bottom: none !important;
-    font-size: 12px !important;
-  }
-  #prod-table-wrap td::before,
-  #stock-table-wrap td::before {
-    content: attr(data-label);
-    font-size: 9px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    margin-bottom: 1px;
-  }
-
-  /* Checkbox + Code row: side by side, full width top */
-  #prod-table-wrap td:nth-child(1),
-  #stock-table-wrap td:nth-child(1) {
-    grid-column: 1 / 2 !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding-bottom: 6px !important;
-    border-bottom: none !important;
-  }
-  #prod-table-wrap td:nth-child(1)::before,
-  #stock-table-wrap td:nth-child(1)::before { display: none; }
-
-  /* Code col: show inline with image, right side top */
-  #prod-table-wrap td:nth-child(2),
-  #stock-table-wrap td:nth-child(2) {
-    grid-column: 2 / 3 !important;
-    flex-direction: column !important;
-    align-items: flex-end !important;
-    font-size: 11px !important;
-    color: var(--muted) !important;
-    border-bottom: none !important;
-    padding-bottom: 4px !important;
-  }
-  #prod-table-wrap td:nth-child(2) img,
-  #stock-table-wrap td:nth-child(2) img {
-    width: 36px !important; height: 36px !important;
-  }
-
-  /* Name col: full width header of card */
-  #prod-table-wrap td:nth-child(3),
-  #stock-table-wrap td:nth-child(3) {
-    grid-column: 1 / -1 !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    padding-bottom: 8px !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-  }
-  #prod-table-wrap td:nth-child(3)::before,
-  #stock-table-wrap td:nth-child(3)::before { display: none; }
-
-  /* Products: actions (col 11) full width */
-  #prod-table-wrap td:nth-child(11) {
-    grid-column: 1 / -1 !important;
-    flex-direction: row !important;
-    gap: 8px !important;
-    padding-top: 8px !important;
-    border-top: 1px solid #f1f5f9 !important;
-    margin-top: 2px !important;
-  }
-  #prod-table-wrap td:nth-child(11)::before { display: none; }
-  #prod-table-wrap td:nth-child(11) button { flex: 1; }
-
-  /* Stock: SKU field (col 11) full width */
-  #stock-table-wrap td:nth-child(11) {
-    grid-column: 1 / -1 !important;
-  }
-  #stock-table-wrap td:nth-child(11) input {
-    width: 100% !important; box-sizing: border-box !important;
-  }
-
-  /* Stock: สถานะ (col 12) + actions (col 13) */
-  #stock-table-wrap td:nth-child(12) { align-items: flex-start !important; }
-  #stock-table-wrap td:nth-child(13) {
-    grid-column: 1 / -1 !important;
-    flex-direction: row !important;
-    gap: 8px !important;
-    padding-top: 8px !important;
-    border-top: 1px solid #f1f5f9 !important;
-    margin-top: 2px !important;
-  }
-  #stock-table-wrap td:nth-child(13)::before { display: none; }
-  #stock-table-wrap td:nth-child(13) button { flex: 1; }
+  .mob-card-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .mob-card-img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); flex-shrink: 0; cursor: zoom-in; }
+  .mob-card-img-placeholder { width: 48px; height: 48px; background: #f1f5f9; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #94a3b8; }
+  .mob-card-title { flex: 1; }
+  .mob-card-name { font-weight: 700; font-size: 14px; color: var(--primary); line-height: 1.3; margin-bottom: 3px; }
+  .mob-card-code { font-size: 11px; color: var(--muted); font-family: monospace; }
+  .mob-card-badge { position: absolute; top: 12px; right: 12px; }
+  .mob-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 12px; margin-bottom: 8px; }
+  .mob-card-row { display: flex; flex-direction: column; }
+  .mob-card-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+  .mob-card-val { font-weight: 600; color: var(--text); font-size: 13px; }
+  .mob-card-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; border-top: 1px solid #f1f5f9; padding-top: 8px; }
+  .mob-card-actions button { flex: 1; min-width: 60px; }
+  .mob-card-sku input { width: 100% !important; box-sizing: border-box; }
+  .mob-card-chk { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 }
 </style>
 </head>
@@ -410,7 +311,7 @@ const db=firebase.firestore();
 const storage=firebase.storage();
 const auth=firebase.auth();
 const googleProvider=new firebase.auth.GoogleAuthProvider();
-const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isMobileUA=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 // ════════════════════════════════════════
 //  ADMIN AUTH
@@ -546,17 +447,99 @@ function toast(msg,type='info'){const t=document.getElementById('toast');t.textC
 function tbl(headers,rows,empty='ไม่มีข้อมูล'){
   if(!rows.length)return`<div style="text-align:center;padding:2rem;color:var(--muted)"><div style="font-size:36px;margin-bottom:8px">📂</div>${empty}</div>`;
   const ths=headers.map((h,i)=>`<th${i>0?' style="text-align:right"':''}>${h}</th>`).join('');
-  const plainLabels=headers.map(h=>{
-    if(typeof h!=='string') return '';
-    return h.replace(/<[^>]*>/g,'').trim();
-  });
-  const trs=rows.map(row=>`<tr>${row.map((c,ci)=>{
-    const lbl=plainLabels[ci]?` data-label="${plainLabels[ci].replace(/"/g,'&quot;')}"`:'';
-    return`<td${lbl}${ci>0?' style="text-align:right"':''}>${c??''}</td>`;
-  }).join('')}</tr>`).join('');
+  const trs=rows.map(row=>`<tr>${row.map((c,ci)=>`<td${ci>0?' style="text-align:right"':''}>${c??''}</td>`).join('')}</tr>`).join('');
   return`<div class="tbl"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
 }
 function sc(label,value,color,sub=''){return`<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value" style="color:${color}">${value}</div>${sub?`<div class="stat-sub">${sub}</div>`:''}</div>`;}
+
+function isMobile(){return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||window.innerWidth<=768;}
+
+function prodMobileCards(list){
+  if(!list.length) return`<div style="text-align:center;padding:2rem;color:var(--muted)"><div style="font-size:36px;margin-bottom:8px">📂</div>ยังไม่มีสินค้า</div>`;
+  return`<div class="mob-card-list">${list.map(p=>{
+    const stockColor=p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)';
+    const statusTxt=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
+    const statusBg=p.stock<=0?'#fee2e2':p.stock<=(p.minStock||5)?'#fef9c3':'#dcfce7';
+    const imgHtml=p.imageUrl
+      ?`<img class="mob-card-img" src="${p.imageUrl}" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`
+      :`<div class="mob-card-img-placeholder">📦</div>`;
+    return`<div class="mob-card">
+      <div class="mob-card-chk">
+        <input type="checkbox" class="prod-chk" data-id="${p.id}" onchange="updateBulkProdBar()" style="width:16px;height:16px;cursor:pointer">
+        <span style="font-size:11px;color:var(--muted)">${p.code||''}</span>
+      </div>
+      <div class="mob-card-header">
+        ${imgHtml}
+        <div class="mob-card-title">
+          <div class="mob-card-name">${p.name}</div>
+          ${p.description?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${p.description}</div>`:''}
+          <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+            ${p.category?`<span style="background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px">${p.category}</span>`:''}
+            ${p.unit?`<span style="background:#f1f5f9;color:#64748b;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px">${p.unit}</span>`:''}
+          </div>
+        </div>
+        <span style="background:${statusBg};color:${stockColor};font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap">${statusTxt}</span>
+      </div>
+      <div class="mob-card-grid">
+        <div class="mob-card-row"><span class="mob-card-label">ต้นทุน</span><span class="mob-card-val">${fmt(p.cost)}</span></div>
+        <div class="mob-card-row"><span class="mob-card-label">ราคาขาย</span><span class="mob-card-val">${fmt(p.price)}</span></div>
+        <div class="mob-card-row"><span class="mob-card-label">สต็อกคงเหลือ</span><span class="mob-card-val" style="color:${stockColor};font-size:15px">${p.stock}</span></div>
+        <div class="mob-card-row"><span class="mob-card-label">Min / กำไร/หน่วย</span><span class="mob-card-val">${p.minStock||5} / <span style="color:var(--success)">${fmt((p.price||0)-(p.cost||0))}</span></span></div>
+      </div>
+      <div class="mob-card-actions">
+        <button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function stockMobileCards(list){
+  if(!list.length) return`<div style="text-align:center;padding:2rem;color:var(--muted)"><div style="font-size:36px;margin-bottom:8px">📂</div>ไม่พบสินค้า</div>`;
+  return`<div class="mob-card-list">${list.map(p=>{
+    const stockColor=p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)';
+    const statusTxt=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
+    const statusBg=p.stock<=0?'#fee2e2':p.stock<=(p.minStock||5)?'#fef9c3':'#dcfce7';
+    const imgHtml=p.imageUrl
+      ?`<img class="mob-card-img" src="${p.imageUrl}" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`
+      :`<div class="mob-card-img-placeholder">📦</div>`;
+    return`<div class="mob-card">
+      <div class="mob-card-chk">
+        <input type="checkbox" class="stock-chk" data-id="${p.id}" onchange="updateBulkStockBar()" style="width:16px;height:16px;cursor:pointer">
+        <span style="font-size:11px;color:var(--muted)">${p.code||''}</span>
+      </div>
+      <div class="mob-card-header">
+        ${imgHtml}
+        <div class="mob-card-title">
+          <div class="mob-card-name">${p.name}</div>
+          <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+            ${p.category?`<span style="background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px">${p.category}</span>`:''}
+            ${p.unit?`<span style="background:#f1f5f9;color:#64748b;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px">${p.unit}</span>`:''}
+          </div>
+        </div>
+        <span style="background:${statusBg};color:${stockColor};font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap">${statusTxt}</span>
+      </div>
+      <div class="mob-card-grid">
+        <div class="mob-card-row"><span class="mob-card-label">คงเหลือ</span><span class="mob-card-val" style="color:${stockColor};font-size:16px;font-weight:800">${p.stock}</span></div>
+        <div class="mob-card-row"><span class="mob-card-label">Min</span><span class="mob-card-val">${p.minStock||5}</span></div>
+        <div class="mob-card-row"><span class="mob-card-label">ต้นทุน/หน่วย</span><span class="mob-card-val">${fmt(p.cost)}</span></div>
+        <div class="mob-card-row"><span class="mob-card-label">ราคาขาย</span><span class="mob-card-val">${fmt(p.price)}</span></div>
+        <div class="mob-card-row" style="grid-column:span 2"><span class="mob-card-label">มูลค่าสต็อก</span><span class="mob-card-val" style="color:#7c3aed">${fmt((p.cost||0)*(p.stock||0))}</span></div>
+      </div>
+      <div class="mob-card-sku" style="margin-bottom:8px">
+        <div style="font-size:10px;color:#e85d04;font-weight:700;margin-bottom:3px">SKU Demon Tweeks</div>
+        <input type="text" value="${p.skuDemonTweeks||''}" placeholder="กรอก SKU"
+          style="width:100%;padding:6px 8px;font-size:12px;border:1.5px solid #e85d04;border-radius:6px;font-family:'Sarabun',sans-serif;color:#e85d04;font-weight:600;outline:none;background:#fff7f0;box-sizing:border-box"
+          onchange="saveSkuDemon('${p.id}',this.value)" onclick="this.select()">
+      </div>
+      <div class="mob-card-actions">
+        <button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับสต็อก</button>
+        <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${(p.name||p.code||'').replace(/'/g,"\\'")}')">ลบ</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
 function openModal(title,body,footer='',opts={}){
   document.getElementById('modal-title').innerHTML=title;
   document.getElementById('modal-body').innerHTML=body;
@@ -3083,7 +3066,7 @@ function renderProducts(){
 
   <!-- Table -->
   <div id="prod-table-wrap">
-    ${tbl(['<input type="checkbox" id="prod-chk-all" onchange="toggleAllProducts(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า')}
+    ${isMobile()?prodMobileCards(list):tbl(['<input type="checkbox" id="prod-chk-all" onchange="toggleAllProducts(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า')}
   </div>`;
 }
 
@@ -3143,6 +3126,7 @@ function _updateProdTable(){
   // Update table only
   const wrap=document.getElementById('prod-table-wrap');
   if(!wrap) return;
+  if(isMobile()){wrap.innerHTML=prodMobileCards(list);return;}
   const rows=list.map(p=>[
     `<input type="checkbox" class="prod-chk" data-id="${p.id}" onchange="updateBulkProdBar()" style="width:16px;height:16px;cursor:pointer">`,
     `<div>${p.code||''}</div>${p.imageUrl?`<img src="${p.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-top:3px;display:block;border:1px solid var(--border);cursor:zoom-in" onerror="this.style.display='none'" onclick="showImgZoom('${p.imageUrl.replace(/'/g,'%27')}','${(p.name||'').replace(/'/g,'%27')}')">`:''}`,
@@ -4146,7 +4130,7 @@ function renderStock(){
 
   <!-- Table -->
   <div id="stock-table-wrap">
-    ${tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า')}
+    ${isMobile()?stockMobileCards(list):tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า')}
   </div>`;
 }
 
@@ -4211,6 +4195,7 @@ function _updateStockTable(){
       badge(st,sc2),
       `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button> <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>`];
   });
+  if(isMobile()){wrap.innerHTML=stockMobileCards(list);return;}
   wrap.innerHTML=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 }
 
