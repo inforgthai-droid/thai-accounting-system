@@ -6894,8 +6894,6 @@ let _shopDesign={
   footerText:'ขอบคุณที่ใช้บริการ', footerAddr:'',
   // Social
   fbUrl:'', lineUrl:'', igUrl:'', ytUrl:'',
-  // Category Hero Grid
-  catHeroEnabled:true, catHeroImages:{},
 };
 
 function renderWebDesign(){
@@ -7107,50 +7105,6 @@ function renderWebDesign(){
   </div>
   </div>
 
-  <!-- ===== CATEGORY HERO GRID ===== -->
-  <div class="card" style="margin-top:14px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px">
-      <div style="font-weight:700;color:var(--primary);font-size:13px">🖼️ รูปภาพหมวดหมู่ (Category Hero Grid)</div>
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px">
-        <div id="cat-hero-toggle"
-          onclick="_shopDesign.catHeroEnabled=!_shopDesign.catHeroEnabled;this.style.background=_shopDesign.catHeroEnabled?'var(--success)':'#cbd5e1';this.nextElementSibling.textContent=_shopDesign.catHeroEnabled?'เปิด':'ปิด'"
-          style="width:36px;height:20px;background:${_shopDesign.catHeroEnabled?'var(--success)':'#cbd5e1'};border-radius:10px;cursor:pointer;transition:.2s;position:relative">
-          <div style="position:absolute;top:2px;${_shopDesign.catHeroEnabled?'right:2px':'left:2px'};width:16px;height:16px;background:#fff;border-radius:50%;transition:.2s"></div>
-        </div>
-        <span>${_shopDesign.catHeroEnabled?'เปิด':'ปิด'}</span>
-      </label>
-    </div>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:12px">ใส่รูปภาพให้แต่ละหมวดหมู่ — แสดงเป็น 5 ช่องใต้แถบโปรโมชั่นในร้านค้าออนไลน์</p>
-    <div id="cat-hero-editor">
-      ${(()=>{
-        const cats=S.categories&&S.categories.length?S.categories:
-          [...new Set((S.products||[]).map(p=>p.category).filter(Boolean))].slice(0,8).map(n=>({id:n,name:n,icon:'📦'}));
-        return cats.slice(0,8).map(c=>{
-          const img=(_shopDesign.catHeroImages||{})[c.name]||c.image||c.imageUrl||'';
-          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-            <div style="width:60px;height:60px;border-radius:8px;overflow:hidden;border:1px solid var(--border);flex-shrink:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center">
-              <img id="chi-prev-${c.name.replace(/\s/g,'_')}" src="${img}" style="width:100%;height:100%;object-fit:cover;${img?'':'display:none'}" onerror="this.style.display='none'">
-              ${img?'':'<span style="font-size:20px">'+(c.icon||'📦')+'</span>'}
-            </div>
-            <div style="flex:1;min-width:0">
-              <div style="font-weight:600;font-size:12px;margin-bottom:4px">${c.icon||'📦'} ${c.name}</div>
-              <div style="display:flex;gap:6px;align-items:center">
-                <input class="fc" id="chi-url-${c.name.replace(/\s/g,'_')}" value="${img}"
-                  placeholder="URL รูปภาพ หรืออัปโหลด..."
-                  style="font-size:11px;padding:5px 8px;flex:1"
-                  oninput="updateCatHeroPreview('${c.name}',this.value)">
-                <label style="display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:#fff;border-radius:6px;padding:5px 8px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">
-                  อัปโหลด
-                  <input type="file" accept="image/*" style="display:none" onchange="uploadCatHeroImg(this,'${c.name}')">
-                </label>
-              </div>
-            </div>
-          </div>`;
-        }).join('');
-      })()}
-    </div>
-  </div>
-
   <!-- Save button bottom -->
   <div style="margin-top:1.2rem;text-align:center">
     <button class="btn" style="font-size:15px;padding:12px 40px" onclick="saveShopDesign()">บันทึก & ใช้งานทันที</button>
@@ -7212,43 +7166,11 @@ async function uploadBannerImg(input){
   }
 }
 
-function collectCatHeroImages(){
-  const imgs={};
-  document.querySelectorAll('[id^="chi-url-"]').forEach(inp=>{
-    const key=inp.id.replace('chi-url-','').replace(/_/g,' ');
-    if(inp.value) imgs[key]=inp.value;
-  });
-  return imgs;
-}
-
-function updateCatHeroPreview(catName, url){
-  const key=catName.replace(/\s/g,'_');
-  const img=document.getElementById('chi-prev-'+key);
-  if(img){img.src=url;img.style.display=url?'block':'none';}
-  if(!_shopDesign.catHeroImages) _shopDesign.catHeroImages={};
-  _shopDesign.catHeroImages[catName]=url;
-}
-
-async function uploadCatHeroImg(input, catName){
-  if(!input.files[0]) return;
-  toast('กำลังอัปโหลด...','info');
-  const url=await uploadWithFallback(input.files[0],null);
-  if(url){
-    const key=catName.replace(/\s/g,'_');
-    const inp=document.getElementById('chi-url-'+key);
-    if(inp) inp.value=url;
-    updateCatHeroPreview(catName,url);
-    toast('อัปโหลดสำเร็จ ✓','success');
-  }
-}
-
 async function loadShopDesign(){
   try{
     const doc=await db.collection('settings').doc('shopDesign').get();
     if(doc.exists){
-      const d=doc.data();
-      if(d.catHeroImages) _shopDesign.catHeroImages=d.catHeroImages;
-      Object.assign(_shopDesign,d);
+      Object.assign(_shopDesign,doc.data());
       renderPage('webdesign');
       toast('โหลดการตั้งค่าเรียบร้อย ✓','success');
     } else {
@@ -7282,8 +7204,6 @@ async function saveShopDesign(){
     lineUrl:get('d-lineUrl'),
     igUrl:get('d-igUrl'),
     ytUrl:get('d-ytUrl'),
-    catHeroEnabled:_shopDesign.catHeroEnabled,
-    catHeroImages:collectCatHeroImages(),
     updatedAt:ts()
   };
   Object.assign(_shopDesign,design);

@@ -518,7 +518,6 @@ let PRODS=[],CO={name:'Racing Garage',vatRate:7,tel:'',address:'',email:'',promp
     CATS=[],  // loaded from Firestore categories collection
     CART=[],CAT='all',LANG='en',shopUser=null;
 let BRAND_FILTER='',STOCK_ONLY=false,PRICE_MAX=500000;
-let SD={catHeroEnabled:true,catHeroImages:{}}; // shopDesign from Firestore
 let O={step:1,pay:'qr',name:'',phone:'',email:'',addr:'',note:''},_docNo='',_tID=null,_tSec=300,_dQty=1;
 const $=id=>document.getElementById(id);
 const fmt=n=>new Intl.NumberFormat('th-TH').format(Math.round(n||0));
@@ -691,8 +690,6 @@ async function init(){
 }
 
 function applyShopDesign(d){
-  // เก็บ shopDesign ไว้ใน SD global
-  if(d) Object.assign(SD, d);
   if(!d) return;
   const root=document.documentElement;
   if(d.colorRed) root.style.setProperty('--red',d.colorRed);
@@ -748,20 +745,15 @@ function buildNav(){
     +cats.map(c=>`<button class="nav-btn${CAT===c.name?' on':''}" onclick="setcat('${c.name}',this)" style="${CAT===c.name?'border-color:'+c.color+';color:'+c.color:''}">${c.name}</button>`).join('');
 }
 function buildCatHeroGrid(){
-  const grid=document.getElementById('cat-hero-grid');
   const wrap=document.getElementById('cat-hero-wrap');
+  const grid=document.getElementById('cat-hero-grid');
   if(!grid) return;
-  // ซ่อน/แสดงตาม catHeroEnabled
-  const enabled=SD.catHeroEnabled!==false;
-  if(wrap) wrap.style.display=enabled?'':'none';
-  if(!enabled) return;
-  const heroImgs=SD.catHeroImages||{};
+  // ใช้ CATS จาก Firestore หรือสร้างจาก products
   const cats=CATS.length?CATS.slice(0,5):[...new Set(PRODS.map(p=>p.category).filter(Boolean))].slice(0,5).map(n=>({name:n,icon:CAT_ICONS[n]||'📦',color:'#e11d48',image:''}));
   grid.innerHTML=cats.map(c=>{
     const count=PRODS.filter(p=>p.category===c.name&&p.stock>0).length;
-    // ใช้รูปจาก catHeroImages ก่อน แล้วค่อย fallback ไป c.image
-    const img=heroImgs[c.name]||c.image||c.imageUrl||'';
-    return `<div class="cat-hero-item" onclick="setcat('${c.name}',null);window.scrollTo(0,0)">
+    const img=c.image||c.imageUrl||'';
+    return `<div class="cat-hero-item" onclick="setcat('${c.name}',null);document.getElementById('cat-hero-wrap').scrollIntoView&&window.scrollTo(0,0)">
       ${img?`<img src="${img}" alt="${c.name}" onerror="this.style.display='none'">`:''}
       <div class="chi-overlay"></div>
       ${count>0?`<div class="chi-count">${count}</div>`:''}
