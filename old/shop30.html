@@ -76,7 +76,9 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 .cat-hero-item:hover img{opacity:1}
 .cat-hero-item .chi-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 60%,transparent 100%)}
 .cat-hero-item .chi-label{position:absolute;bottom:0;left:0;right:0;padding:10px 10px 8px;font-family:var(--font);font-weight:700;font-size:12px;color:#fff;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px}
+.cat-hero-item .chi-label .chi-icon{font-size:16px}
 .cat-hero-item .chi-label .chi-arrow{margin-left:auto;font-size:11px;opacity:.7}
+.cat-hero-item .chi-count{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;font-family:var(--font)}
 .cat-hero-wrap{background:#111;border-bottom:2px solid #1a1a1a}
 @media(max-width:768px){.cat-hero-grid{grid-template-columns:repeat(3,1fr);gap:8px;padding:10px}}
 @media(max-width:480px){.cat-hero-grid{grid-template-columns:repeat(2,1fr)}}
@@ -762,7 +764,9 @@ function buildCatHeroGrid(){
     return `<div class="cat-hero-item" onclick="setcat('${c.name}',null);window.scrollTo(0,0)">
       ${img?`<img src="${img}" alt="${c.name}" onerror="this.style.display='none'">`:''}
       <div class="chi-overlay"></div>
+      ${count>0?`<div class="chi-count">${count}</div>`:''}
       <div class="chi-label">
+        <span class="chi-icon">${c.icon||'📦'}</span>
         <span>${c.name}</span>
         <span class="chi-arrow">›</span>
       </div>
