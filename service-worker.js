@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rg-admin-v1';
+const CACHE_NAME = 'rg-admin-v2';
 const STATIC_ASSETS = [
   '/thai-accounting-system/admin.html',
   'https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap'
