@@ -75,21 +75,6 @@ nav{flex:1;padding:.4rem 0;overflow-y:auto}
 .nav-btn:hover{background:rgba(255,255,255,.07)}
 .nav-btn.active{background:rgba(255,255,255,.14);border-left-color:var(--accent);font-weight:700}
 .nav-icon{font-size:15px;flex-shrink:0}
-/* Product/Stock view modes */
-.prod-list-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--card);font-size:12px;cursor:pointer}
-.prod-list-item:hover{background:var(--hover,#f8fafc)}
-.prod-list-img{width:36px;height:36px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border)}
-.prod-list-info{flex:1;min-width:0}
-.prod-list-name{font-weight:600;font-size:12px;white-space:normal;word-break:break-word;line-height:1.3}
-.prod-list-meta{font-size:10px;color:var(--muted);margin-top:2px;display:flex;flex-wrap:wrap;gap:4px}
-.prod-list-actions{display:flex;gap:4px;flex-shrink:0}
-.prod-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 0}
-.prod-grid-4-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 4px;text-align:center;cursor:pointer;font-size:10px}
-.prod-grid-4-card img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;margin-bottom:3px}
-.prod-grid-4-card .g4-name{font-weight:600;font-size:9px;line-height:1.2;word-break:break-word;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.prod-grid-4-card .g4-code{font-size:8px;color:var(--muted)}
-.prod-grid-4-card .g4-price{font-weight:700;color:var(--accent);font-size:10px}
-.prod-grid-4-card .g4-stock{font-size:9px}
 .nav-label{white-space:nowrap}
 .nav-short{display:none;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px;text-align:center}
 .sb-footer{padding:.9rem 1rem;font-size:11px;color:rgba(255,255,255,.35);border-top:1px solid rgba(255,255,255,.08)}
@@ -209,6 +194,127 @@ tbody tr:hover{background:#f0f9ff}
   .stat-card { padding: 10px !important; }
   .modal-content { width: 96vw !important; max-height: 90vh !important; overflow-y: auto !important; margin: 5vh auto !important; }
   .hide-mobile { display: none !important; }
+
+  /* ── Responsive Card Table: prod-table-wrap & stock-table-wrap ── */
+  #prod-table-wrap .tbl,
+  #stock-table-wrap .tbl { overflow-x: visible !important; }
+
+  #prod-table-wrap table,
+  #stock-table-wrap table { display: block; }
+
+  #prod-table-wrap thead,
+  #stock-table-wrap thead { display: none !important; }
+
+  #prod-table-wrap tbody,
+  #stock-table-wrap tbody { display: flex; flex-direction: column; gap: 10px; }
+
+  #prod-table-wrap tr,
+  #stock-table-wrap tr {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    gap: 0 !important;
+    background: #fff !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    position: relative !important;
+  }
+  #prod-table-wrap tr:nth-child(even),
+  #stock-table-wrap tr:nth-child(even) { background: #fff !important; }
+
+  #prod-table-wrap td,
+  #stock-table-wrap td {
+    display: flex !important;
+    flex-direction: column !important;
+    text-align: left !important;
+    padding: 4px 6px !important;
+    border-bottom: none !important;
+    font-size: 12px !important;
+  }
+  #prod-table-wrap td::before,
+  #stock-table-wrap td::before {
+    content: attr(data-label);
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-bottom: 1px;
+  }
+
+  /* Checkbox + Code row: side by side, full width top */
+  #prod-table-wrap td:nth-child(1),
+  #stock-table-wrap td:nth-child(1) {
+    grid-column: 1 / 2 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding-bottom: 6px !important;
+    border-bottom: none !important;
+  }
+  #prod-table-wrap td:nth-child(1)::before,
+  #stock-table-wrap td:nth-child(1)::before { display: none; }
+
+  /* Code col: show inline with image, right side top */
+  #prod-table-wrap td:nth-child(2),
+  #stock-table-wrap td:nth-child(2) {
+    grid-column: 2 / 3 !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    font-size: 11px !important;
+    color: var(--muted) !important;
+    border-bottom: none !important;
+    padding-bottom: 4px !important;
+  }
+  #prod-table-wrap td:nth-child(2) img,
+  #stock-table-wrap td:nth-child(2) img {
+    width: 36px !important; height: 36px !important;
+  }
+
+  /* Name col: full width header of card */
+  #prod-table-wrap td:nth-child(3),
+  #stock-table-wrap td:nth-child(3) {
+    grid-column: 1 / -1 !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+  #prod-table-wrap td:nth-child(3)::before,
+  #stock-table-wrap td:nth-child(3)::before { display: none; }
+
+  /* Products: actions (col 11) full width */
+  #prod-table-wrap td:nth-child(11) {
+    grid-column: 1 / -1 !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #f1f5f9 !important;
+    margin-top: 2px !important;
+  }
+  #prod-table-wrap td:nth-child(11)::before { display: none; }
+  #prod-table-wrap td:nth-child(11) button { flex: 1; }
+
+  /* Stock: SKU field (col 11) full width */
+  #stock-table-wrap td:nth-child(11) {
+    grid-column: 1 / -1 !important;
+  }
+  #stock-table-wrap td:nth-child(11) input {
+    width: 100% !important; box-sizing: border-box !important;
+  }
+
+  /* Stock: สถานะ (col 12) + actions (col 13) */
+  #stock-table-wrap td:nth-child(12) { align-items: flex-start !important; }
+  #stock-table-wrap td:nth-child(13) {
+    grid-column: 1 / -1 !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #f1f5f9 !important;
+    margin-top: 2px !important;
+  }
+  #stock-table-wrap td:nth-child(13)::before { display: none; }
+  #stock-table-wrap td:nth-child(13) button { flex: 1; }
 }
 </style>
 </head>
@@ -440,7 +546,14 @@ function toast(msg,type='info'){const t=document.getElementById('toast');t.textC
 function tbl(headers,rows,empty='ไม่มีข้อมูล'){
   if(!rows.length)return`<div style="text-align:center;padding:2rem;color:var(--muted)"><div style="font-size:36px;margin-bottom:8px">📂</div>${empty}</div>`;
   const ths=headers.map((h,i)=>`<th${i>0?' style="text-align:right"':''}>${h}</th>`).join('');
-  const trs=rows.map(row=>`<tr>${row.map((c,ci)=>`<td${ci>0?' style="text-align:right"':''}>${c??''}</td>`).join('')}</tr>`).join('');
+  const plainLabels=headers.map(h=>{
+    if(typeof h!=='string') return '';
+    return h.replace(/<[^>]*>/g,'').trim();
+  });
+  const trs=rows.map(row=>`<tr>${row.map((c,ci)=>{
+    const lbl=plainLabels[ci]?` data-label="${plainLabels[ci].replace(/"/g,'&quot;')}"`:'';
+    return`<td${lbl}${ci>0?' style="text-align:right"':''}>${c??''}</td>`;
+  }).join('')}</tr>`).join('');
   return`<div class="tbl"><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
 }
 function sc(label,value,color,sub=''){return`<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value" style="color:${color}">${value}</div>${sub?`<div class="stat-sub">${sub}</div>`:''}</div>`;}
@@ -2927,7 +3040,6 @@ function renderProducts(){
       ${cats.map(c=>`<option value="${c}"${catFilter===c?' selected':''}>${c}</option>`).join('')}
     </select>
     <div style="font-size:13px;color:var(--muted)" id="prod-count">${list.length}/${S.products.length} รายการ</div>
-    <button onclick="toggleProdView()" id="prod-view-btn" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px" title="สลับมุมมอง">${(S._prodView||'list')==='list'?'⊞ Grid':'☰ List'}</button>
 
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
       <!-- EXPORT dropdown -->
@@ -2969,63 +3081,10 @@ function renderProducts(){
     </div>
   </div>
 
-  <!-- Table / List / Grid -->
+  <!-- Table -->
   <div id="prod-table-wrap">
-    ${buildProdView(list, S._prodView||'list')}
+    ${tbl(['<input type="checkbox" id="prod-chk-all" onchange="toggleAllProducts(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า')}
   </div>`;
-}
-
-function buildProdView(list, mode){
-  if(!list.length) return '<div style="text-align:center;padding:2rem;color:var(--muted)">🔍 ไม่พบสินค้า</div>';
-  if(mode==='grid'){
-    return '<div class="prod-grid-4">' + list.map(p=>`
-      <div class="prod-grid-4-card${p.stock<=0?' out':''}">
-        ${p.imageUrl?`<img src="${p.imageUrl}" onerror="this.style.display='none'">`:'<div style="font-size:24px;margin-bottom:3px">📦</div>'}
-        <div class="g4-name">${p.name}</div>
-        <div class="g4-code">${p.code||''}</div>
-        <div class="g4-price">${fmt(p.price)}</div>
-        <div class="g4-stock" style="color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock<=0?'หมด':p.stock+' '+p.unit}</div>
-        <div style="margin-top:4px;display:flex;gap:2px;justify-content:center">
-          <button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้</button>
-          <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>
-        </div>
-      </div>`).join('') + '</div>';
-  }
-  // list mode
-  return list.map(p=>`
-    <div class="prod-list-item">
-      <input type="checkbox" class="prod-chk" data-id="${p.id}" onchange="updateBulkProdBar()" style="width:16px;height:16px;cursor:pointer;flex-shrink:0">
-      ${p.imageUrl?`<img class="prod-list-img" src="${p.imageUrl}" onerror="this.style.display='none'">`:'<div style="width:36px;height:36px;background:var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>'}
-      <div class="prod-list-info">
-        <div class="prod-list-name">${p.name}</div>
-        <div class="prod-list-meta">
-          <span style="background:#e0e7ff;padding:1px 5px;border-radius:4px">${p.code||'-'}</span>
-          <span>${p.category||'-'}</span>
-          <span>ราคา: <b>${fmt(p.price)}</b></span>
-          <span>ต้นทุน: ${fmt(p.cost)}</span>
-          <span>กำไร: <b style="color:var(--success)">${fmt((p.price||0)-(p.cost||0))}</b></span>
-          <span style="color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success);font-weight:700'}">สต็อก: <b>${p.stock}</b> ${p.unit||''}</span>
-        </div>
-      </div>
-      <div class="prod-list-actions">
-        <button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button>
-        <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>
-      </div>
-    </div>`).join('');
-}
-
-function toggleProdView(){
-  S._prodView = (S._prodView||'list')==='list' ? 'grid' : 'list';
-  const wrap = document.getElementById('prod-table-wrap');
-  const btn = document.getElementById('prod-view-btn');
-  if(wrap) wrap.innerHTML = buildProdView(
-    S.products.filter(p=>{
-      const q=S._prodQ||''; const cat=S._prodCat||'';
-      if(q && !(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase())) return false;
-      if(cat && p.category!==cat) return false;
-      return true;
-    }), S._prodView);
-  if(btn) btn.textContent = S._prodView==='list' ? '⊞ Grid' : '☰ List';
 }
 
 // ─── Product Search/Filter (no full re-render) ───
@@ -4075,7 +4134,6 @@ function renderStock(){
       ${cats.map(c=>`<option value="${c}"${S._stockCat===c?' selected':''}>${c}</option>`).join('')}
     </select>
     <div style="font-size:12px;color:var(--muted)" id="stock-count">${list.length}/${S.products.length} รายการ</div>
-    <button onclick="toggleStockView()" id="stock-view-btn" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px" title="สลับมุมมอง">${(S._stockView||'list')=='list'?'⊞ Grid':'☰ List'}</button>
   </div>
 
   <!-- Bulk Delete Bar -->
@@ -4086,70 +4144,10 @@ function renderStock(){
     <button class="btn btn-gray btn-sm" onclick="document.querySelectorAll('.stock-chk').forEach(c=>c.checked=false);updateBulkStockBar()">ยกเลิก</button>
   </div>
 
-  <!-- Table / List / Grid -->
+  <!-- Table -->
   <div id="stock-table-wrap">
-    ${buildStockView(list, S._stockView||'list')}
+    ${tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า')}
   </div>`;
-}
-
-function buildStockView(list, mode){
-  if(!list.length) return '<div style="text-align:center;padding:2rem;color:var(--muted)">🔍 ไม่พบสินค้า</div>';
-  if(mode==='grid'){
-    return '<div class="prod-grid-4">' + list.map(p=>`
-      <div class="prod-grid-4-card">
-        ${p.imageUrl?`<img src="${p.imageUrl}" onerror="this.style.display='none'">`:`<div style="font-size:24px;margin-bottom:3px">📦</div>`}
-        <div class="g4-name">${p.name}</div>
-        <div class="g4-code">${p.code||''}</div>
-        <div class="g4-stock" style="color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">
-          <b>${p.stock}</b> ${p.unit||''}
-        </div>
-        <div style="font-size:8px;color:var(--muted)">${p.category||''}</div>
-        <div style="margin-top:4px;display:flex;gap:2px;justify-content:center">
-          <button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button>
-          <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้</button>
-        </div>
-      </div>`).join('') + '</div>';
-  }
-  // list mode
-  return list.map(p=>{
-    const st=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
-    const sc=p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)';
-    return `<div class="prod-list-item">
-      <input type="checkbox" class="stock-chk" data-id="${p.id}" onchange="updateBulkStockBar()" style="width:16px;height:16px;cursor:pointer;flex-shrink:0">
-      ${p.imageUrl?`<img class="prod-list-img" src="${p.imageUrl}" onerror="this.style.display='none'">`:`<div style="width:36px;height:36px;background:var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>`}
-      <div class="prod-list-info">
-        <div class="prod-list-name">${p.name}</div>
-        <div class="prod-list-meta">
-          <span style="background:#e0e7ff;padding:1px 5px;border-radius:4px">${p.code||'-'}</span>
-          <span>${p.category||'-'}</span>
-          <span>ราคา: <b>${fmt(p.price)}</b></span>
-          <span>ต้นทุน: ${fmt(p.cost)}</span>
-          <span style="color:${sc};font-weight:700">สต็อก: <b>${p.stock}</b> ${p.unit||''} (min:${p.minStock||5})</span>
-          <span style="color:${sc};font-weight:700">สถานะ: ${st}</span>
-        </div>
-      </div>
-      <div class="prod-list-actions">
-        <button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button>
-        <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button>
-        <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function toggleStockView(){
-  S._stockView = (S._stockView||'list')==='list' ? 'grid' : 'list';
-  const wrap = document.getElementById('stock-table-wrap');
-  const btn = document.getElementById('stock-view-btn');
-  const q=S._stockQ||''; const statusF=S._stockStatus||'all'; 
-  let list=S.products;
-  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase()));
-  if(statusF==='low') list=list.filter(p=>p.stock>0&&p.stock<=(p.minStock||5));
-  if(statusF==='out') list=list.filter(p=>p.stock<=0);
-  if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
-  if(S._stockCat) list=list.filter(p=>p.category===S._stockCat);
-  if(wrap) wrap.innerHTML = buildStockView(list, S._stockView);
-  if(btn) btn.textContent = S._stockView==='list' ? '⊞ Grid' : '☰ List';
 }
 
 function stockSearch(val){
