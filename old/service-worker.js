@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rg-admin-v3';
+const CACHE_NAME = 'rg-admin-v2';
 const STATIC_ASSETS = [
   '/thai-accounting-system/admin.html',
   'https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap'
@@ -20,15 +20,11 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Network first — cache เฉพาะ admin.html เท่านั้น ไม่แตะ shop.html
+// Network first — ถ้าออนไลน์ใช้ข้อมูลสด, ถ้าออฟไลน์ใช้ cache
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('firestore.googleapis.com')) return;
   if (e.request.url.includes('firebase')) return;
-
-  // ข้าม shop.html และ index.html — ให้โหลดสดทุกครั้ง
-  if (e.request.url.includes('shop.html')) return;
-  if (e.request.url.includes('index.html')) return;
 
   e.respondWith(
     fetch(e.request)
