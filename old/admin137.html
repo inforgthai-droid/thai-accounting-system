@@ -3063,11 +3063,9 @@ function prodScanKey(e, inp){
   }
 }
 
-let _prodSearchTimer=null;
 function prodSearch(val){
   S._prodQ=val;
-  if(_prodSearchTimer) clearTimeout(_prodSearchTimer);
-  _prodSearchTimer=setTimeout(()=>_updateProdTable(),300);
+  _updateProdTable();
 }
 function prodFilter(){
   const sel=document.getElementById('prod-cat-select');
@@ -4156,11 +4154,9 @@ function toggleStockView(){
   if(btn) btn.textContent = S._stockView==='list' ? '⊞ Grid' : '☰ List';
 }
 
-let _stockSearchTimer=null;
 function stockSearch(val){
   S._stockQ=val;
-  if(_stockSearchTimer) clearTimeout(_stockSearchTimer);
-  _stockSearchTimer=setTimeout(()=>_updateStockTable(),300);
+  _updateStockTable();
 }
 function stockFilter(){
   _updateStockTable();
