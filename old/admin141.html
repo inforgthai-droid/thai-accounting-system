@@ -387,18 +387,6 @@ auth.onAuthStateChanged(async user=>{
   }
 });
 const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:false,posVatMode:'inclusive',_posCat:'all',posPayMethod:'cash'};
-var _shopDesign={
-  colorRed:'#e8172c', colorBg:'#0a0a0a', colorText:'#e8e8e8',
-  logoRacing:'Racing', logoGarage:'Garage', logoSize:'30',
-  promoText:'Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide',
-  promoColor:'#e8172c', promoTextColor:'#ffffff',
-  bannerEnabled:false, bannerUrl:'', bannerTitle:'', bannerSubtitle:'', bannerBtn:'SHOP NOW',
-  topbarShip:'Nationwide Delivery', topbarAuth:'100% Genuine',
-  footerText:'ขอบคุณที่ใช้บริการ', footerAddr:'',
-  fbUrl:'', lineUrl:'', igUrl:'', ytUrl:'',
-  catHeroEnabled:true, catHeroImages:{},
-};
-
 let PI=[];
 const SEED={
   products:[{code:'P001',name:'กระดาษ A4',unit:'รีม',cost:95,price:120,stock:50,minStock:10,category:'เครื่องเขียน'},{code:'P002',name:'ปากกาลูกลื่น',unit:'ด้าม',cost:8,price:15,stock:100,minStock:20,category:'เครื่องเขียน'},{code:'P003',name:'แฟ้มเอกสาร',unit:'อัน',cost:35,price:55,stock:30,minStock:5,category:'อุปกรณ์'},{code:'P004',name:'หมึกพิมพ์',unit:'กล่อง',cost:450,price:650,stock:8,minStock:3,category:'คอมพิวเตอร์'}],
@@ -6889,6 +6877,27 @@ function bahtText(amount){
 
 // ===== WEB DESIGN PAGE =====
 // ===== WEB DESIGN VISUAL EDITOR =====
+var _shopDesign={
+  // Theme colors
+  colorRed:'#e8172c', colorBg:'#0a0a0a', colorText:'#e8e8e8',
+  // Logo
+  logoRacing:'Racing', logoGarage:'Garage',
+  logoSize:'30',
+  // Promo bar
+  promoText:'Professional Motorsport Equipment — 100% Genuine — Fast Delivery Nationwide',
+  promoColor:'#e8172c', promoTextColor:'#ffffff',
+  // Hero/Banner
+  bannerEnabled:false, bannerUrl:'', bannerTitle:'', bannerSubtitle:'', bannerBtn:'SHOP NOW',
+  // Topbar
+  topbarShip:'Nationwide Delivery', topbarAuth:'100% Genuine',
+  // Footer
+  footerText:'ขอบคุณที่ใช้บริการ', footerAddr:'',
+  // Social
+  fbUrl:'', lineUrl:'', igUrl:'', ytUrl:'',
+  // Category Hero Grid
+  catHeroEnabled:true, catHeroImages:{},
+};
+
 function renderWebDesign(){
   return`
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
