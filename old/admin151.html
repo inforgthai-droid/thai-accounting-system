@@ -486,16 +486,7 @@ function renderPage(key){
   const el=document.getElementById('p-'+key);
   if(!el)return;
   const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign};
-  if(key==='sales'){
-    // โหลด rentals ก่อนถ้ายังไม่มี แล้วค่อย render
-    if(_rentals.length===0){
-      loadRentals().then(()=>{ el.innerHTML=renderSales(); });
-    } else {
-      el.innerHTML=renderSales();
-    }
-  } else {
-    if(map[key])el.innerHTML=map[key]();
-  }
+  if(map[key])el.innerHTML=map[key]();
   if(key==='settings')setTimeout(renderAdminEmailList,50);
   if(key==='categories')setTimeout(renderCatList,50);
   if(key==='shipping')setTimeout(()=>{
