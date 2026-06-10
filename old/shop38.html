@@ -6,10 +6,10 @@
 <title>Racing Garage — Motorsport Shop</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;600;700&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <style>
 @font-face{font-family:'Barlow Condensed';font-display:swap}
-@font-face{font-family:'IBM Plex Sans Thai';font-display:swap}
+@font-face{font-family:'Sarabun';font-display:swap}
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;
@@ -17,7 +17,7 @@
   --white:#fff;--gray:#888;--lgray:#bbb;
   --bd:#2a2a2a;--text:#e8e8e8;
   --font:'Barlow Condensed',sans-serif;
-  --thai:'IBM Plex Sans Thai',sans-serif;
+  --thai:'Sarabun',sans-serif;
 }
 html{scroll-behavior:smooth}
 body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
@@ -339,8 +339,8 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
     <div style="text-align:center;padding:3rem;color:#333;font-family:var(--font);font-size:16px;letter-spacing:.5px">YOUR CART IS EMPTY</div>
   </div>
   <div class="cart-ft">
-    <div class="cart-row"><span id="ct-sub-l">Subtotal</span><span id="cf-sub">0</span></div>
-    <div class="cart-total"><span id="ct-total-l">Total</span><span id="cf-total">0</span></div>
+    <div class="cart-row"><span id="ct-sub-l">Subtotal</span><span id="cf-sub">฿0</span></div>
+    <div class="cart-total"><span id="ct-total-l">Total</span><span id="cf-total">฿0</span></div>
     <button class="chk-btn" id="chk-btn" onclick="openCheckout()" disabled>Pay Now →</button>
   </div>
 </div>
@@ -445,7 +445,7 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
     <!-- Price filter -->
     <div class="sb-section">
       <div class="sb-title" id="sb-price-title">PRICE RANGE</div>
-      <div style="font-size:12px;color:#666;margin-bottom:8px" id="price-display">0 — 999,999</div>
+      <div style="font-size:12px;color:#666;margin-bottom:8px" id="price-display">฿0 — ฿999,999</div>
       <input type="range" id="price-max" min="0" max="500000" value="500000" step="1000"
         style="width:100%;accent-color:var(--red)" oninput="updatePriceFilter(this.value)">
     </div>
@@ -844,7 +844,7 @@ function setBrand(b){BRAND_FILTER=BRAND_FILTER===b?'':b;buildBrands('');doFilter
 function toggleStockFilter(){STOCK_ONLY=!STOCK_ONLY;$('stock-dot').style.background=STOCK_ONLY?'var(--red)':'';doFilter();}
 function updatePriceFilter(v){
   PRICE_MAX=parseInt(v);
-  $('price-display').textContent='0 — '+fmt(PRICE_MAX);
+  $('price-display').textContent='฿0 — ฿'+fmt(PRICE_MAX);
   doFilter();
 }
 
@@ -946,7 +946,7 @@ function prodCard(p){
       <div class="pcard-cat-tag">${p.category||''}</div>
       <div class="pcard-foot">
         <div>
-          <div class="pcard-price ${p.price>0?'has':'noprice'}">${p.price>0?fmt(p.price):t('contact_price')}</div>
+          <div class="pcard-price ${p.price>0?'has':'noprice'}">${p.price>0?'฿'+fmt(p.price):t('contact_price')}</div>
           <div class="pcard-stock ${stockClass}">${stockTx}</div>
         </div>
         ${p.stock>0&&p.price>0?`<button class="pcard-plus${inCart?' in-cart':''}" onclick="event.stopPropagation();qadd('${p.id}')">${inCart?'✓':'+'}</button>`:''}
@@ -1059,7 +1059,7 @@ function openPD(id){
   const stockCls=p.stock<=0?'ou-s':p.stock<=5?'lo-s':'in-s';
   const stockTx=p.stock<=0?t('out_stock'):p.stock<=5?t('low_stock')+' ('+p.stock+')':t('in_stock');
   const descHtml=p.description?'<div class="pd-features" style="font-size:13px;color:#888;line-height:1.7;margin-bottom:12px">'+p.description.slice(0,300)+'</div>':'';
-  const priceHtml=p.price>0?(fmt(p.price)):t('contact_price');
+  const priceHtml=p.price>0?('฿'+fmt(p.price)):t('contact_price');
   const authBadge=LANG==='th'?'สินค้าแท้ 100% | จัดส่งทั่วไทย':'100% Genuine | Nationwide Delivery';
   const qtyHtml=p.stock>0&&p.price>0
     ?'<div class="pd-qty-row"><button class="qb" onclick="dqty(-1)">-</button><div class="qv" id="dqv">1</div><button class="qb" onclick="dqty(1)">+</button></div>'
@@ -1154,8 +1154,8 @@ function prodCardGroup(prods){
   const prices=prods.filter(p=>p.price>0).map(p=>p.price);
   const minP=Math.min(...prices), maxP=Math.max(...prices);
   const priceDisplay=prices.length===0?t('contact_price')
-    :minP===maxP?fmt(minP)
-    :fmt(minP)+' – '+fmt(maxP);
+    :minP===maxP?'฿'+fmt(minP)
+    :'฿'+fmt(minP)+' – ฿'+fmt(maxP);
 
   // Total stock
   const totalStock=prods.reduce((a,p)=>a+p.stock,0);
@@ -1231,19 +1231,19 @@ function updateCart(){
   const{sub,vat,grand,cnt}=cartTotals();
   $('ccnt').textContent=cnt;if($('ccnt2'))$('ccnt2').textContent=cnt;
   $('cart-title').textContent=t('cart')+' ('+cnt+')';
-  $('cf-sub').textContent=fmt(sub);$('cf-total').textContent=fmt(grand);
+  $('cf-sub').textContent='฿'+fmt(sub);$('cf-total').textContent='฿'+fmt(grand);
   $('chk-btn').disabled=CART.length===0;
   $('citems').innerHTML=CART.length?CART.map(item=>`
     <div class="cart-item">
       <div class="ci-thumb">${item.imageUrl?`<img src="${item.imageUrl}" onerror="this.style.display='none'">`:('')}</div>
       <div class="ci-info">
         <div class="ci-name">${item.name}</div>
-        <div class="ci-price">${fmt(item.price)}</div>
+        <div class="ci-price">฿${fmt(item.price)}</div>
         <div class="ci-qty">
           <button class="cqb" onclick="cqty('${item.id}',-1)">−</button>
           <span style="font-family:var(--font);font-weight:900;min-width:20px;text-align:center">${item.qty}</span>
           <button class="cqb" onclick="cqty('${item.id}',1)">+</button>
-          <span style="font-size:11px;color:#444">${fmt(item.price*item.qty)}</span>
+          <span style="font-size:11px;color:#444">฿${fmt(item.price*item.qty)}</span>
         </div>
       </div>
       <button class="ci-rm" onclick="cremove('${item.id}')">✕</button>
@@ -1287,8 +1287,8 @@ function renderCO(){
       <div class="fi"><label class="fl">${t('note')}</label><input class="fc" id="oz" value="${O.note}"></div>
       <div class="order-sum">
         <div style="font-family:var(--font);font-weight:800;color:var(--red);letter-spacing:.5px;margin-bottom:8px">${LANG==='th'?'สรุปคำสั่งซื้อ':'ORDER SUMMARY'}</div>
-        ${CART.map(i=>`<div class="os-row"><span>${i.name.slice(0,30)} × ${i.qty}</span><span>${fmt(i.price*i.qty)}</span></div>`).join('')}
-        <div class="os-total"><span>${t('total')}</span><span>${fmtD(grand)}</span></div>
+        ${CART.map(i=>`<div class="os-row"><span>${i.name.slice(0,30)} × ${i.qty}</span><span>฿${fmt(i.price*i.qty)}</span></div>`).join('')}
+        <div class="os-total"><span>${t('total')}</span><span>฿${fmtD(grand)}</span></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:1rem">
         <button onclick="closeM()" class="act-btn sec" style="flex:1">${LANG==='th'?'ยกเลิก':'Cancel'}</button>
@@ -1306,7 +1306,7 @@ function renderCO(){
       ${pm('cod','Cash','CASH ON DELIVERY',LANG==='th'?'ชำระเมื่อรับสินค้า':'Pay on arrival')}
       <div style="display:flex;gap:8px;margin-top:1rem">
         <button onclick="O.step=1;renderCO()" class="act-btn sec" style="flex:1">← ${LANG==='th'?'ย้อนกลับ':'Back'}</button>
-        <button onclick="step3()" class="act-btn" style="flex:2">${t('confirm_order')} ${fmtD(grand)} →</button>
+        <button onclick="step3()" class="act-btn" style="flex:2">${t('confirm_order')} ฿${fmtD(grand)} →</button>
       </div>`;
   } else if(O.step===3){
     renderPayScreen(grand,steps);
@@ -1332,7 +1332,7 @@ function renderPayScreen(grand,steps){
       <div style="text-align:center">
         <div style="font-family:var(--font);font-size:12px;color:#444;letter-spacing:1px;margin-bottom:12px">${_docNo}</div>
         <div class="qr-wrap" id="qrw"></div>
-        <div class="qr-total">${fmtD(grand)}</div>
+        <div class="qr-total">฿${fmtD(grand)}</div>
         <div style="font-size:13px;color:#444;margin:.5rem 0">${LANG==='th'?'ชำระภายใน':'Pay within'} <span style="font-family:var(--font);font-size:22px;font-weight:900;color:var(--red)" id="tmel">05:00</span></div>
         <div class="qr-acct">
           <div style="font-family:var(--font);font-weight:800;color:var(--red);letter-spacing:.5px;margin-bottom:6px">PROMPTPAY</div>
@@ -1351,7 +1351,7 @@ function renderPayScreen(grand,steps){
           <tr><td style="color:#555;width:110px">${LANG==='th'?'ธนาคาร':'Bank'}</td><td><strong>${CO.bankName||'(กรุณาตั้งค่า)'}</strong></td></tr>
           <tr><td style="color:#555">${LANG==='th'?'เลขบัญชี':'Account No.'}</td><td><strong style="font-size:16px;letter-spacing:1px">${CO.bankAccount||'XXXX-X-XXXXX-X'}</strong></td></tr>
           <tr><td style="color:#555">${LANG==='th'?'ชื่อบัญชี':'Account Name'}</td><td><strong>${CO.bankAccountName||CO.name}</strong></td></tr>
-          <tr><td style="color:#555">${LANG==='th'?'ยอดโอน':'Amount'}</td><td><strong style="font-family:var(--font);font-size:20px;color:var(--red)">${fmtD(grand)}</strong></td></tr>
+          <tr><td style="color:#555">${LANG==='th'?'ยอดโอน':'Amount'}</td><td><strong style="font-family:var(--font);font-size:20px;color:var(--red)">฿${fmtD(grand)}</strong></td></tr>
         </table>
       </div>
       <div style="font-size:13px;color:var(--red);font-family:var(--font);font-weight:700;letter-spacing:.5px;margin-bottom:8px">${LANG==='th'?'เวลาที่เหลือ':'TIME REMAINING'}: <span id="tmel" style="font-size:18px">05:00</span></div>
@@ -1366,7 +1366,7 @@ function renderPayScreen(grand,steps){
       <div style="text-align:center;padding:1rem 0">
         <div style="background:var(--bg3);border:1px solid var(--bd);padding:1.5rem;margin-bottom:1rem">
           <div style="font-size:11px;color:#444;letter-spacing:2px;font-family:var(--font)">TOTAL AMOUNT</div>
-          <div style="font-family:var(--font);font-size:32px;font-weight:900;color:#fff">${fmtD(grand)}</div>
+          <div style="font-family:var(--font);font-size:32px;font-weight:900;color:#fff">฿${fmtD(grand)}</div>
           <div style="font-size:12px;color:#444">${_docNo}</div>
         </div>
         <div style="background:var(--bg3);border:1px solid var(--bd);border-left:3px solid var(--red);padding:.8rem;font-size:12px;color:#555;text-align:left;margin-bottom:1rem">
@@ -1388,7 +1388,7 @@ function renderPayScreen(grand,steps){
             <tr><td style="color:#555">${LANG==='th'?'ผู้รับ':'Recipient'}</td><td><strong>${O.name}</strong></td></tr>
             <tr><td style="color:#555">${LANG==='th'?'โทร':'Phone'}</td><td><strong>${O.phone}</strong></td></tr>
             <tr><td style="color:#555">${LANG==='th'?'ที่อยู่':'Address'}</td><td><strong>${O.addr}</strong></td></tr>
-            <tr><td style="color:#555">COD</td><td><strong style="font-family:var(--font);font-size:18px;color:var(--red)">${fmtD(grand)}</strong></td></tr>
+            <tr><td style="color:#555">COD</td><td><strong style="font-family:var(--font);font-size:18px;color:var(--red)">฿${fmtD(grand)}</strong></td></tr>
           </table>
         </div>
       </div>
@@ -1403,7 +1403,7 @@ function genQR(amount){
   const el=$('qrw');if(!el)return;el.innerHTML='';
   const ph=CO.promptpay||CO.tel||'0000000000';
   try{new QRCode(el,{text:`promptpay:${ph}:${amount}`,width:160,height:160,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}
-  catch{el.innerHTML=`<div style="text-align:center;padding:1rem;color:#333;font-family:var(--font)">QR QR PROMPTPAY<br>${fmtD(amount)}</div>`;}
+  catch{el.innerHTML=`<div style="text-align:center;padding:1rem;color:#333;font-family:var(--font)">QR QR PROMPTPAY<br>฿${fmtD(amount)}</div>`;}
 }
 function startTimer(){_tSec=300;clearTimer();_tID=setInterval(()=>{_tSec--;const e=$('tmel');if(e){const m=Math.floor(_tSec/60),s=_tSec%60;e.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;if(_tSec<=60)e.style.color='#f87171';}if(_tSec<=0){clearTimer();toast(LANG==='th'?'หมดเวลาชำระ':'Payment timeout','err');closeM();}},1000);}
 function clearTimer(){if(_tID){clearInterval(_tID);_tID=null;}}
@@ -1436,7 +1436,7 @@ function renderSuccess(grand){
       <div class="qr-acct" style="text-align:left;font-size:13px;line-height:2">
         <div>Name: <strong>${O.name}</strong> / ${O.phone}</div>
         <div>Addr: ${O.addr}</div>
-        <div style="font-family:var(--font);font-size:20px;font-weight:900;color:var(--red)">${fmtD(grand)}</div>
+        <div style="font-family:var(--font);font-size:20px;font-weight:900;color:var(--red)">฿${fmtD(grand)}</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:1rem">
         <button onclick="doPrint(${JSON.stringify(grand)})" class="act-btn sec" style="flex:1">${t('print')}</button>
@@ -1447,7 +1447,7 @@ function renderSuccess(grand){
 
 function doPrint(grand){
   const c=window._lastCart||[];
-  $('pzone').innerHTML=`<div style="max-width:380px;margin:0 auto;font-family:'IBM Plex Sans Thai',sans-serif;font-size:13px;padding:20px">
+  $('pzone').innerHTML=`<div style="max-width:380px;margin:0 auto;font-family:'Sarabun',sans-serif;font-size:13px;padding:20px">
     <div style="text-align:center;border-bottom:3px solid #000;padding-bottom:12px;margin-bottom:12px">
       <div style="font-family:Impact,'Arial Black',sans-serif;font-size:26px;font-style:italic;font-weight:900"><span style="color:#e8172c">Racing</span> <span style="color:#000">Garage</span></div>
       ${CO.address?('<div>'+CO.address+'</div>'):''}${CO.tel?('<div>Tel: '+CO.tel+'</div>'):''}
@@ -1455,8 +1455,8 @@ function doPrint(grand){
     </div>
     <div style="margin-bottom:10px;line-height:1.8"><div><b>${LANG==='th'?'เลขที่':'Order No.'}</b> ${_docNo}</div><div><b>${LANG==='th'?'วันที่':'Date'}</b> ${todayISO()}</div><div><b>${LANG==='th'?'ผู้รับ':'Customer'}</b> ${O.name}</div></div>
     <table style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:1px solid #000"><th align="left">${LANG==='th'?'สินค้า':'Item'}</th><th align="right">Qty</th><th align="right">${LANG==='th'?'รวม':'Total'}</th></tr></thead>
-    <tbody>${c.map(i=>`<tr><td>${i.name}</td><td align="right">${i.qty}</td><td align="right">${fmtD(i.price*i.qty)}</td></tr>`).join('')}</tbody></table>
-    <div style="text-align:right;margin-top:8px;font-size:16px;font-weight:700;border-top:1px solid #000;padding-top:8px">${LANG==='th'?'ยอดสุทธิ':'Total'} ${fmtD(grand)}</div>
+    <tbody>${c.map(i=>`<tr><td>${i.name}</td><td align="right">${i.qty}</td><td align="right">฿${fmtD(i.price*i.qty)}</td></tr>`).join('')}</tbody></table>
+    <div style="text-align:right;margin-top:8px;font-size:16px;font-weight:700;border-top:1px solid #000;padding-top:8px">${LANG==='th'?'ยอดสุทธิ':'Total'} ฿${fmtD(grand)}</div>
     <div style="text-align:center;margin-top:14px;font-weight:700;border-top:2px dashed #000;padding-top:10px">${CO.receiptFooter||'ขอบคุณที่ใช้บริการ'}</div></div>`;
   setTimeout(()=>window.print(),200);
 }
