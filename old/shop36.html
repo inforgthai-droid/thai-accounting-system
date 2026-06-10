@@ -860,10 +860,9 @@ function getBaseName(name){
 function getCodePrefix(code){
   if(!code) return '';
   const p=code.split('-');
-  // ต้องการ prefix ที่ specific พอ: ≥3 parts หรือ ≥2 parts ที่ยาวพอ
-  if(p.length>=3) return p.slice(0,-2).join('-'); // เก็บ parts นอกจาก size/color 2 ตัวท้าย
-  if(p.length===2 && p[0].length>=4) return p[0];
-  return ''; // code สั้นเกิน ไม่ group ด้วย code
+  if(p.length>=3) return p.slice(0,-2).join('-');
+  if(p.length===2) return p[0];
+  return code;
 }
 function groupProducts(list){
   const groups=new Map();
@@ -872,13 +871,7 @@ function groupProducts(list){
     let key;
     if(hasVar){
       const pfx=getCodePrefix(p.code);
-      // ใช้ code prefix เฉพาะเมื่อ prefix ยาวพอ (>4 chars) และไม่ใช่แค่ brand name
-      if(pfx && pfx.length>4 && pfx!==p.code){
-        key='pfx:'+pfx;
-      } else {
-        // ใช้ base name แต่ต้องตรงกันทั้งหมด (exact match)
-        key='name:'+getBaseName(p.name);
-      }
+      key=(pfx&&pfx!==p.code)?'pfx:'+pfx:'name:'+getBaseName(p.name);
     } else {
       key='solo:'+p.id;
     }
