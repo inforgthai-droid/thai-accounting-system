@@ -442,10 +442,8 @@ async function initApp(){
     document.getElementById('sb-footer').textContent=`VAT ${(S.company.vatRate??7)}% • ${S.company.currency||'THB'}`;
     document.title=S.company.name+' | ระบบบัญชี & POS';
     document.getElementById('loading-overlay').classList.add('hidden');
-    const hashPage=location.hash.replace('#','');
-    const validPage=MENU.find(m=>m.key===hashPage);
-    buildNav();renderPage(validPage?hashPage:'dashboard');toast('เชื่อมต่อ Firebase สำเร็จ ✓','success');
-  }catch(e){document.getElementById('loading-overlay').classList.add('hidden');toast('Error: '+e.message,'error');const hashPage=location.hash.replace('#','');const validPage=MENU.find(m=>m.key===hashPage);buildNav();renderPage(validPage?hashPage:'dashboard');}
+    buildNav();renderPage('dashboard');toast('เชื่อมต่อ Firebase สำเร็จ ✓','success');
+  }catch(e){document.getElementById('loading-overlay').classList.add('hidden');toast('Error: '+e.message,'error');buildNav();renderPage('dashboard');}
 }
 const fmt=n=>new Intl.NumberFormat('th-TH').format(Math.round(n||0));
 const fmtM=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(n||0);
@@ -482,7 +480,7 @@ const MENU=[
 ];
 let currentPage='dashboard',sidebarOpen=true;
 function buildNav(){document.getElementById('nav').innerHTML=MENU.map(m=>m.g?`<div class="nav-group">${m.g}</div>`:`<button class="nav-btn${currentPage===m.key?' active':''}" onclick="navigate('${m.key}')"><span class="nav-icon">${m.icon}</span><span class="nav-label">${m.label}</span><span class="nav-short">${m.short||m.label}</span></button>`).join('');}
-function navigate(key){currentPage=key;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('p-'+key).classList.add('active');const m=MENU.find(x=>x.key===key);document.getElementById('topbar-title').textContent=(m?.icon||'')+' '+(m?.label||'');buildNav();renderPage(key);history.replaceState(null,'','#'+key);}
+function navigate(key){currentPage=key;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('p-'+key).classList.add('active');const m=MENU.find(x=>x.key===key);document.getElementById('topbar-title').textContent=(m?.icon||'')+' '+(m?.label||'');buildNav();renderPage(key);}
 function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').classList.toggle('collapsed',!sidebarOpen);}
 function renderPage(key){
   const el=document.getElementById('p-'+key);

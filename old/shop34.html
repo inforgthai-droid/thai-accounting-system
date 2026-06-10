@@ -679,7 +679,6 @@ async function init(){
     // Apply shopDesign from admin
     if(sd.exists) applyShopDesign(sd.data());
 
-    restoreState();
     applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
     if($('price-max')){
       const maxP=Math.max(...PRODS.map(p=>p.price||0),500000);
@@ -775,29 +774,6 @@ function buildCatHeroGrid(){
   }).join('');
 }
 
-function saveState(){
-  const q=$('sinput')?.value||'';
-  const srt=$('srt')?.value||'az';
-  const params=new URLSearchParams();
-  if(CAT&&CAT!=='all') params.set('cat',CAT);
-  if(q) params.set('q',q);
-  if(srt&&srt!=='az') params.set('srt',srt);
-  if(BRAND_FILTER) params.set('brand',BRAND_FILTER);
-  if(STOCK_ONLY) params.set('stock','1');
-  const hash=params.toString();
-  history.replaceState(null,'',hash?'#'+hash:'#');
-}
-function restoreState(){
-  const hash=location.hash.replace('#','');
-  if(!hash) return;
-  const params=new URLSearchParams(hash);
-  if(params.get('cat')){CAT=params.get('cat');}
-  if(params.get('q')&&$('sinput')) $('sinput').value=params.get('q');
-  if(params.get('srt')&&$('srt')) $('srt').value=params.get('srt');
-  if(params.get('brand')) BRAND_FILTER=params.get('brand');
-  if(params.get('stock')) STOCK_ONLY=true;
-}
-
 function setcat(c,el){
   CAT=c;BRAND_FILTER='';
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
@@ -814,7 +790,7 @@ function setcat(c,el){
     icon.textContent='';
     if(catObj?.color) banner.style.setProperty('--cat-color', catObj.color);
   }
-  buildSidebar();doFilter();saveState();
+  buildSidebar();doFilter();
 }
 
 // ── SIDEBAR ──
@@ -915,7 +891,6 @@ function doFilter(){
     grid.innerHTML='<div class="empty-state"><div class="empty-icon"></div><div class="empty-msg">'+t('no_products')+'</div></div>';return;
   }
   grid.innerHTML=grouped.map(g=>g.type==='single'?prodCard(g.p):prodCardGroup(g.prods)).join('');
-  saveState();
 }
 
 // ── PRODUCT CARD ──
