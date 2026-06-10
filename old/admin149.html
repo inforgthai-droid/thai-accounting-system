@@ -2242,7 +2242,7 @@ function renderSales(){
   const today=todayISO();
   const thisMonth=today.slice(0,7);
 
-  // ── Merge POS + Online + Rental ──
+  // ── Merge POS + Online ──
   const posRows=[...S.sales].map(s=>({...s,_ch:'pos',_chLabel:'POS'}));
   const ordRows=[...S.onlineOrders].filter(o=>o.status!=='ยกเลิก').map(o=>({
     id:o.id,_ch:'online',_chLabel:'Online',
@@ -2258,25 +2258,6 @@ function renderSales(){
     status:o.status||'รอยืนยัน',
     payMethod:o.payMethod||'-',
   }));
-  const rentRows=(_rentals||[]).map(r=>{
-    const fee=(r.items||[]).reduce((s,i)=>s+(i.rentalFee||0),0);
-    const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
-    return {
-      id:r.id, _ch:'rental', _chLabel:'เช่า',
-      docNo:r.contractNo||r.id,
-      date:r.rentalDate||today,
-      customerName:r.renterName||'-',
-      items:(r.items||[]).map(i=>({name:i.name,qty:i.qty||1,price:i.rentalFee})),
-      subtotal:fee,
-      discount:0, vat:0,
-      total:fee+dep,
-      rentalFee:fee, rentalDeposit:dep,
-      totalCost:0,
-      status:r.status==='returned'?'คืนแล้ว':r.status==='active'?'กำลังเช่า':'ยกเลิก',
-      payMethod:r.depositPayMethod||'cash',
-      _rentalRef:r,
-    };
-  });
 
   // ── Sort helper: createdAt desc, fallback to date desc, fallback to docNo desc ──
   const sortDesc=(a,b)=>{
@@ -2288,10 +2269,9 @@ function renderSales(){
     return (b.docNo||'').localeCompare(a.docNo||'');
   };
   // ── Filter by channel ──
-  let all=[...posRows,...ordRows,...rentRows].sort(sortDesc);
+  let all=[...posRows,...ordRows].sort(sortDesc);
   if(ch==='pos') all=posRows.sort(sortDesc);
   if(ch==='online') all=ordRows.sort(sortDesc);
-  if(ch==='rental') all=rentRows.sort(sortDesc);
 
   // ── Filter by date ──
   if(df) all=all.filter(s=>(s.date||'')>=df);
@@ -2299,13 +2279,12 @@ function renderSales(){
 
   // ── Stats (ไม่นับบิลที่ยกเลิก) ──
   const activeAll=all.filter(s=>s.status!=='ยกเลิก');
-  const totalRev=activeAll.reduce((a,b)=>a+(b.rentalFee??b.total??0),0);
+  const totalRev=activeAll.reduce((a,b)=>a+(b.total||0),0);
   const totalSub=activeAll.reduce((a,b)=>a+(b.subtotal||0),0);
   const totalCost=activeAll.reduce((a,b)=>a+(b.totalCost||0),0);
-  const totalProfit=activeAll.filter(s=>s._ch==='pos').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const totalProfit=activeAll.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
   const posCount=activeAll.filter(s=>s._ch==='pos').length;
   const ordCount=activeAll.filter(s=>s._ch==='online').length;
-  const rentCount=activeAll.filter(s=>s._ch==='rental').length;
   const cancelCount=all.filter(s=>s.status==='ยกเลิก').length;
 
   // ── Table rows ──
@@ -2313,32 +2292,24 @@ function renderSales(){
     const isCancelled=s.status==='ยกเลิก';
     const chBadge=s._ch==='pos'
       ?`<span style="font-size:10px;background:#dbeafe;color:#1d4ed8;border-radius:4px;padding:1px 6px;font-weight:700">POS</span>`
-      :s._ch==='rental'
-      ?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-weight:700">เช่า</span>`
       :`<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:4px;padding:1px 6px;font-weight:700">Online</span>`;
     const cancelBadge=isCancelled?`<span style="font-size:10px;background:#fef2f2;color:var(--danger);border-radius:4px;padding:1px 6px;font-weight:700;margin-left:3px">ยกเลิก</span>`:'';
-    const profit=s._ch==='pos'&&!isCancelled?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):s._ch==='rental'?s.rentalFee||0:0;
-    const displaySub=s._ch==='rental'?fmt(s.rentalFee||0):(isCancelled?`<s style="color:#aaa">${fmt(s.subtotal||s.total)}</s>`:''+fmt(s.subtotal||s.total));
-    const displayTotal=s._ch==='rental'
-      ?`${fmt(s.rentalFee||0)}<span style="font-size:10px;color:#92400e;margin-left:4px">+มัดจำ ${fmt(s.rentalDeposit||0)}</span>`
-      :isCancelled?`<s style="color:#aaa">${fmt(s.total)}</s>`:''+fmt(s.total);
+    const profit=s._ch==='pos'&&!isCancelled?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):0;
     const actions=s._ch==='pos'
       ?`<button class="btn btn-primary btn-xs" onclick="viewSale('${s.id}')">ดู</button> `
        +(!isCancelled?`<button class="btn btn-gray btn-xs" onclick="showPrintMenu('${s.id}',this)">พิมพ์ ▾</button> `
        +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `:'')
        +`<button class="btn btn-danger btn-xs" onclick="deleteSale('${s.id}')">ลบ</button>`
        +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="confirmCancelSale('${s.id}')">ยกเลิก</button>`:'')
-      :s._ch==='rental'
-      ?`<button class="btn btn-primary btn-xs" onclick="navigate('rental')">ดู</button> <button class="btn btn-xs" style="background:#065f46;color:#fff" onclick="_showRentalInvoice('${s.id}')">🧾</button>`
       :`<button class="btn btn-primary btn-xs" onclick="viewOnlineOrder('${s.id}')">ดู</button>`;
     return[
       `${chBadge}${cancelBadge} ${s.docNo||'-'}`,
       s.date||'-',
       s.customerName||'ลูกค้าทั่วไป',
       s.items?s.items.length+' รายการ':'-',
-      displaySub,
+      isCancelled?`<s style="color:#aaa">${fmt(s.subtotal||s.total)}</s>`:''+fmt(s.subtotal||s.total),
       (s.discount||0)>0?'-'+fmt(s.discount):'-',
-      displayTotal,
+      isCancelled?`<s style="color:#aaa">${fmt(s.total)}</s>`:''+fmt(s.total),
       profit>0?`<span style="color:#7c3aed;font-weight:700">${fmt(profit)}</span>`:'-',
       actions
     ];
@@ -2359,12 +2330,12 @@ function renderSales(){
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <!-- Channel tabs -->
       <div style="display:flex;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px">
-        ${[['all','ทั้งหมด','#1a3a5c'],['pos','POS','#1d4ed8'],['online','Online','#065f46'],['rental','เช่า','#92400e']].map(([key,label,col])=>`
+        ${[['all','ทั้งหมด','#1a3a5c'],['pos','POS','#1d4ed8'],['online','Online','#065f46']].map(([key,label,col])=>`
           <button onclick="S._salesCh='${key}';renderPage('sales')"
             style="padding:5px 14px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all .13s;
             background:${ch===key?'#fff':'transparent'};color:${ch===key?col:'#888'};
             box-shadow:${ch===key?'0 1px 4px rgba(0,0,0,.1)':'none'}">${label}
-            ${ch===key?`<span style="background:${col};color:#fff;border-radius:99px;padding:0 6px;font-size:10px;margin-left:4px">${key==='all'?all.length:key==='pos'?posCount:key==='online'?ordCount:rentCount}</span>`:''}
+            ${ch===key?`<span style="background:${col};color:#fff;border-radius:99px;padding:0 6px;font-size:10px;margin-left:4px">${key==='all'?all.length:key==='pos'?posCount:ordCount}</span>`:''}
           </button>`).join('')}
       </div>
 
