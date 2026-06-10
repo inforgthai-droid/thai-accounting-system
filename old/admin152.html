@@ -2311,8 +2311,7 @@ function renderSales(){
   const totalRev=activeAll.reduce((a,b)=>a+(b.rentalFee??b.total??0),0);
   const totalSub=activeAll.reduce((a,b)=>a+(b.subtotal||0),0);
   const totalCost=activeAll.reduce((a,b)=>a+(b.totalCost||0),0);
-  const totalProfit=activeAll.filter(s=>s._ch==='pos').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0)
-    + activeAll.filter(s=>s._ch==='rental').reduce((a,s)=>a+(s.rentalFee||0),0);
+  const totalProfit=activeAll.filter(s=>s._ch==='pos').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
   const posCount=activeAll.filter(s=>s._ch==='pos').length;
   const ordCount=activeAll.filter(s=>s._ch==='online').length;
   const rentCount=activeAll.filter(s=>s._ch==='rental').length;
