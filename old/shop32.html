@@ -56,9 +56,6 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 .srch-btn{background:var(--red);border:none;padding:0 18px;cursor:pointer;transition:background .13s}
 .srch-btn:hover{background:var(--red2)}
 .hdr-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0}
-.social-icons{display:flex;align-items:center;gap:6px}
-.social-icons a{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#1a1a1a;border:1px solid #2a2a2a;color:#888;transition:all .15s;text-decoration:none}
-.social-icons a:hover{background:var(--red);border-color:var(--red);color:#fff}
 .cart-btn{display:flex;align-items:center;gap:7px;background:var(--red);color:#fff;border:none;padding:9px 18px;font-family:var(--font);font-size:15px;font-weight:800;letter-spacing:.5px;cursor:pointer;transition:background .13s;white-space:nowrap;text-transform:uppercase}
 .cart-btn:hover{background:var(--red2)}
 .cart-cnt{background:#000;color:var(--red);border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center}
@@ -396,7 +393,6 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
       </button>
     </div>
     <div class="hdr-right">
-      <div id="social-icons" class="social-icons"></div>
       <div id="hdr-user-area"></div>
       <button class="login-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
       <button class="cart-btn" onclick="toggleCart()"> <span class="cart-cnt" id="ccnt">0</span> <span id="cart-btn-txt">Cart</span></button>
@@ -696,22 +692,6 @@ async function init(){
   }finally{hideLd();}
 }
 
-function buildSocialIcons(d){
-  const el=document.getElementById('social-icons');
-  if(!el) return;
-  const icons=[
-    {key:'fbUrl', label:'Facebook', svg:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>'},
-    {key:'igUrl', label:'Instagram', svg:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>'},
-    {key:'lineUrl', label:'LINE', svg:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 10.5c0-4.42-4.48-8-10-8S0 6.08 0 10.5c0 3.95 3.53 7.27 8.3 7.9.32.07.76.21.87.49.1.25.07.64.03.89l-.14.84c-.04.25-.2 1 .88.54 1.08-.45 5.83-3.43 7.96-5.87C19.21 13.55 20 12.12 20 10.5z"/></svg>'},
-    {key:'ytUrl', label:'YouTube', svg:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#000"/></svg>'},
-    {key:'ttUrl', label:'TikTok', svg:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z"/></svg>'},
-  ];
-  const links = icons.filter(i => d[i.key]).map(i =>
-    `<a href="${d[i.key]}" target="_blank" rel="noopener" title="${i.label}">${i.svg}</a>`
-  ).join('');
-  el.innerHTML = links;
-}
-
 function applyShopDesign(d){
   // เก็บ shopDesign ไว้ใน SD global
   if(d) Object.assign(SD, d);
@@ -720,8 +700,6 @@ function applyShopDesign(d){
   if(d.colorRed) root.style.setProperty('--red',d.colorRed);
   if(d.colorBg) root.style.setProperty('--bg',d.colorBg);
   if(d.colorText) root.style.setProperty('--text',d.colorText);
-  // Social icons
-  buildSocialIcons(d);
   // Promo bar
   if(d.promoText){
     const pb=$('promo-bar');

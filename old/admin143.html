@@ -395,7 +395,7 @@ var _shopDesign={
   bannerEnabled:false, bannerUrl:'', bannerTitle:'', bannerSubtitle:'', bannerBtn:'SHOP NOW',
   topbarShip:'Nationwide Delivery', topbarAuth:'100% Genuine',
   footerText:'ขอบคุณที่ใช้บริการ', footerAddr:'',
-  fbUrl:'', lineUrl:'', igUrl:'', ytUrl:'', ttUrl:'',
+  fbUrl:'', lineUrl:'', igUrl:'', ytUrl:'',
   catHeroEnabled:true, catHeroImages:{},
 };
 
@@ -7003,7 +7003,6 @@ function renderWebDesign(){
         <div class="fm"><label class="fl">LINE URL</label><input class="fc" id="d-lineUrl" value="${_shopDesign.lineUrl}" placeholder="https://line.me/..."></div>
         <div class="fm"><label class="fl">Instagram URL</label><input class="fc" id="d-igUrl" value="${_shopDesign.igUrl}" placeholder="https://instagram.com/..."></div>
         <div class="fm"><label class="fl">YouTube URL</label><input class="fc" id="d-ytUrl" value="${_shopDesign.ytUrl}" placeholder="https://youtube.com/..."></div>
-        <div class="fm"><label class="fl">TikTok URL</label><input class="fc" id="d-ttUrl" value="${_shopDesign.ttUrl||''}" placeholder="https://tiktok.com/@..."></div>
       </div>
     </div>
 
@@ -7274,7 +7273,6 @@ async function saveShopDesign(){
     lineUrl:get('d-lineUrl'),
     igUrl:get('d-igUrl'),
     ytUrl:get('d-ytUrl'),
-    ttUrl:get('d-ttUrl'),
     catHeroEnabled:_shopDesign.catHeroEnabled,
     catHeroImages:collectCatHeroImages(),
     updatedAt:ts()
@@ -8051,7 +8049,7 @@ function pStats(stats){
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js')
+    navigator.serviceWorker.register('service-worker.js', { scope: '/thai-accounting-system/' })
       .then(() => console.log('[SW] registered'))
       .catch(e => console.warn('[SW] failed:', e));
   });
