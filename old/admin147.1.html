@@ -2196,8 +2196,7 @@ function printReceiptToWindow(sale, pw){
 
   const autoPrint=c.autoPrintReceipt!==false;
   const shopUrl='https://www.racinggarage.net/';
-  const _isRental=sale.docNo&&sale.docNo.startsWith('RNT');const _bcW=_isRental?1.0:1.6;const _bcH=_isRental?32:44;const _bcM=_isRental?1:2;
-  const bcScript='if(typeof JsBarcode!=="undefined"){JsBarcode("#bc58","'+sale.docNo+'",{format:"CODE128",width:'+_bcW+',height:'+_bcH+',fontSize:0,textMargin:0,margin:'+_bcM+',background:"#fff",lineColor:"#000",displayValue:false});}'
+  const bcScript='if(typeof JsBarcode!=="undefined"){JsBarcode("#bc58","'+sale.docNo+'",{format:"CODE128",width:1.6,height:44,fontSize:0,textMargin:0,margin:2,background:"#fff",lineColor:"#000",displayValue:false});}'
     +'var qw=document.getElementById("qr-wrap");'
     +'if(qw&&typeof QRCode!=="undefined"){try{new QRCode(qw,{text:"'+shopUrl+'",width:110,height:110,colorDark:"#000",colorLight:"#fff",correctLevel:QRCode.CorrectLevel.M});}catch(ex){}}';
   const scriptTag='<scr'+'ipt src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"><'+'/scr'+'ipt>'
