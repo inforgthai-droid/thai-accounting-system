@@ -116,11 +116,6 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 /* MAIN */
 #main-col{flex:1;min-width:0}
 .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;padding-bottom:.8rem;border-bottom:1px solid var(--bd)}
-.toolbar-search{flex:1;min-width:140px;display:flex;align-items:center;background:#111;border:1px solid #2a2a2a;transition:border .13s}
-.toolbar-search input{flex:1;padding:7px 10px;background:none;border:none;color:#fff;font-family:var(--thai);font-size:13px;outline:none}
-.toolbar-search button{background:none;border:none;color:#555;padding:0 10px;cursor:pointer;font-size:14px;transition:color .13s}
-.toolbar-search button:hover{color:var(--red)}
-.toolbar-search:focus-within{border-color:var(--red)}
 .toolbar-left{font-size:12px;color:#555}
 .toolbar-left strong{color:#888}
 .sort-sel{background:var(--bg3);border:1px solid var(--bd);color:#fff;font-family:var(--thai);font-size:13px;padding:6px 10px;outline:none;margin-left:auto}
@@ -469,10 +464,6 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
   <div id="main-col">
     <div class="toolbar">
       <div class="toolbar-left" id="result-count"><strong>0</strong> items</div>
-      <div class="toolbar-search">
-        <input type="text" id="sinput2" placeholder="ค้นหาสินค้า..." oninput="syncSearch(this.value)" onkeydown="if(event.key==='Enter')doFilter()">
-        <button onclick="syncSearch($('sinput2').value);doFilter()">🔍</button>
-      </div>
       <select class="sort-sel" id="srt" onchange="doFilter()">
         <option value="az" id="sort-az">Name A→Z</option>
         <option value="za" id="sort-za">Name Z→A</option>
@@ -781,12 +772,6 @@ function buildCatHeroGrid(){
       </div>
     </div>`;
   }).join('');
-}
-
-function syncSearch(val){
-  if($('sinput')) $('sinput').value=val;
-  if($('sinput2')) $('sinput2').value=val;
-  doFilter();
 }
 
 function saveState(){
