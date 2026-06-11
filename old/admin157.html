@@ -3687,26 +3687,19 @@ function openBulkEditGroup(baseName){
   if(!prods.length) return;
   const rep=prods[0];
   const cats=[...new Set(S.products.map(p=>p.category).filter(Boolean))].sort();
-  // store variant rows in window._beRows for per-variant editing
-  window._beRows=prods.map(p=>({
-    id:p.id,
-    name:p.name,
-    code:p.code||'',
-    price:p.price||0,
-    cost:p.cost||0,
-    stock:p.stock||0,
-    minStock:p.minStock||p.min||1
-  }));
   openModal(`✏️ แก้ไขกลุ่ม: ${baseName}`,`
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem">
-      <div style="font-weight:700;color:var(--primary);margin-bottom:10px;font-size:13px">ข้อมูลหลัก (ใช้ร่วมกัน — เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน)</div>
+      <div style="font-weight:700;color:var(--primary);margin-bottom:10px;font-size:13px">ข้อมูลหลัก (จะอัปเดตทุก ${prods.length} variants พร้อมกัน)</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div><label class="fl">ราคาขาย</label><input type="number" class="fc" id="be-price" value="${rep.price||0}" style="font-size:13px"></div>
+        <div><label class="fl">ต้นทุน</label><input type="number" class="fc" id="be-cost" value="${rep.cost||0}" style="font-size:13px"></div>
         <div><label class="fl">หน่วยนับ</label><input class="fc" id="be-unit" value="${(rep.unit||'ชิ้น').replace(/"/g,'&quot;')}" style="font-size:13px"></div>
         <div><label class="fl">หมวดหมู่</label>
           <input class="fc" id="be-cat" list="beCatList" value="${(rep.category||'').replace(/"/g,'&quot;')}" style="font-size:13px">
           <datalist id="beCatList">${cats.map(c=>`<option value="${c}">`).join('')}</datalist>
         </div>
         <div><label class="fl">แบรนด์</label><input class="fc" id="be-brand" value="${(rep.brand||'').replace(/"/g,'&quot;')}" style="font-size:13px"></div>
+        <div><label class="fl">สต็อกขั้นต่ำ</label><input type="number" class="fc" id="be-min" value="${rep.minStock||rep.min||1}" style="font-size:13px"></div>
         <div style="grid-column:1/-1">
           <label class="fl">รูปภาพ URL (ใช้ร่วมกันทุก variant)</label>
           <div style="display:flex;gap:8px;align-items:center">
@@ -3716,62 +3709,24 @@ function openBulkEditGroup(baseName){
         </div>
         <div style="grid-column:1/-1">
           <label class="fl">คำอธิบาย</label>
-          <textarea class="fc" id="be-desc" rows="2" style="font-size:13px;resize:vertical"></textarea>
+          <textarea class="fc" id="be-desc" rows="3" style="font-size:13px;resize:vertical"></textarea>
         </div>
       </div>
     </div>
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem">
-      <div style="font-weight:700;color:var(--primary);margin-bottom:10px;font-size:13px">แก้ไขแต่ละ Variant (${prods.length} รายการ)</div>
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead>
-            <tr style="background:var(--bg2);color:var(--muted);text-align:left">
-              <th style="padding:7px 8px;font-weight:600;white-space:nowrap">ชื่อ Variant</th>
-              <th style="padding:7px 8px;font-weight:600;white-space:nowrap">รหัสสินค้า</th>
-              <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">ราคาขาย</th>
-              <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">ต้นทุน</th>
-              <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">สต็อก</th>
-              <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">สต็อกขั้นต่ำ</th>
-            </tr>
-          </thead>
-          <tbody id="beVariantTbody">
-            ${prods.map((p,i)=>`
-            <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:6px 8px;font-weight:600;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${p.name}">${p.name}</td>
-              <td style="padding:4px 8px">
-                <input type="text" value="${(p.code||'').replace(/"/g,'&quot;')}"
-                  onchange="window._beRows[${i}].code=this.value.trim()" onclick="this.select()"
-                  style="width:110px;padding:4px 7px;border:1.5px solid var(--accent);border-radius:6px;font-size:12px;font-weight:700;color:var(--primary);background:#f0f9ff;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="number" value="${p.price||0}"
-                  onchange="window._beRows[${i}].price=parseFloat(this.value)||0" onclick="this.select()"
-                  style="width:80px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="number" value="${p.cost||0}"
-                  onchange="window._beRows[${i}].cost=parseFloat(this.value)||0" onclick="this.select()"
-                  style="width:80px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="number" value="${p.stock||0}"
-                  onchange="window._beRows[${i}].stock=parseInt(this.value)||0" onclick="this.select()"
-                  style="width:65px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="number" value="${p.minStock||p.min||1}"
-                  onchange="window._beRows[${i}].minStock=parseInt(this.value)||1" onclick="this.select()"
-                  style="width:65px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
+      <div style="font-weight:700;color:var(--primary);margin-bottom:8px;font-size:13px">Variants ในกลุ่มนี้ (${prods.length} รายการ)</div>
+      <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+        ${prods.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:4px;font-size:12px">
+          <span style="font-weight:600">${p.name}</span>
+          <span style="color:var(--muted)">${p.code||'-'} | สต็อก: ${p.stock||0}</span>
+        </div>`).join('')}
       </div>
     </div>`,
     `<button class="btn btn-gray" onclick="openBulkEdit()">← กลับ</button>
-     <button class="btn" style="background:#065f46;color:#fff" onclick="saveBulkEditGroup()">💾 บันทึกทั้งกลุ่ม (${prods.length} รายการ)</button>`,
+     <button class="btn" style="background:#065f46;color:#fff" onclick="saveBulkEditGroup(${JSON.stringify(JSON.stringify(prods.map(p=>p.id)))})">💾 บันทึกทั้งกลุ่ม (${prods.length} รายการ)</button>`,
     {wide:true}
   );
+  // Set image and description safely via JS after modal renders
   setTimeout(()=>{
     const imgInput=document.getElementById('be-img');
     const imgPreview=document.getElementById('beImgPreview');
@@ -3785,40 +3740,27 @@ function openBulkEditGroup(baseName){
   },50);
 }
 
-async function saveBulkEditGroup(){
-  const rows=window._beRows||[];
-  if(!rows.length){toast('ไม่มีข้อมูล variant','error');return;}
+async function saveBulkEditGroup(idsJson){
+  const ids=JSON.parse(idsJson);
+  const price=parseFloat(document.getElementById('be-price')?.value)||0;
+  const cost=parseFloat(document.getElementById('be-cost')?.value)||0;
   const unit=document.getElementById('be-unit')?.value||'ชิ้น';
   const category=document.getElementById('be-cat')?.value||'';
   const brand=document.getElementById('be-brand')?.value||'';
+  const minStock=parseInt(document.getElementById('be-min')?.value)||1;
   const image=document.getElementById('be-img')?.value||'';
   const description=document.getElementById('be-desc')?.value||'';
+  const updates={price,cost,unit,category,brand,minStock,image,description};
   try{
     const batch=db.batch();
-    rows.forEach(r=>{
-      const upd={
-        code:r.code,
-        price:r.price,
-        cost:r.cost,
-        stock:r.stock,
-        minStock:r.minStock,
-        unit,category,brand
-      };
-      if(image) upd.image=image;
-      if(description) upd.description=description;
-      batch.update(db.collection('products').doc(r.id),upd);
+    ids.forEach(id=>{
+      batch.update(db.collection('products').doc(id),updates);
     });
     await batch.commit();
     // อัปเดต local state
-    const idMap=Object.fromEntries(rows.map(r=>[r.id,r]));
-    S.products=S.products.map(p=>{
-      if(!idMap[p.id]) return p;
-      const r=idMap[p.id];
-      return {...p,code:r.code,price:r.price,cost:r.cost,stock:r.stock,minStock:r.minStock,
-              unit,category,brand,...(image?{image}:{}),...(description?{description}:{})};
-    });
+    S.products=S.products.map(p=>ids.includes(p.id)?{...p,...updates}:p);
     closeModal();
-    toast(`อัปเดต ${rows.length} variants สำเร็จ ✓`,'success');
+    toast(`อัปเดต ${ids.length} รายการสำเร็จ ✓`,'success');
     renderPage('products');
   }catch(e){
     toast('Error: '+e.message,'error');
