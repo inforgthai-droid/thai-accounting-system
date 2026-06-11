@@ -599,22 +599,20 @@ function setLang(l){
   buildCatHeroGrid();
 }
 function applyLang(){
-  const _s=(id,val)=>{const el=$(id);if(el){if(val.placeholder!==undefined)el.placeholder=val;else el.textContent=val;}};
-  const _p=(id,val)=>{const el=$(id);if(el)el.placeholder=val;};
-  _p('sinput',t('search_ph'));_p('sinput2',t('search_ph'));
-  const ct=$('cart-title');if(ct)ct.textContent='Cart '+t('cart')+' ('+CART.reduce((a,b)=>a+b.qty,0)+')';
-  _s('ct-sub-l',t('sub'));_s('ct-total-l',t('total'));
+  $('sinput').placeholder=t('search_ph');
+  $('cart-title').textContent='Cart '+t('cart')+' ('+CART.reduce((a,b)=>a+b.qty,0)+')';
+  $('ct-sub-l').textContent=t('sub');$('ct-total-l').textContent=t('total');
   const cb=$('chk-btn');if(cb)cb.textContent=t('pay')+' →';
-  _s('nav-all',t('all'));
-  const lb=$('login-btn');if(lb)lb.textContent=shopUser?t('logout'):t('login');
-  _s('cart-btn-txt',t('cart'));
-  _s('tb-ship',t('tb_ship'));_s('tb-auth',t('tb_auth'));
-  _s('promo-bar',t('promo'));
-  _s('sb-cat-title',t('sb_cat'));_s('sb-brand-title',t('sb_brand'));
-  _s('sb-price-title',t('sb_price'));_s('sb-avail-title',t('sb_avail'));
-  _s('sb-instock-txt',t('sb_instock'));
+  $('nav-all').textContent=t('all');
+  $('login-btn').textContent=shopUser?t('logout'):t('login');
+  $('cart-btn-txt').textContent=t('cart');
+  $('tb-ship').textContent=t('tb_ship');$('tb-auth').textContent=t('tb_auth');
+  $('promo-bar').textContent=t('promo');
+  $('sb-cat-title').textContent=t('sb_cat');$('sb-brand-title').textContent=t('sb_brand');
+  $('sb-price-title').textContent=t('sb_price');$('sb-avail-title').textContent=t('sb_avail');
+  $('sb-instock-txt').textContent=t('sb_instock');
   ['az','za','pa','pd'].forEach(v=>{const o=$('sort-'+v);if(o)o.textContent=t('sort_'+v);});
-  _s('ft-cat-h',t('ft_cat'));_s('ft-svc-h',t('ft_svc'));_s('ft-pay-h',t('ft_pay'));
+  $('ft-cat-h').textContent=t('ft_cat');$('ft-svc-h').textContent=t('ft_svc');$('ft-pay-h').textContent=t('ft_pay');
   $('ft-admin').textContent=t('ft_admin');$('ft-contact').textContent=t('ft_contact');$('ft-return').textContent=t('ft_return');
   $('pd-back-txt').textContent=t('back');
 }
