@@ -50,7 +50,7 @@ body{font-family:'Sarabun',sans-serif;background:#f0f4f8;color:#1e293b;font-size
 #toast.info{background:#0ea5e9}
 #modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8000;display:none;align-items:center;justify-content:center}
 #modal-overlay.open{display:flex}
-#modal-box{background:#fff;border-radius:16px;padding:1.5rem;width:90%;max-width:600px;max-height:88vh;overflow-y:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);display:flex;flex-direction:column}
+#modal-box{background:#fff;border-radius:16px;padding:1.5rem;width:90%;max-width:600px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .modal-title{font-size:17px;font-weight:700;color:var(--primary);margin-bottom:1rem;padding-bottom:8px;border-bottom:2px solid var(--accent)}
 .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
 @media print{
@@ -238,7 +238,7 @@ tbody tr:hover{background:#f0f9ff}
 
 <div id="loading-overlay"><div class="ld-logo">🏪</div><div class="ld-title">ระบบบัญชี & POS Pro</div><div class="ld-sub">กำลังเชื่อมต่อ Firebase...</div><div class="ld-bar"><div class="ld-bar-inner"></div></div></div>
 <div id="toast"></div>
-<div id="modal-overlay"><div id="modal-box"><div class="modal-title" id="modal-title"></div><div id="modal-body" style="overflow-y:auto;flex:1;min-height:0"></div><div class="modal-footer" id="modal-footer" style="flex-shrink:0;padding-top:12px;border-top:1px solid #eee;margin-top:8px"></div></div></div>
+<div id="modal-overlay"><div id="modal-box"><div class="modal-title" id="modal-title"></div><div id="modal-body"></div><div class="modal-footer" id="modal-footer"></div></div></div>
 <div id="print-area"></div>
 <div id="sidebar">
   <div class="sb-header">
