@@ -3183,7 +3183,6 @@ function renderProducts(){
       <!-- Add new -->
       <button class="btn btn-sm" onclick="editProduct()">+ เพิ่มสินค้า</button>
       <button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="openBulkProduct()">+ เพิ่มแบบกลุ่ม</button>
-      <button class="btn btn-sm" style="background:#065f46;color:#fff" onclick="openBulkEdit()">✏️ แก้ไขแบบกลุ่ม</button>
     </div>
   </div>
 
@@ -3637,124 +3636,6 @@ async function saveProduct(id){
 
 // ===== BULK PRODUCT ADD =====
 // เพิ่มสินค้าแบบกลุ่ม — 1 สินค้าหลัก หลายสี/ไซส์ → สร้างหลาย SKU อัตโนมัติ
-function openBulkEdit(){
-  // สร้าง list กลุ่มสินค้า โดย group จาก baseName
-  const groups=new Map();
-  S.products.forEach(p=>{
-    const bn=p.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*[/|]\s*\S.*$/i,'')
-      .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*$/i,'')
-      .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon)\s*$/i,'')
-      .trim();
-    if(!groups.has(bn)) groups.set(bn,[]);
-    groups.get(bn).push(p);
-  });
-  // เฉพาะกลุ่มที่มีมากกว่า 1 ชิ้น
-  const multiGroups=[...groups.entries()].filter(([,prods])=>prods.length>1).sort((a,b)=>a[0].localeCompare(b[0],'th'));
-  if(!multiGroups.length){toast('ไม่พบสินค้าที่เพิ่มแบบกลุ่ม','error');return;}
-  openModal('✏️ แก้ไขสินค้าแบบกลุ่ม',`
-    <div style="margin-bottom:10px">
-      <input class="fc" id="be-search" placeholder="ค้นหาชื่อกลุ่มสินค้า..." oninput="filterBulkEditList(this.value)" style="font-size:13px">
-    </div>
-    <div id="be-list" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
-      ${multiGroups.map(([name,prods])=>`
-        <div class="be-group-row" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer" onclick="openBulkEditGroup(${JSON.stringify(name).replace(/"/g,'&quot;')})">
-          <div>
-            <div style="font-weight:700;font-size:13px">${name}</div>
-            <div style="font-size:11px;color:var(--muted)">${prods.length} variants • ${[...new Set(prods.map(p=>p.category).filter(Boolean))].join(', ')}</div>
-          </div>
-          <button class="btn btn-sm btn-primary" style="font-size:11px">แก้ไข →</button>
-        </div>`).join('')}
-    </div>`,
-    `<button class="btn btn-gray" onclick="closeModal()">ปิด</button>`,
-    {wide:true}
-  );
-}
-
-function filterBulkEditList(q){
-  document.querySelectorAll('.be-group-row').forEach(row=>{
-    row.style.display=row.innerText.toLowerCase().includes(q.toLowerCase())?'flex':'none';
-  });
-}
-
-function openBulkEditGroup(baseName){
-  const prods=S.products.filter(p=>{
-    const bn=p.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*[/|]\s*\S.*$/i,'')
-      .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*$/i,'')
-      .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon)\s*$/i,'')
-      .trim();
-    return bn===baseName;
-  });
-  if(!prods.length) return;
-  const rep=prods[0];
-  const cats=[...new Set(S.products.map(p=>p.category).filter(Boolean))].sort();
-  openModal(`✏️ แก้ไขกลุ่ม: ${baseName}`,`
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem">
-      <div style="font-weight:700;color:var(--primary);margin-bottom:10px;font-size:13px">ข้อมูลหลัก (จะอัปเดตทุก ${prods.length} variants พร้อมกัน)</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        <div><label class="fl">ราคาขาย</label><input type="number" class="fc" id="be-price" value="${rep.price||0}" style="font-size:13px"></div>
-        <div><label class="fl">ต้นทุน</label><input type="number" class="fc" id="be-cost" value="${rep.cost||0}" style="font-size:13px"></div>
-        <div><label class="fl">หน่วยนับ</label><input class="fc" id="be-unit" value="${rep.unit||'ชิ้น'}" style="font-size:13px"></div>
-        <div><label class="fl">หมวดหมู่</label>
-          <input class="fc" id="be-cat" list="beCatList" value="${rep.category||''}" style="font-size:13px">
-          <datalist id="beCatList">${cats.map(c=>`<option value="${c}">`).join('')}</datalist>
-        </div>
-        <div><label class="fl">แบรนด์</label><input class="fc" id="be-brand" value="${rep.brand||''}" style="font-size:13px"></div>
-        <div><label class="fl">สต็อกขั้นต่ำ</label><input type="number" class="fc" id="be-min" value="${rep.minStock||rep.min||1}" style="font-size:13px"></div>
-        <div style="grid-column:1/-1">
-          <label class="fl">รูปภาพ URL (ใช้ร่วมกันทุก variant)</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input class="fc" id="be-img" value="${rep.image||rep.imageUrl||''}" placeholder="https://..." style="flex:1;font-size:13px" oninput="const img=document.getElementById('beImgPreview');if(img){img.src=this.value;img.style.display=this.value?'block':'none'}">
-            <img id="beImgPreview" src="${rep.image||rep.imageUrl||''}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:${rep.image||rep.imageUrl?'block':'none'}">
-          </div>
-        </div>
-        <div style="grid-column:1/-1">
-          <label class="fl">คำอธิบาย</label>
-          <textarea class="fc" id="be-desc" rows="3" style="font-size:13px;resize:vertical">${rep.description||rep.desc||''}</textarea>
-        </div>
-      </div>
-    </div>
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem">
-      <div style="font-weight:700;color:var(--primary);margin-bottom:8px;font-size:13px">Variants ในกลุ่มนี้ (${prods.length} รายการ)</div>
-      <div style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
-        ${prods.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:var(--bg2);border-radius:4px;font-size:12px">
-          <span style="font-weight:600">${p.name}</span>
-          <span style="color:var(--muted)">${p.code||'-'} | สต็อก: ${p.stock||0}</span>
-        </div>`).join('')}
-      </div>
-    </div>`,
-    `<button class="btn btn-gray" onclick="openBulkEdit()">← กลับ</button>
-     <button class="btn" style="background:#065f46;color:#fff" onclick="saveBulkEditGroup(${JSON.stringify(JSON.stringify(prods.map(p=>p.id)))})">💾 บันทึกทั้งกลุ่ม (${prods.length} รายการ)</button>`,
-    {wide:true}
-  );
-}
-
-async function saveBulkEditGroup(idsJson){
-  const ids=JSON.parse(idsJson);
-  const price=parseFloat(document.getElementById('be-price')?.value)||0;
-  const cost=parseFloat(document.getElementById('be-cost')?.value)||0;
-  const unit=document.getElementById('be-unit')?.value||'ชิ้น';
-  const category=document.getElementById('be-cat')?.value||'';
-  const brand=document.getElementById('be-brand')?.value||'';
-  const minStock=parseInt(document.getElementById('be-min')?.value)||1;
-  const image=document.getElementById('be-img')?.value||'';
-  const description=document.getElementById('be-desc')?.value||'';
-  const updates={price,cost,unit,category,brand,minStock,image,description};
-  try{
-    const batch=db.batch();
-    ids.forEach(id=>{
-      batch.update(db.collection('products').doc(id),updates);
-    });
-    await batch.commit();
-    // อัปเดต local state
-    S.products=S.products.map(p=>ids.includes(p.id)?{...p,...updates}:p);
-    closeModal();
-    toast(`อัปเดต ${ids.length} รายการสำเร็จ ✓`,'success');
-    renderPage('products');
-  }catch(e){
-    toast('Error: '+e.message,'error');
-  }
-}
-
 function openBulkProduct(){
   const cats=[...new Set(S.products.map(p=>p.category).filter(Boolean))].sort();
   openModal('➕ เพิ่มสินค้าแบบกลุ่ม (หลายสี/ไซส์)',`
