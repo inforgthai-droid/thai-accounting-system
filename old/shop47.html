@@ -358,7 +358,10 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
 <!-- PRODUCT DETAIL PAGE -->
 <div id="pdpage">
   <div style="background:#000;border-bottom:2px solid var(--red);position:sticky;top:0;z-index:10;padding:.8rem 1.5rem;display:flex;align-items:center;justify-content:space-between">
-    <div style="width:60px"></div>
+    <button class="pd-back" onclick="closePD()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      <span id="pd-back-txt">Back</span>
+    </button>
     <svg style="height:30px;display:block;overflow:visible" viewBox="0 0 300 32" xmlns="http://www.w3.org/2000/svg"><text y="28" style="font-family:Impact,'Arial Black',sans-serif;font-size:30px;font-style:italic;font-weight:900"><tspan fill="#e8172c">Racing</tspan><tspan fill="#ffffff"> Garage</tspan></text></svg>
     <button class="cart-btn" onclick="toggleCart()"> <span class="cart-cnt" id="ccnt2">0</span></button>
   </div>
@@ -613,6 +616,7 @@ function applyLang(){
   ['az','za','pa','pd'].forEach(v=>{const o=$('sort-'+v);if(o)o.textContent=t('sort_'+v);});
   _s('ft-cat-h',t('ft_cat'));_s('ft-svc-h',t('ft_svc'));_s('ft-pay-h',t('ft_pay'));
   $('ft-admin').textContent=t('ft_admin');$('ft-contact').textContent=t('ft_contact');$('ft-return').textContent=t('ft_return');
+  $('pd-back-txt').textContent=t('back');
 }
 
 // ── AUTH ──
