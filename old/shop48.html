@@ -1122,9 +1122,8 @@ function openPD(id){
   document.getElementById('pdpage').classList.add('show');
   document.body.style.overflow='hidden';
   window.scrollTo(0,0);
-  history.pushState({pdOpen:true},'','');
 }
-function closePD(fromPop){$('pdpage').classList.remove('show');document.body.style.overflow='';if(!fromPop&&history.state&&history.state.pdOpen)history.back();}
+function closePD(){$('pdpage').classList.remove('show');document.body.style.overflow='';}
 function pdTab(btn,id){
   document.querySelectorAll('.pd-tab').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -1491,12 +1490,6 @@ window.addEventListener('scroll',()=>{$('stb').classList.toggle('show',scrollY>4
 
 // ── BOOT ──
 init();
-
-window.addEventListener('popstate',function(e){
-  if(document.getElementById('pdpage').classList.contains('show')){
-    closePD(true);
-  }
-});
 </script>
 </body>
 </html>
