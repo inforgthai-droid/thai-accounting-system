@@ -482,14 +482,6 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
         <option value="pa" id="sort-pa">Price Low→High</option>
         <option value="pd" id="sort-pd">Price High→Low</option>
       </select>
-      <select class="sort-sel" id="psize" onchange="changePageSize(this.value)">
-        <option value="10">10 / page</option>
-        <option value="20">20 / page</option>
-        <option value="30">30 / page</option>
-        <option value="40">40 / page</option>
-        <option value="50">50 / page</option>
-        <option value="100">100 / page</option>
-      </select>
     </div>
     <div class="pgrid" id="pgrid">
       ${[...Array(12)].map(()=>`<div class="pcard" style="pointer-events:none"><div style="aspect-ratio:1;background:#1a1a1a"></div><div style="padding:12px"><div style="height:10px;background:#222;margin-bottom:6px;border-radius:2px;width:40%"></div><div style="height:14px;background:#1e1e1e;border-radius:2px"></div></div></div>`).join('')}
@@ -540,7 +532,7 @@ let PRODS=[],CO={name:'Racing Garage',vatRate:7,tel:'',address:'',email:'',promp
     CATS=[],  // loaded from Firestore categories collection
     CART=[],CAT='all',LANG='en',shopUser=null;
 let BRAND_FILTER='',STOCK_ONLY=false,PRICE_MAX=500000;
-let PAGE=1,PAGE_SIZE=parseInt(localStorage.getItem('rg_page_size'))||20;
+let PAGE=1;const PAGE_SIZE=50;
 let SD={catHeroEnabled:true,catHeroImages:{}}; // shopDesign from Firestore
 let O={step:1,pay:'qr',name:'',phone:'',email:'',addr:'',note:''},_docNo='',_tID=null,_tSec=300,_dQty=1;
 const $=id=>document.getElementById(id);
@@ -945,7 +937,6 @@ function doFilter(resetPage=true){
   list.sort(sorts[srt]||sorts.az);
   const grouped=groupProducts(list);
   $('result-count').innerHTML='<strong>'+grouped.length+'</strong> '+t('items');
-  const psizeEl=$('psize');if(psizeEl)psizeEl.value=String(PAGE_SIZE);
   const grid=$('pgrid');if(!grid)return;
   if(!grouped.length){
     grid.innerHTML='<div class="empty-state"><div class="empty-icon"></div><div class="empty-msg">'+t('no_products')+'</div></div>';
@@ -960,13 +951,6 @@ function doFilter(resetPage=true){
   grid.innerHTML=pageItems.map(g=>g.type==='single'?prodCard(g.p):prodCardGroup(g.prods)).join('');
   renderPagination(totalPages);
   saveState();
-}
-
-function changePageSize(v){
-  PAGE_SIZE=parseInt(v);
-  localStorage.setItem('rg_page_size',PAGE_SIZE);
-  PAGE=1;
-  doFilter(false);
 }
 
 function goToPage(n){
