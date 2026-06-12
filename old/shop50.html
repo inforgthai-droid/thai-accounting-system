@@ -128,12 +128,6 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 
 /* PROD GRID */
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1px}
-.pagination{display:flex;justify-content:center;align-items:center;gap:6px;padding:24px 12px;flex-wrap:wrap}
-.page-btn{min-width:36px;height:36px;padding:0 10px;border:1px solid #2a2a2a;background:#111;color:#ccc;border-radius:4px;cursor:pointer;font-size:14px;font-weight:600}
-.page-btn:hover:not(:disabled){border-color:var(--red);color:var(--red)}
-.page-btn.on{background:var(--red);border-color:var(--red);color:#fff}
-.page-btn:disabled{opacity:.35;cursor:default}
-.page-ellipsis{color:#555;padding:0 4px}
 
 /* PROD CARD */
 .pcard{background:var(--bg2);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;position:relative;border:1px solid transparent}
@@ -486,7 +480,6 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
     <div class="pgrid" id="pgrid">
       ${[...Array(12)].map(()=>`<div class="pcard" style="pointer-events:none"><div style="aspect-ratio:1;background:#1a1a1a"></div><div style="padding:12px"><div style="height:10px;background:#222;margin-bottom:6px;border-radius:2px;width:40%"></div><div style="height:14px;background:#1e1e1e;border-radius:2px"></div></div></div>`).join('')}
     </div>
-    <div class="pagination" id="pagination"></div>
   </div>
 </div>
 
@@ -532,7 +525,6 @@ let PRODS=[],CO={name:'Racing Garage',vatRate:7,tel:'',address:'',email:'',promp
     CATS=[],  // loaded from Firestore categories collection
     CART=[],CAT='all',LANG='en',shopUser=null;
 let BRAND_FILTER='',STOCK_ONLY=false,PRICE_MAX=500000;
-let PAGE=1;const PAGE_SIZE=50;
 let SD={catHeroEnabled:true,catHeroImages:{}}; // shopDesign from Firestore
 let O={step:1,pay:'qr',name:'',phone:'',email:'',addr:'',note:''},_docNo='',_tID=null,_tSec=300,_dQty=1;
 const $=id=>document.getElementById(id);
@@ -921,8 +913,7 @@ function groupProducts(list){
   return result;
 }
 
-function doFilter(resetPage=true){
-  if(resetPage)PAGE=1;
+function doFilter(){
   const q=($('sinput')?.value||'').toLowerCase();
   const srt=$('srt')?.value||'az';
   let list=PRODS.filter(p=>{
@@ -939,51 +930,10 @@ function doFilter(resetPage=true){
   $('result-count').innerHTML='<strong>'+grouped.length+'</strong> '+t('items');
   const grid=$('pgrid');if(!grid)return;
   if(!grouped.length){
-    grid.innerHTML='<div class="empty-state"><div class="empty-icon"></div><div class="empty-msg">'+t('no_products')+'</div></div>';
-    const pg=$('pagination');if(pg)pg.innerHTML='';
-    saveState();return;
+    grid.innerHTML='<div class="empty-state"><div class="empty-icon"></div><div class="empty-msg">'+t('no_products')+'</div></div>';return;
   }
-  const totalPages=Math.max(1,Math.ceil(grouped.length/PAGE_SIZE));
-  if(PAGE>totalPages)PAGE=totalPages;
-  if(PAGE<1)PAGE=1;
-  const start=(PAGE-1)*PAGE_SIZE;
-  const pageItems=grouped.slice(start,start+PAGE_SIZE);
-  grid.innerHTML=pageItems.map(g=>g.type==='single'?prodCard(g.p):prodCardGroup(g.prods)).join('');
-  renderPagination(totalPages);
+  grid.innerHTML=grouped.map(g=>g.type==='single'?prodCard(g.p):prodCardGroup(g.prods)).join('');
   saveState();
-}
-
-function goToPage(n){
-  PAGE=n;
-  doFilter(false);
-  const grid=$('pgrid');if(grid)grid.scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function renderPagination(totalPages){
-  const pg=$('pagination');if(!pg)return;
-  if(totalPages<=1){pg.innerHTML='';return;}
-  let html='';
-  html+=`<button class="page-btn" ${PAGE<=1?'disabled':''} onclick="goToPage(${PAGE-1})">‹</button>`;
-  const maxBtns=7;
-  let pages=[];
-  if(totalPages<=maxBtns){
-    pages=Array.from({length:totalPages},(_,i)=>i+1);
-  }else{
-    pages.push(1);
-    let lo=Math.max(2,PAGE-1),hi=Math.min(totalPages-1,PAGE+1);
-    if(PAGE<=3){lo=2;hi=4;}
-    if(PAGE>=totalPages-2){lo=totalPages-3;hi=totalPages-1;}
-    if(lo>2)pages.push('...');
-    for(let i=lo;i<=hi;i++)pages.push(i);
-    if(hi<totalPages-1)pages.push('...');
-    pages.push(totalPages);
-  }
-  pages.forEach(p=>{
-    if(p==='...'){html+=`<span class="page-ellipsis">…</span>`;}
-    else{html+=`<button class="page-btn${p===PAGE?' on':''}" onclick="goToPage(${p})">${p}</button>`;}
-  });
-  html+=`<button class="page-btn" ${PAGE>=totalPages?'disabled':''} onclick="goToPage(${PAGE+1})">›</button>`;
-  pg.innerHTML=html;
 }
 
 // ── PRODUCT CARD ──
