@@ -5569,32 +5569,6 @@ function renderSettings(){
       </div>
     </div>
 
-    <!-- Backup / Restore -->
-    <div class="card" style="grid-column:1/-1;border:2px solid var(--accent)">
-      <div style="font-weight:700;color:var(--accent);margin-bottom:1rem;font-size:15px;display:flex;align-items:center;gap:8px">
-        💾 สำรองข้อมูล (Backup / Restore)
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
-        <div style="flex:1;min-width:240px">
-          <div style="font-size:13px;font-weight:700;margin-bottom:6px">📥 ดาวน์โหลดข้อมูลสำรอง</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-            ดาวน์โหลดข้อมูลทั้งหมด (สินค้า, สต็อก, ยอดขาย, หมวดหมู่, การจัดส่ง, สัญญาเช่า, การตั้งค่า ฯลฯ) เป็นไฟล์ JSON ไว้สำรอง
-          </div>
-          <button class="btn btn-success" onclick="backupAllData()">📥 ดาวน์โหลดไฟล์สำรองข้อมูล</button>
-          <div id="backup-status" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
-        </div>
-        <div style="flex:1;min-width:240px">
-          <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--danger)">📤 กู้คืนข้อมูลจากไฟล์สำรอง</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-            ⚠️ การกู้คืนจะ<strong>เขียนทับ</strong>ข้อมูลปัจจุบันในระบบ กรุณาตรวจสอบไฟล์ให้แน่ใจก่อนอัปโหลด
-          </div>
-          <input type="file" id="restore-file-input" accept=".json" style="display:none" onchange="restoreAllData(event)">
-          <button class="btn btn-danger" onclick="document.getElementById('restore-file-input').click()">📤 เลือกไฟล์เพื่อกู้คืนข้อมูล</button>
-          <div id="restore-status" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Admin Emails -->
     <div class="card" style="grid-column:1/-1;border:2px solid var(--danger)">
       <div style="font-weight:700;color:var(--danger);margin-bottom:1rem;font-size:15px;display:flex;align-items:center;gap:8px">
@@ -5733,100 +5707,7 @@ function processLogoFile(file){
   reader.readAsDataURL(file);
 }
 
-// ======= Backup / Restore ทั้งระบบ =======
-const BACKUP_COLLECTIONS=['categories','printJobs','products','purchase_docs','purchases','rental_contracts','rental_items','sales','settings','shipping'];
-
-async function backupAllData(){
-  const statusEl=document.getElementById('backup-status');
-  try{
-    statusEl.textContent='⏳ กำลังดึงข้อมูล...';
-    const backup={ exportedAt:new Date().toISOString(), source:'Racing Garage Admin', collections:{} };
-    for(const col of BACKUP_COLLECTIONS){
-      statusEl.textContent=`⏳ กำลังดึงข้อมูล: ${col} ...`;
-      const snap=await db.collection(col).get();
-      const docs=[];
-      snap.forEach(doc=>docs.push({ id:doc.id, data:doc.data() }));
-      backup.collections[col]=docs;
-    }
-    const json=JSON.stringify(backup,(k,v)=>{
-      // แปลง Firestore Timestamp ให้เก็บกลับมาได้ถูกต้อง
-      if(v && typeof v==='object' && typeof v.toDate==='function'){
-        return { __ts__:true, seconds:v.seconds, nanoseconds:v.nanoseconds };
-      }
-      return v;
-    },2);
-    const blob=new Blob([json],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    const ts=new Date().toISOString().replace(/[:.]/g,'-');
-    a.href=url;
-    a.download=`racing-garage-backup-${ts}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    let total=0;
-    for(const col of BACKUP_COLLECTIONS) total+=backup.collections[col].length;
-    statusEl.textContent=`✅ ดาวน์โหลดสำเร็จ (${total} เอกสาร จาก ${BACKUP_COLLECTIONS.length} collections)`;
-    toast('ดาวน์โหลดไฟล์สำรองข้อมูลเรียบร้อย','success');
-  }catch(err){
-    console.error(err);
-    statusEl.textContent='❌ เกิดข้อผิดพลาด: '+err.message;
-    toast('สำรองข้อมูลล้มเหลว: '+err.message,'error');
-  }
-}
-
-async function restoreAllData(event){
-  const file=event.target.files[0];
-  if(!file) return;
-  const statusEl=document.getElementById('restore-status');
-  try{
-    const text=await file.text();
-    const backup=JSON.parse(text,(k,v)=>{
-      if(v && typeof v==='object' && v.__ts__){
-        return firebase.firestore.Timestamp(v.seconds,v.nanoseconds);
-      }
-      return v;
-    });
-    if(!backup.collections){ throw new Error('ไฟล์ไม่ถูกต้อง: ไม่พบข้อมูล collections'); }
-
-    const foundCols=Object.keys(backup.collections);
-    let totalDocs=0;
-    foundCols.forEach(c=>totalDocs+=backup.collections[c].length);
-
-    const ok=confirm(`พบข้อมูล ${totalDocs} เอกสาร จาก ${foundCols.length} collections (${foundCols.join(', ')})\n\n⚠️ การกู้คืนจะเขียนทับข้อมูลปัจจุบันในระบบทั้งหมด ต้องการดำเนินการต่อหรือไม่?`);
-    if(!ok){ event.target.value=''; return; }
-
-    statusEl.textContent='⏳ กำลังกู้คืนข้อมูล...';
-    let done=0;
-    for(const col of foundCols){
-      const docs=backup.collections[col];
-      statusEl.textContent=`⏳ กำลังกู้คืน: ${col} (${docs.length} รายการ)...`;
-      // เขียนเป็น batch ละ 400 รายการ (ขีดจำกัด Firestore = 500)
-      for(let i=0;i<docs.length;i+=400){
-        const chunk=docs.slice(i,i+400);
-        const batch=db.batch();
-        chunk.forEach(d=>{
-          const ref=db.collection(col).doc(d.id);
-          batch.set(ref,d.data);
-        });
-        await batch.commit();
-        done+=chunk.length;
-        statusEl.textContent=`⏳ กำลังกู้คืน: ${col} (${Math.min(i+400,docs.length)}/${docs.length})...`;
-      }
-    }
-    statusEl.textContent=`✅ กู้คืนข้อมูลสำเร็จ (${done} เอกสาร)`;
-    toast('กู้คืนข้อมูลเรียบร้อย กรุณารีโหลดหน้าเว็บ','success');
-    event.target.value='';
-  }catch(err){
-    console.error(err);
-    statusEl.textContent='❌ เกิดข้อผิดพลาด: '+err.message;
-    toast('กู้คืนข้อมูลล้มเหลว: '+err.message,'error');
-    event.target.value='';
-  }
-}
-
-
+async function saveSettings(previewOnly=false){
   const get=id=>document.getElementById(id)?.value;
   const chk=id=>document.getElementById(id)?.checked;
   const data={
