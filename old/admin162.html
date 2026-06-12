@@ -7628,7 +7628,7 @@ function renderWebDesign(){
       ${(()=>{
         const cats=S.categories&&S.categories.length?S.categories:
           [...new Set((S.products||[]).map(p=>p.category).filter(Boolean))].slice(0,8).map(n=>({id:n,name:n,icon:'📦'}));
-        return cats.map(c=>{
+        return cats.slice(0,8).map(c=>{
           const img=(_shopDesign.catHeroImages||{})[c.name]||c.image||c.imageUrl||'';
           return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
             <div style="width:60px;height:60px;border-radius:8px;overflow:hidden;border:1px solid var(--border);flex-shrink:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center">
@@ -7716,11 +7716,10 @@ async function uploadBannerImg(input){
 }
 
 function collectCatHeroImages(){
-  const imgs={...(_shopDesign.catHeroImages||{})};
+  const imgs={};
   document.querySelectorAll('[id^="chi-url-"]').forEach(inp=>{
     const key=inp.id.replace('chi-url-','').replace(/_/g,' ');
-    imgs[key]=inp.value||'';
-    if(!imgs[key]) delete imgs[key];
+    if(inp.value) imgs[key]=inp.value;
   });
   return imgs;
 }
@@ -7793,7 +7792,7 @@ async function saveShopDesign(){
   };
   Object.assign(_shopDesign,design);
   try{
-    await db.collection('settings').doc('shopDesign').set(design,{merge:true});
+    await db.collection('settings').doc('shopDesign').set(design);
     toast('บันทึกการตั้งค่าเรียบร้อย ✓ — ร้านค้าออนไลน์จะอัปเดตทันที','success');
   }catch(e){toast('บันทึกไม่สำเร็จ: '+e.message,'error');}
 }
