@@ -190,10 +190,6 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 .pd-main-img-wrap{flex:1;aspect-ratio:1;background:var(--bg3);overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
 .pd-main-img{width:100%;height:100%;object-fit:cover}
 .pd-main-ph{font-size:90px;opacity:.15}
-.pd-gallery{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.pd-gallery-thumb{width:64px;height:64px;flex-shrink:0;border:2px solid #333;border-radius:4px;overflow:hidden;cursor:pointer;background:#111;display:flex;align-items:center;justify-content:center;transition:border .13s}
-.pd-gallery-thumb.on{border-color:var(--red)}
-.pd-gallery-thumb img{width:100%;height:100%;object-fit:cover}
 .pd-info{}
 .pd-brand{font-family:var(--thai);font-size:11px;color:var(--red);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
 .pd-title{font-family:var(--font);font-size:28px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:.5rem}
@@ -1180,17 +1176,10 @@ function openPD(id){
   }).join(''):'';
   const thumbsHtml=relatedThumbs?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'+relatedThumbs+'</div>':'';
 
-  // Gallery: รูปสินค้าหลายรูป (p.images) ของสินค้านี้
-  const galleryImgs=(p.images&&p.images.length?p.images:(p.imageUrl?[p.imageUrl]:[])).filter(Boolean);
-  const galleryHtml=galleryImgs.length>1?'<div class="pd-gallery">'+galleryImgs.map(function(src,i){
-    return '<div class="pd-gallery-thumb'+(i===0?' on':'')+'" onclick="pdSetImg(this,\''+src.replace(/'/g,"\\'")+'\')"><img src="'+src+'"></div>';
-  }).join('')+'</div>':'';
-
   const html='<div class="pd-layout">'
     // Images
     +'<div>'
-    +(hasImg?'<div class="pd-main-img-wrap"><img class="pd-main-img" src="'+(galleryImgs[0]||p.imageUrl)+'" id="pd-mimg" onerror="this.style.display=\'none\'"></div>':'<div class="pd-main-ph"></div>')
-    +galleryHtml
+    +(hasImg?'<div class="pd-main-img-wrap"><img class="pd-main-img" src="'+p.imageUrl+'" id="pd-mimg" onerror="this.style.display=\'none\'"></div>':'<div class="pd-main-ph"></div>')
     +thumbsHtml+'</div>'
     // Info
     +'<div class="pd-info">'
@@ -1222,11 +1211,6 @@ function openPD(id){
   history.pushState({pdOpen:true},'','');
 }
 function closePD(fromPop){$('pdpage').classList.remove('show');document.body.style.overflow='';if(!fromPop&&history.state&&history.state.pdOpen)history.back();}
-function pdSetImg(el,src){
-  const img=$('pd-mimg');if(img)img.src=src;
-  document.querySelectorAll('.pd-gallery-thumb').forEach(function(t){t.classList.remove('on')});
-  el.classList.add('on');
-}
 function pdTab(btn,id){
   document.querySelectorAll('.pd-tab').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');

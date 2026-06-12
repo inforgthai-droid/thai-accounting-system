@@ -3565,25 +3565,22 @@ function prodForm(p={}){
   <div class="fm"><label class="fl">จำนวนสต็อก</label><input type="number" class="fc" id="pStock" value="${p.stock||0}" min="0"></div>
   <div class="fm"><label class="fl">สต็อกขั้นต่ำ</label><input type="number" class="fc" id="pMin" value="${p.minStock||5}" min="0"></div>
   <div class="fm" style="grid-column:1/-1">
-    <label class="fl">รูปภาพสินค้า (สูงสุด 5 รูป — อัปโหลด หรือ ใส่ URL)</label>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      ${[0,1,2,3,4].map(i=>{
-        const url=(p.images&&p.images[i])||(i===0?(p.imageUrl||''):'')||'';
-        return `<div style="display:flex;flex-direction:column;gap:4px;width:140px">
-          <div style="width:140px;height:100px;border-radius:8px;border:2px dashed var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;background:#0f0f0f;position:relative">
-            <img id="pImgPreview${i}" src="${url}" style="width:100%;height:100%;object-fit:cover;display:${url?'block':'none'}" onerror="this.style.display='none'">
-            <span id="pImgPh${i}" style="font-size:11px;color:var(--muted);display:${url?'none':'block'}">รูปที่ ${i+1}</span>
-          </div>
-          <input class="fc" id="pImg${i}" value="${url}" placeholder="URL รูปภาพ"
-            oninput="const iv=document.getElementById('pImgPreview${i}');const ph=document.getElementById('pImgPh${i}');if(iv){iv.src=this.value;iv.style.display=this.value?'block':'none';}if(ph)ph.style.display=this.value?'none':'block';"
-            style="font-size:11px;padding:5px 6px">
-          <label style="display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--accent);color:#fff;border-radius:6px;padding:5px 6px;font-size:11px;font-weight:600;cursor:pointer">
-            เลือกไฟล์
-            <input type="file" id="pImgFile${i}" accept="image/*" style="display:none" onchange="previewProdImgSlot(this,${i})">
-          </label>
-          <span id="pImgStatus${i}" style="font-size:10px;color:var(--muted)"></span>
-        </div>`;
-      }).join('')}
+    <label class="fl">รูปภาพสินค้า (อัปโหลด หรือ ใส่ URL)</label>
+    <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">
+        <input class="fc" id="pImg" value="${p.imageUrl||''}" placeholder="https://example.com/image.jpg"
+          oninput="const iv=document.getElementById('pImgPreview');const ph=document.getElementById('pImgPh');if(iv){iv.src=this.value;iv.style.display=this.value?'block':'none';}if(ph)ph.style.display=this.value?'none':'block';"
+          style="margin-bottom:6px">
+        <label style="display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">
+          เลือกไฟล์รูป
+          <input type="file" id="pImgFile" accept="image/*" style="display:none" onchange="previewProdImg(this)">
+        </label>
+        <span id="pImgStatus" style="font-size:11px;color:var(--muted);margin-left:8px"></span>
+      </div>
+      <div style="width:80px;height:80px;border-radius:8px;border:2px dashed var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8fafc;flex-shrink:0">
+        <img id="pImgPreview" src="${p.imageUrl||''}" style="width:100%;height:100%;object-fit:cover;display:${p.imageUrl?'block':'none'}" onerror="this.style.display='none'">
+        <span id="pImgPh" style="font-size:24px;color:#cbd5e1;display:${p.imageUrl?'none':'block'}"></span>
+      </div>
     </div>
   </div>
   <div class="fm" style="grid-column:1/-1"><label class="fl">คำอธิบายสินค้า (แสดงในร้านค้าออนไลน์)</label><textarea class="fc" id="pDesc" rows="2" style="resize:vertical">${p.description||''}</textarea></div>
@@ -3591,15 +3588,15 @@ function prodForm(p={}){
 </div>`;
 }
 
-function previewProdImgSlot(input,idx){
+function previewProdImg(input){
   if(!input.files[0])return;
   const reader=new FileReader();
   reader.onload=e=>{
-    const prev=document.getElementById('pImgPreview'+idx);
-    const ph=document.getElementById('pImgPh'+idx);
+    const prev=document.getElementById('pImgPreview');
+    const ph=document.getElementById('pImgPh');
     if(prev){prev.src=e.target.result;prev.style.display='block';}
     if(ph)ph.style.display='none';
-    document.getElementById('pImgStatus'+idx).textContent='พร้อมอัปโหลด ✓';
+    document.getElementById('pImgStatus').textContent='พร้อมอัปโหลด ✓';
   };
   reader.readAsDataURL(input.files[0]);
 }
@@ -3610,19 +3607,16 @@ function editProduct(id){
     `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button><button class="btn" onclick="saveProduct('${id||''}')">บันทึก</button>`);
 }
 async function saveProduct(id){
-  const imgUrls=[];
-  for(let i=0;i<5;i++){
-    const statusEl=document.getElementById('pImgStatus'+i);
-    let url=document.getElementById('pImg'+i)?.value||'';
-    const file=document.getElementById('pImgFile'+i)?.files[0];
-    if(file){
-      if(statusEl){statusEl.textContent='⏳ อัปโหลด...';statusEl.style.color='var(--warning)';}
-      const uploaded=await uploadWithFallback(file,statusEl);
-      if(uploaded) url=uploaded;
-    }
-    if(url) imgUrls.push(url);
+  const statusEl=document.getElementById('pImgStatus');
+  let imgUrl=document.getElementById('pImg').value||'';
+  const imgFile=document.getElementById('pImgFile')?.files[0];
+
+  if(imgFile){
+    if(statusEl){statusEl.textContent='⏳ กำลังอัปโหลด...';statusEl.style.color='var(--warning)';}
+    // ลองอัปโหลด Firebase Storage ก่อน มี timeout 12 วินาที
+    const uploaded = await uploadWithFallback(imgFile, statusEl);
+    if(uploaded) imgUrl = uploaded;
   }
-  const imgUrl=imgUrls[0]||'';
 
   const data={
     code:document.getElementById('pCode').value,
@@ -3634,7 +3628,6 @@ async function saveProduct(id){
     stock:parseInt(document.getElementById('pStock').value)||0,
     minStock:parseInt(document.getElementById('pMin').value)||5,
     imageUrl:imgUrl,
-    images:imgUrls,
     description:document.getElementById('pDesc').value||'',
     skuDemonTweeks:document.getElementById('pSkuDemon')?.value?.trim()||''
   };
