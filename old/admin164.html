@@ -2351,9 +2351,7 @@ function renderSales(){
       displaySub,
       (s.discount||0)>0?'-'+fmt(s.discount):'-',
       displayTotal,
-      (s._ch==='pos'&&!isCancelled)||s._ch==='rental'
-        ?`<span style="color:${profit<0?'var(--danger)':'#7c3aed'};font-weight:700">${profit<0?'-':''}${fmt(Math.abs(profit))}</span>`
-        :'-',
+      profit>0?`<span style="color:#7c3aed;font-weight:700">${fmt(profit)}</span>`:'-',
       actions
     ];
   });
