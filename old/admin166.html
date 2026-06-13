@@ -3575,7 +3575,6 @@ function prodForm(p={}){
           <div style="width:140px;aspect-ratio:1/1;border-radius:8px;border:2px dashed var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;background:#0f0f0f;position:relative">
             <img id="pImgPreview${i}" src="${url}" style="width:100%;height:100%;object-fit:cover;display:${url?'block':'none'}" onerror="this.style.display='none'">
             <span id="pImgPh${i}" style="font-size:11px;color:var(--muted);display:${url?'none':'block'}">รูปที่ ${i+1}</span>
-            <button type="button" onclick="removeProdImgSlot(${i})" title="ลบรูป" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">×</button>
           </div>
           <input class="fc" id="pImg${i}" value="${url}" placeholder="URL รูปภาพ"
             oninput="const iv=document.getElementById('pImgPreview${i}');const ph=document.getElementById('pImgPh${i}');if(iv){iv.src=this.value;iv.style.display=this.value?'block':'none';}if(ph)ph.style.display=this.value?'none':'block';"
@@ -3605,19 +3604,6 @@ function previewProdImgSlot(input,idx){
     document.getElementById('pImgStatus'+idx).textContent='พร้อมอัปโหลด ✓';
   };
   reader.readAsDataURL(input.files[0]);
-}
-
-function removeProdImgSlot(idx){
-  const urlInput=document.getElementById('pImg'+idx);
-  const fileInput=document.getElementById('pImgFile'+idx);
-  const prev=document.getElementById('pImgPreview'+idx);
-  const ph=document.getElementById('pImgPh'+idx);
-  const status=document.getElementById('pImgStatus'+idx);
-  if(urlInput)urlInput.value='';
-  if(fileInput)fileInput.value='';
-  if(prev){prev.src='';prev.style.display='none';}
-  if(ph)ph.style.display='block';
-  if(status)status.textContent='';
 }
 
 function editProduct(id){
