@@ -470,13 +470,6 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
     <!-- Price filter -->
     <div class="sb-section">
       <div class="sb-title" id="sb-price-title">PRICE RANGE</div>
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
-        <input type="number" id="price-min-input" min="0" placeholder="0" value="0"
-          oninput="updatePriceInputs()" style="width:50%;padding:6px 8px;background:#111;border:1px solid #2a2a2a;color:#fff;font-size:12px;border-radius:4px">
-        <span style="color:#666;font-size:12px">—</span>
-        <input type="number" id="price-max-input" min="0" placeholder="500000" value="500000"
-          oninput="updatePriceInputs()" style="width:50%;padding:6px 8px;background:#111;border:1px solid #2a2a2a;color:#fff;font-size:12px;border-radius:4px">
-      </div>
       <div style="font-size:12px;color:#666;margin-bottom:8px" id="price-display">0 — 999,999</div>
       <input type="range" id="price-max" min="0" max="500000" value="500000" step="1000"
         style="width:100%;accent-color:var(--red)" oninput="updatePriceFilter(this.value)">
@@ -564,7 +557,7 @@ const fts=()=>firebase.firestore.FieldValue.serverTimestamp(),inc=n=>firebase.fi
 let PRODS=[],CO={name:'Racing Garage',vatRate:7,tel:'',address:'',email:'',promptpay:'',bankName:'',bankAccount:'',bankAccountName:'',receiptFooter:'ขอบคุณที่ใช้บริการ'},
     CATS=[],  // loaded from Firestore categories collection
     CART=[],CAT='all',LANG='en',shopUser=null;
-let BRAND_FILTER='',STOCK_ONLY=false,PRICE_MIN=0,PRICE_MAX=500000;
+let BRAND_FILTER='',STOCK_ONLY=false,PRICE_MAX=500000;
 let PAGE=1,PAGE_SIZE=parseInt(localStorage.getItem('rg_page_size'))||20;
 let SD={catHeroEnabled:true,catHeroImages:{}}; // shopDesign from Firestore
 let O={step:1,pay:'qr',name:'',phone:'',email:'',addr:'',note:''},_docNo='',_tID=null,_tSec=300,_dQty=1;
@@ -730,9 +723,7 @@ async function init(){
     applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
     if($('price-max')){
       const maxP=Math.max(...PRODS.map(p=>p.price||0),500000);
-      $('price-max').max=maxP;PRICE_MAX=maxP;
-      if($('price-max-input'))$('price-max-input').max=maxP;
-      updatePriceFilter(maxP);
+      $('price-max').max=maxP;PRICE_MAX=maxP;updatePriceFilter(maxP);
     }
     toast(LANG==='th'?'โหลดสินค้า '+PRODS.length+' รายการ':'Loaded '+PRODS.length+' products','ok');
   }catch(e){
@@ -914,20 +905,6 @@ function toggleStockFilter(){STOCK_ONLY=!STOCK_ONLY;$('stock-dot').style.backgro
 function updatePriceFilter(v){
   PRICE_MAX=parseInt(v);
   $('price-display').textContent='0 — '+fmt(PRICE_MAX);
-  const maxInput=$('price-max-input');if(maxInput)maxInput.value=PRICE_MAX;
-  doFilter();
-}
-function updatePriceInputs(){
-  let min=parseInt($('price-min-input').value)||0;
-  let max=parseInt($('price-max-input').value)||0;
-  const sliderMax=parseInt($('price-max').max)||500000;
-  if(min<0)min=0;
-  if(max<=0)max=sliderMax;
-  if(min>max){const t=min;min=max;max=t;}
-  PRICE_MIN=min;PRICE_MAX=max;
-  $('price-display').textContent=fmt(PRICE_MIN)+' — '+fmt(PRICE_MAX);
-  const slider=$('price-max');
-  slider.value=Math.min(PRICE_MAX,sliderMax);
   doFilter();
 }
 
@@ -994,7 +971,6 @@ function doFilter(resetPage=true){
     if(BRAND_FILTER){const b=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1];if(b!==BRAND_FILTER)return false;}
     if(STOCK_ONLY&&p.stock<=0)return false;
     if(p.price>PRICE_MAX&&p.price>0)return false;
-    if(p.price<PRICE_MIN&&p.price>0)return false;
     return true;
   });
   const sorts={az:(a,b)=>a.name.localeCompare(b.name,'th'),za:(a,b)=>b.name.localeCompare(a.name,'th'),pa:(a,b)=>a.price-b.price,pd:(a,b)=>b.price-a.price};
