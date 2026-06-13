@@ -1006,8 +1006,8 @@ function doFilter(resetPage=true){
     if(q&&!(p.name+p.code+(p.description||'')+(p.category||'')).toLowerCase().includes(q))return false;
     if(BRAND_FILTER){const b=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1];if(b!==BRAND_FILTER)return false;}
     if(STOCK_ONLY&&p.stock<=0)return false;
-    if(p.price>PRICE_MAX)return false;
-    if(p.price<PRICE_MIN)return false;
+    if(p.price>PRICE_MAX&&p.price>0)return false;
+    if(p.price<PRICE_MIN&&p.price>0)return false;
     return true;
   });
   const sorts={az:(a,b)=>a.name.localeCompare(b.name,'th'),za:(a,b)=>b.name.localeCompare(a.name,'th'),pa:(a,b)=>a.price-b.price,pd:(a,b)=>b.price-a.price};
@@ -1093,7 +1093,7 @@ function prodCard(p){
       <div class="pcard-cat-tag">${p.category||''}</div>
       <div class="pcard-foot">
         <div>
-          <div class="pcard-price has">${fmt(p.price)}</div>
+          <div class="pcard-price ${p.price>0?'has':'noprice'}">${p.price>0?fmt(p.price):t('contact_price')}</div>
           <div class="pcard-stock ${stockClass}">${stockTx}</div>
         </div>
         ${p.stock>0&&p.price>0?`<button class="pcard-plus${inCart?' in-cart':''}" onclick="event.stopPropagation();qadd('${p.id}')">${inCart?'✓':'+'}</button>`:''}
@@ -1206,7 +1206,7 @@ function openPD(id){
   const stockCls=p.stock<=0?'ou-s':p.stock<=5?'lo-s':'in-s';
   const stockTx=p.stock<=0?t('out_stock'):p.stock<=5?t('low_stock')+' ('+p.stock+')':t('in_stock');
   const descHtml=p.description?'<div class="pd-features" style="font-size:13px;color:#888;line-height:1.7;margin-bottom:12px">'+p.description.slice(0,300)+'</div>':'';
-  const priceHtml=fmt(p.price);
+  const priceHtml=p.price>0?(fmt(p.price)):t('contact_price');
   const authBadge=LANG==='th'?'สินค้าแท้ 100% | จัดส่งทั่วไทย':'100% Genuine | Nationwide Delivery';
   const qtyHtml=p.stock>0&&p.price>0
     ?'<div class="pd-qty-row"><button class="qb" onclick="dqty(-1)">-</button><div class="qv" id="dqv">1</div><button class="qb" onclick="dqty(1)">+</button></div>'
@@ -1311,9 +1311,11 @@ function prodCardGroup(prods){
   sizes.sort((a,b)=>(sizeOrder.indexOf(a)>=0?sizeOrder.indexOf(a):99)-(sizeOrder.indexOf(b)>=0?sizeOrder.indexOf(b):99));
 
   // Price range
-  const prices=prods.map(p=>p.price);
+  const prices=prods.filter(p=>p.price>0).map(p=>p.price);
   const minP=Math.min(...prices), maxP=Math.max(...prices);
-  const priceDisplay=minP===maxP?fmt(minP):fmt(minP)+' – '+fmt(maxP);
+  const priceDisplay=prices.length===0?t('contact_price')
+    :minP===maxP?fmt(minP)
+    :fmt(minP)+' – '+fmt(maxP);
 
   // Total stock
   const totalStock=prods.reduce((a,p)=>a+p.stock,0);
