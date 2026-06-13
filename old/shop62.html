@@ -89,7 +89,7 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 
 /* PROMO */
 .promo-bar{background:var(--red);padding:8px;text-align:center;font-family:var(--font);font-size:13px;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase}
-.cat-hero-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:16px 20px;background:#111;border-bottom:2px solid #222;max-width:1440px;margin:0 auto}
+.cat-hero-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 20px;background:#111;border-bottom:2px solid #222;max-width:1440px;margin:0 auto}
 .cat-hero-item{position:relative;border-radius:10px;overflow:hidden;cursor:pointer;aspect-ratio:1/1;background:#1a1a1a;border:1px solid #2a2a2a;transition:transform .2s,border-color .2s}
 .cat-hero-item:hover{transform:translateY(-3px);border-color:var(--red)}
 .cat-hero-item img{width:100%;height:100%;object-fit:cover;display:block;opacity:.85;transition:opacity .2s}
@@ -813,7 +813,7 @@ function buildCatHeroGrid(){
   if(wrap) wrap.style.display=enabled?'':'none';
   if(!enabled) return;
   const heroImgs=SD.catHeroImages||{};
-  const cats=CATS.length?CATS.slice(0,6):[...new Set(PRODS.map(p=>p.category).filter(Boolean))].slice(0,6).map(n=>({name:n,icon:CAT_ICONS[n]||'📦',color:'#e11d48',image:''}));
+  const cats=CATS.length?CATS.slice(0,5):[...new Set(PRODS.map(p=>p.category).filter(Boolean))].slice(0,5).map(n=>({name:n,icon:CAT_ICONS[n]||'📦',color:'#e11d48',image:''}));
   grid.innerHTML=cats.map(c=>{
     const count=PRODS.filter(p=>p.category===c.name&&p.stock>0).length;
     // ใช้รูปจาก catHeroImages ก่อน แล้วค่อย fallback ไป c.image
