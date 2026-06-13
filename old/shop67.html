@@ -35,13 +35,6 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 .tb-inner{max-width:1440px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
 .tb-left{display:flex;gap:1.2rem;color:#666;align-items:center}
 .tb-right{display:flex;gap:10px;align-items:center}
-.tb-social-mobile{display:none;align-items:center;gap:8px}
-.tb-social-mobile a{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;overflow:hidden}
-.tb-social-mobile svg{width:26px;height:26px;display:block}
-@media(max-width:640px){
-  .tb-left{display:none}
-  .tb-social-mobile{display:flex;margin-right:auto}
-}
 .lang-btn{background:none;border:1px solid #2a2a2a;color:#666;padding:3px 9px;font-size:11px;cursor:pointer;font-family:var(--thai);transition:all .13s;letter-spacing:.03em}
 .lang-btn.on,.lang-btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
 
@@ -403,7 +396,6 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
       <span id="tb-auth">100% Genuine</span>
       <span id="tb-tel"></span>
     </div>
-    <div id="tb-social-mobile" class="tb-social-mobile"></div>
     <div class="tb-right">
       <div id="tb-user"></div>
       <button class="lang-btn" id="btn-th" onclick="setLang('th')"> ไทย</button>
@@ -761,10 +753,9 @@ const SOCIAL_DEFS=[
   {key:'ttUrl',label:'TikTok',svg:`<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="11" fill="#000"/><path fill="#fff" d="M29 13c.4 2.6 2 4.4 4.6 4.6v3.3c-1.7.1-3.2-.4-4.6-1.4v7.6c0 3.6-2.9 6.4-6.5 6.4S16 30.7 16 27.1c0-3.5 2.7-6.3 6.1-6.4v3.4c-1.6.1-2.8 1.4-2.8 3 0 1.7 1.4 3 3.1 3s3.1-1.3 3.1-3V13z"/></svg>`},
 ];
 function renderSocialIcons(){
+  const wrap=$('social-icons');if(!wrap)return;
   const items=SOCIAL_DEFS.filter(s=>SD[s.key]&&SD[s.key].trim());
-  const html=items.map(s=>`<a href="${SD[s.key]}" target="_blank" rel="noopener" title="${s.label}">${s.svg}</a>`).join('');
-  const wrap=$('social-icons');if(wrap)wrap.innerHTML=html;
-  const tbWrap=$('tb-social-mobile');if(tbWrap)tbWrap.innerHTML=html;
+  wrap.innerHTML=items.map(s=>`<a href="${SD[s.key]}" target="_blank" rel="noopener" title="${s.label}">${s.svg}</a>`).join('');
 }
 
 function applyShopDesign(d){
