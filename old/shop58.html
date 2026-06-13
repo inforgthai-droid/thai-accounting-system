@@ -41,13 +41,13 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 #hdr{background:#000;border-bottom:2px solid var(--red);position:sticky;top:0;z-index:500;box-shadow:0 2px 24px rgba(0,0,0,.8)}
 .hdr-inner{max-width:1440px;margin:0 auto;padding:.8rem 1.5rem;display:flex;align-items:center;gap:1.2rem}
 @media(max-width:640px){
-  .hdr-inner{padding:.5rem .6rem;gap:.4rem}
-  .cart-btn{padding:8px 10px;font-size:12px}
-  .login-btn{padding:7px 8px;font-size:11px}
-  .srch input{padding:8px 8px;font-size:12px}
+  .hdr-inner{padding:.6rem .8rem;gap:.5rem}
+  .cart-btn{padding:8px 10px;font-size:13px}
+  .login-btn{padding:7px 9px;font-size:11px}
+  .srch input{padding:9px 10px;font-size:12px}
   .srch-btn{padding:0 10px}
-  .logo-text{font-size:18px}
-  .logo-svg{height:16px}
+  .logo-text{font-size:22px}
+  .logo-svg{height:26px}
 }
 /* LOGO */
 .logo-wrap{display:flex;align-items:center;text-decoration:none;flex-shrink:0}
@@ -410,7 +410,7 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
 <header id="hdr">
   <div class="hdr-inner">
     <a href="shop.html" class="logo-wrap">
-      <svg class="logo-svg" style="display:block;overflow:visible" viewBox="0 0 300 32" xmlns="http://www.w3.org/2000/svg"><text y="28" style="font-family:Impact,'Arial Black',sans-serif;font-size:30px;font-style:italic;font-weight:900"><tspan fill="#e8172c">Racing</tspan><tspan fill="#ffffff"> Garage</tspan></text></svg>
+      <svg style="height:30px;display:block;overflow:visible" viewBox="0 0 300 32" xmlns="http://www.w3.org/2000/svg"><text y="28" style="font-family:Impact,'Arial Black',sans-serif;font-size:30px;font-style:italic;font-weight:900"><tspan fill="#e8172c">Racing</tspan><tspan fill="#ffffff"> Garage</tspan></text></svg>
     </a>
     <div class="srch">
       <input type="search" id="sinput" oninput="doFilter()" onkeydown="shopScanKey(event,this)" placeholder="Search products, brands or codes..." autocomplete="off">
