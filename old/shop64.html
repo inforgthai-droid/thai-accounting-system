@@ -472,13 +472,10 @@ footer{background:#000;border-top:3px solid var(--red);margin-top:3rem;padding:2
       <div class="sb-title" id="sb-price-title">PRICE RANGE</div>
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
         <input type="number" id="price-min-input" min="0" placeholder="0" value="0"
-          oninput="updatePriceInputs()" onkeydown="if(event.key==='Enter')applyPriceFilter()" style="width:42%;padding:6px 8px;background:#111;border:1px solid #2a2a2a;color:#fff;font-size:12px;border-radius:4px">
+          oninput="updatePriceInputs()" style="width:50%;padding:6px 8px;background:#111;border:1px solid #2a2a2a;color:#fff;font-size:12px;border-radius:4px">
         <span style="color:#666;font-size:12px">—</span>
         <input type="number" id="price-max-input" min="0" placeholder="500000" value="500000"
-          oninput="updatePriceInputs()" onkeydown="if(event.key==='Enter')applyPriceFilter()" style="width:42%;padding:6px 8px;background:#111;border:1px solid #2a2a2a;color:#fff;font-size:12px;border-radius:4px">
-        <button onclick="applyPriceFilter()" title="ค้นหา" style="flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--red);border:none;border-radius:4px;cursor:pointer">
-          <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4-4"/></svg>
-        </button>
+          oninput="updatePriceInputs()" style="width:50%;padding:6px 8px;background:#111;border:1px solid #2a2a2a;color:#fff;font-size:12px;border-radius:4px">
       </div>
       <div style="font-size:12px;color:#666;margin-bottom:8px" id="price-display">0 — 999,999</div>
       <input type="range" id="price-max" min="0" max="500000" value="500000" step="1000"
@@ -926,18 +923,8 @@ function updatePriceInputs(){
   const sliderMax=parseInt($('price-max').max)||500000;
   if(min<0)min=0;
   if(max<=0)max=sliderMax;
-  $('price-display').textContent=fmt(min)+' — '+fmt(max);
-}
-function applyPriceFilter(){
-  let min=parseInt($('price-min-input').value)||0;
-  let max=parseInt($('price-max-input').value)||0;
-  const sliderMax=parseInt($('price-max').max)||500000;
-  if(min<0)min=0;
-  if(max<=0)max=sliderMax;
   if(min>max){const t=min;min=max;max=t;}
   PRICE_MIN=min;PRICE_MAX=max;
-  $('price-min-input').value=min;
-  $('price-max-input').value=max;
   $('price-display').textContent=fmt(PRICE_MIN)+' — '+fmt(PRICE_MAX);
   const slider=$('price-max');
   slider.value=Math.min(PRICE_MAX,sliderMax);
