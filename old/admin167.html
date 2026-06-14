@@ -308,11 +308,6 @@ const db=firebase.firestore();
 const storage=firebase.storage();
 const auth=firebase.auth();
 const googleProvider=new firebase.auth.GoogleAuthProvider();
-// ให้มี auth.currentUser เสมอ (anonymous) เพื่อให้ Storage Rules (request.auth!=null) ผ่าน
-// ไม่กระทบ Google login เดิม: ถ้ามี user (รวม anonymous) อยู่แล้วจะไม่ sign in ซ้ำ
-auth.onAuthStateChanged(u=>{
-  if(!u){auth.signInAnonymously().catch(e=>console.warn('Anonymous auth failed:',e.message));}
-});
 const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 // ════════════════════════════════════════
