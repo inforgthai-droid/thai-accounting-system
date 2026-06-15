@@ -1377,42 +1377,7 @@ async function _deleteRental(id){
   await db.collection('rental_contracts').doc(id).delete();
   toast('ลบแล้ว','info');
   await loadRentals();
-  if(S._page==='rental') _renderRentalPage(); else renderPage('sales');
-}
-
-// ── ยกเลิกสัญญาเช่า (confirm dialog) ──
-function confirmCancelRental(id){
-  const r=_rentals.find(x=>x.id===id);if(!r)return;
-  const fee=(r.items||[]).reduce((s,i)=>s+(i.rentalFee||0),0);
-  const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
-  const items=(r.items||[]).map(i=>i.name+' x'+(i.qty||1)).join(', ');
-  openModal('⚠️ ยืนยันยกเลิกสัญญาเช่า',`
-  <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:14px">
-    <div style="font-size:15px;font-weight:700;margin-bottom:6px">${r.contractNo||r.id}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">ผู้เช่า: ${r.renterName||'-'}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">วันที่: ${r.rentalDate||'-'}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">อุปกรณ์: ${items}</div>
-    <div style="font-size:15px;font-weight:700;color:var(--danger);margin-top:8px">ยอด: ${fmt(fee+dep)}</div>
-  </div>
-  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b">
-    ⚠️ การยกเลิกจะทำเครื่องหมายสัญญานี้ว่า "ยกเลิก" และไม่นับรวมในยอดขาย/กำไร
-  </div>
-  `,`
-  <button class="btn btn-gray" onclick="closeModal()">ปิด</button>
-  <button class="btn" style="background:#f59e0b;color:#fff" onclick="closeModal();cancelRental('${id}')">ยืนยันยกเลิก</button>
-  `);
-}
-
-async function cancelRental(id){
-  const r=_rentals.find(x=>x.id===id);if(!r)return;
-  const note=prompt('เหตุผลการยกเลิก (ไม่บังคับ):','');
-  if(note===null)return; // กด cancel
-  try{
-    await db.collection('rental_contracts').doc(id).update({status:'cancelled',cancelNote:note||'',cancelledAt:ts()});
-    r.status='cancelled';r.cancelNote=note||'';
-    toast('ยกเลิกสัญญาเช่าแล้ว','info');
-    renderPage('sales');
-  }catch(e){toast('Error: '+e.message,'error');}
+  _renderRentalPage();
 }
 // ══════════════════════════════════════════════════════════
 
@@ -2295,7 +2260,7 @@ function renderSales(){
 
   // ── Merge POS + Online + Rental ──
   const posRows=[...S.sales].map(s=>({...s,_ch:'pos',_chLabel:'POS'}));
-  const ordRows=[...S.onlineOrders].map(o=>({
+  const ordRows=[...S.onlineOrders].filter(o=>o.status!=='ยกเลิก').map(o=>({
     id:o.id,_ch:'online',_chLabel:'Online',
     docNo:o.orderNo||o.id?.slice(-6)||'-',
     date:o.date||o.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||today,
@@ -2369,10 +2334,10 @@ function renderSales(){
       ?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-weight:700">เช่า</span>`
       :`<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:4px;padding:1px 6px;font-weight:700">Online</span>`;
     const cancelBadge=isCancelled?`<span style="font-size:10px;background:#fef2f2;color:var(--danger);border-radius:4px;padding:1px 6px;font-weight:700;margin-left:3px">ยกเลิก</span>`:'';
-    const profit=isCancelled?0:(s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):s._ch==='rental'?s.rentalFee||0:0);
-    const displaySub=s._ch==='rental'?(isCancelled?`<s style="color:#aaa">${fmt(s.rentalFee||0)}</s>`:fmt(s.rentalFee||0)):(isCancelled?`<s style="color:#aaa">${fmt(s.subtotal||s.total)}</s>`:''+fmt(s.subtotal||s.total));
+    const profit=s._ch==='pos'&&!isCancelled?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):s._ch==='rental'?s.rentalFee||0:0;
+    const displaySub=s._ch==='rental'?fmt(s.rentalFee||0):(isCancelled?`<s style="color:#aaa">${fmt(s.subtotal||s.total)}</s>`:''+fmt(s.subtotal||s.total));
     const displayTotal=s._ch==='rental'
-      ?(isCancelled?`<s style="color:#aaa">${fmt(s.rentalFee||0)}</s>`:`${fmt(s.rentalFee||0)}<span style="font-size:10px;color:#92400e;margin-left:4px">+มัดจำ ${fmt(s.rentalDeposit||0)}</span>`)
+      ?`${fmt(s.rentalFee||0)}<span style="font-size:10px;color:#92400e;margin-left:4px">+มัดจำ ${fmt(s.rentalDeposit||0)}</span>`
       :isCancelled?`<s style="color:#aaa">${fmt(s.total)}</s>`:''+fmt(s.total);
     const actions=s._ch==='pos'
       ?`<button class="btn btn-primary btn-xs" onclick="viewSale('${s.id}')">ดู</button> `
@@ -2382,15 +2347,14 @@ function renderSales(){
        +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="confirmCancelSale('${s.id}')">ยกเลิก</button>`:'')
       :s._ch==='rental'
       ?`<button class="btn btn-primary btn-xs" onclick="navigate('rental')">ดู</button> `
-       +(!isCancelled?`<button class="btn btn-xs" style="background:#065f46;color:#fff" onclick="_showRentalInvoice('${s.id}')">🧾 พิมพ์</button> `
-       +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `:'')
+       +`<button class="btn btn-xs" style="background:#065f46;color:#fff" onclick="_showRentalInvoice('${s.id}')">🧾 พิมพ์</button> `
+       +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `
        +`<button class="btn btn-danger btn-xs" onclick="_deleteRental('${s.id}')">ลบ</button>`
-       +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="confirmCancelRental('${s.id}')">ยกเลิก</button>`:'')
       :`<button class="btn btn-primary btn-xs" onclick="viewOrder('${s.id}')">ดู</button> `
-       +(!isCancelled?`<button class="btn btn-gray btn-xs" onclick="printOnlineOrder('${s.id}')">พิมพ์</button> `
-       +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `:'')
+       +`<button class="btn btn-gray btn-xs" onclick="printOnlineOrder('${s.id}')">พิมพ์</button> `
+       +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `
        +`<button class="btn btn-danger btn-xs" onclick="deleteOrder('${s.id}')">ลบ</button>`
-       +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="confirmCancelOrder('${s.id}')">ยกเลิก</button>`:'');
+       +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="updateOrderStatus('${s.id}','ยกเลิก');renderPage('sales')">ยกเลิก</button>`:'');
     return[
       `${chBadge}${cancelBadge} ${s.docNo||'-'}`,
       s.date||'-',
@@ -2399,7 +2363,7 @@ function renderSales(){
       displaySub,
       (s.discount||0)>0?'-'+fmt(s.discount):'-',
       displayTotal,
-      (s._ch==='pos'&&!isCancelled)||(s._ch==='rental'&&!isCancelled)
+      (s._ch==='pos'&&!isCancelled)||s._ch==='rental'
         ?`<span style="color:${profit<0?'var(--danger)':'#7c3aed'};font-weight:700">${profit<0?'-':''}${fmt(Math.abs(profit))}</span>`
         :'-',
       actions
@@ -2565,50 +2529,6 @@ async function cancelSale(id){
     const idx=S.sales.findIndex(x=>x.id===id);
     if(idx>=0) S.sales[idx]={...S.sales[idx],status:'ยกเลิก',cancelNote:note||''};
     toast('ยกเลิก '+s.docNo+' แล้ว — คืนสต็อกสำเร็จ','info');
-    renderPage('sales');
-  }catch(e){toast('เกิดข้อผิดพลาด: '+e.message,'error');}
-}
-
-// ── ยกเลิกออเดอร์ออนไลน์ (confirm dialog) ──
-function confirmCancelOrder(id){
-  const o=S.onlineOrders.find(x=>x.id===id);if(!o)return;
-  const items=(o.items||[]).map(i=>i.name+' x'+i.qty).join(', ');
-  openModal('⚠️ ยืนยันยกเลิกออเดอร์ออนไลน์',`
-  <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:14px">
-    <div style="font-size:15px;font-weight:700;margin-bottom:6px">${o.orderNo||o.id}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">ลูกค้า: ${o.customerName||'-'}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">วันที่: ${o.date||'-'}</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">สินค้า: ${items}</div>
-    <div style="font-size:15px;font-weight:700;color:var(--danger);margin-top:8px">ยอด: ${fmt(o.total||0)}</div>
-  </div>
-  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:13px;color:#991b1b">
-    ⚠️ การยกเลิกจะ <b>คืนสต็อกสินค้า</b> (ถ้ามีการตัดสต็อกไว้) และทำเครื่องหมายออเดอร์นี้ว่า "ยกเลิก"
-  </div>
-  `,`
-  <button class="btn btn-gray" onclick="closeModal()">ปิด</button>
-  <button class="btn" style="background:#f59e0b;color:#fff" onclick="closeModal();cancelOnlineOrder('${id}')">ยืนยันยกเลิก</button>
-  `);
-}
-
-// ── ยกเลิกออเดอร์ออนไลน์ ──
-async function cancelOnlineOrder(id){
-  const o=S.onlineOrders.find(x=>x.id===id);if(!o)return;
-  const note=prompt('เหตุผลการยกเลิก (ไม่บังคับ):','');
-  if(note===null)return; // กด cancel
-  try{
-    const batch=db.batch();
-    batch.update(db.collection('onlineOrders').doc(id),{status:'ยกเลิก',cancelNote:note||'',cancelledAt:ts()});
-    // คืนสต็อก (ถ้าออเดอร์มี pid อ้างถึงสินค้า)
-    (o.items||[]).forEach(item=>{
-      if(item.pid){
-        batch.update(db.collection('products').doc(item.pid),{stock:inc(item.qty)});
-        const p=S.products.find(x=>x.id===item.pid);
-        if(p) p.stock+=item.qty;
-      }
-    });
-    await batch.commit();
-    o.status='ยกเลิก';o.cancelNote=note||'';
-    toast('ยกเลิก '+(o.orderNo||id)+' แล้ว','info');
     renderPage('sales');
   }catch(e){toast('เกิดข้อผิดพลาด: '+e.message,'error');}
 }
