@@ -2346,15 +2346,8 @@ function renderSales(){
        +`<button class="btn btn-danger btn-xs" onclick="deleteSale('${s.id}')">ลบ</button>`
        +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="confirmCancelSale('${s.id}')">ยกเลิก</button>`:'')
       :s._ch==='rental'
-      ?`<button class="btn btn-primary btn-xs" onclick="navigate('rental')">ดู</button> `
-       +`<button class="btn btn-xs" style="background:#065f46;color:#fff" onclick="_showRentalInvoice('${s.id}')">🧾 พิมพ์</button> `
-       +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `
-       +`<button class="btn btn-danger btn-xs" onclick="_deleteRental('${s.id}')">ลบ</button>`
-      :`<button class="btn btn-primary btn-xs" onclick="viewOrder('${s.id}')">ดู</button> `
-       +`<button class="btn btn-gray btn-xs" onclick="printOnlineOrder('${s.id}')">พิมพ์</button> `
-       +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `
-       +`<button class="btn btn-danger btn-xs" onclick="deleteOrder('${s.id}')">ลบ</button>`
-       +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="updateOrderStatus('${s.id}','ยกเลิก');renderPage('sales')">ยกเลิก</button>`:'');
+      ?`<button class="btn btn-primary btn-xs" onclick="navigate('rental')">ดู</button> <button class="btn btn-xs" style="background:#065f46;color:#fff" onclick="_showRentalInvoice('${s.id}')">🧾</button>`
+      :`<button class="btn btn-primary btn-xs" onclick="viewOnlineOrder('${s.id}')">ดู</button>`;
     return[
       `${chBadge}${cancelBadge} ${s.docNo||'-'}`,
       s.date||'-',
