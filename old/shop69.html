@@ -1171,17 +1171,9 @@ function openPD(id){
     });
   }
 
-  // Sort sizes logically: letter sizes first (XS..4XL) in fixed order, then numeric sizes ascending
-  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL'];
-  sizes.sort((a,b)=>{
-    const ai=sizeOrder.indexOf(a.toUpperCase()),bi=sizeOrder.indexOf(b.toUpperCase());
-    const an=/^\d+$/.test(a),bn=/^\d+$/.test(b);
-    if(ai>=0&&bi>=0) return ai-bi;
-    if(ai>=0) return -1;
-    if(bi>=0) return 1;
-    if(an&&bn) return parseInt(a)-parseInt(b);
-    return a.localeCompare(b);
-  });
+  // Sort sizes logically
+  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','36','37','38','39','40','41','42','43','44','45','46'];
+  sizes.sort((a,b)=>{ const ai=sizeOrder.indexOf(a),bi=sizeOrder.indexOf(b); return(ai>=0?ai:99)-(bi>=0?bi:99); });
 
   // Build selectors HTML
   function buildSelector(type, items, current){
@@ -1207,14 +1199,13 @@ function openPD(id){
       const tid=target?target.id:'';
       const isCur=val===current;
       const oos=target&&target.stock<=0;
-      if(oos&&!isCur) return ''; // hide out-of-stock options entirely (unless it's the currently viewed one)
       return '<button onclick="'+(tid&&!isCur?'openPD(\''+tid+'\')':'')+'"'
         +' style="padding:6px 14px;border:2px solid '+(isCur?'var(--red)':'#333')+';border-radius:4px;'
         +'background:'+(isCur?'var(--red)':'#111')+';color:'+(isCur?'#fff':'#ccc')+';'
         +'font-family:var(--font-thai);font-size:13px;font-weight:'+(isCur?700:400)+';cursor:'+(tid&&!isCur?'pointer':'default')+';'
         +'opacity:'+(oos?0.4:1)+';transition:all .13s;white-space:nowrap"'
         +' title="'+(oos?'Sold Out':val)+'">'
-        +val+'</button>';
+        +val+(oos?' (-)':'')+'</button>';
     }).join('');
     return '<div style="margin-bottom:12px">'
       +'<div style="font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">'+label+'</div>'
@@ -1325,7 +1316,7 @@ function prodCardGroup(prods){
 
   // Extract unique sizes and colors
   const sizes=[]; const colors=[];
-  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL'];
+  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','36','37','38','39','40','41','42','43','44','45'];
   prods.forEach(p=>{
     if(!p.variations) return;
     const parts=p.variations.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
@@ -1334,15 +1325,7 @@ function prodCardGroup(prods){
       else if(part){if(!colors.includes(part))colors.push(part);}
     });
   });
-  sizes.sort((a,b)=>{
-    const ai=sizeOrder.indexOf(a.toUpperCase()),bi=sizeOrder.indexOf(b.toUpperCase());
-    const an=/^\d+$/.test(a),bn=/^\d+$/.test(b);
-    if(ai>=0&&bi>=0) return ai-bi;
-    if(ai>=0) return -1;
-    if(bi>=0) return 1;
-    if(an&&bn) return parseInt(a)-parseInt(b);
-    return a.localeCompare(b);
-  });
+  sizes.sort((a,b)=>(sizeOrder.indexOf(a)>=0?sizeOrder.indexOf(a):99)-(sizeOrder.indexOf(b)>=0?sizeOrder.indexOf(b):99));
 
   // Price range
   const prices=prods.map(p=>p.price);
@@ -1358,17 +1341,16 @@ function prodCardGroup(prods){
   const sizeChips=sizes.map(s=>{
     const p=prods.find(x=>x.variations&&x.variations.includes(s));
     const oos=!p||p.stock<=0;
-    if(oos) return '';
     return'<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin:2px;'
-      +'border:1px solid #555;color:#aaa">'+s+'</span>';
+      +'border:1px solid '+(oos?'#333':'#555')+';color:'+(oos?'#444':'#aaa')+';'
+      +'text-decoration:'+(oos?'line-through':'none')+'">'+s+'</span>';
   }).join('');
 
   const colorChips=colors.slice(0,5).map(c=>{
     const p=prods.find(x=>x.variations&&x.variations.toLowerCase().includes(c.toLowerCase()));
     const oos=!p||p.stock<=0;
-    if(oos) return '';
     return'<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin:2px;'
-      +'border:1px solid #555;color:#aaa">'+c+'</span>';
+      +'border:1px solid '+(oos?'#333':'#555')+';color:'+(oos?'#444':'#aaa')+'">'+c+'</span>';
   }).join('');
 
   const variantCount=prods.length;
