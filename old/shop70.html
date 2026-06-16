@@ -1207,14 +1207,12 @@ function openPD(id){
       const tid=target?target.id:'';
       const isCur=val===current;
       const oos=target&&target.stock<=0;
-      const borderCol=isCur?'var(--red)':(oos?'#333':'#333');
-      const bgCol=isCur?'var(--red)':(oos?'#1a1a1a':'#111');
-      const textCol=isCur?'#fff':(oos?'#555':'#ccc');
+      if(oos&&!isCur) return ''; // hide out-of-stock options entirely (unless it's the currently viewed one)
       return '<button onclick="'+(tid&&!isCur?'openPD(\''+tid+'\')':'')+'"'
-        +' style="padding:6px 14px;border:2px solid '+borderCol+';border-radius:4px;'
-        +'background:'+bgCol+';color:'+textCol+';'
+        +' style="padding:6px 14px;border:2px solid '+(isCur?'var(--red)':'#333')+';border-radius:4px;'
+        +'background:'+(isCur?'var(--red)':'#111')+';color:'+(isCur?'#fff':'#ccc')+';'
         +'font-family:var(--font-thai);font-size:13px;font-weight:'+(isCur?700:400)+';cursor:'+(tid&&!isCur?'pointer':'default')+';'
-        +'transition:all .13s;white-space:nowrap"'
+        +'opacity:'+(oos?0.4:1)+';transition:all .13s;white-space:nowrap"'
         +' title="'+(oos?'Sold Out':val)+'">'
         +val+'</button>';
     }).join('');
@@ -1360,15 +1358,17 @@ function prodCardGroup(prods){
   const sizeChips=sizes.map(s=>{
     const p=prods.find(x=>x.variations&&x.variations.includes(s));
     const oos=!p||p.stock<=0;
+    if(oos) return '';
     return'<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin:2px;'
-      +'border:1px solid '+(oos?'#333':'#555')+';color:'+(oos?'#444':'#aaa')+'">'+s+'</span>';
+      +'border:1px solid #555;color:#aaa">'+s+'</span>';
   }).join('');
 
   const colorChips=colors.slice(0,5).map(c=>{
     const p=prods.find(x=>x.variations&&x.variations.toLowerCase().includes(c.toLowerCase()));
     const oos=!p||p.stock<=0;
+    if(oos) return '';
     return'<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin:2px;'
-      +'border:1px solid '+(oos?'#333':'#555')+';color:'+(oos?'#444':'#aaa')+'">'+c+'</span>';
+      +'border:1px solid #555;color:#aaa">'+c+'</span>';
   }).join('');
 
   const variantCount=prods.length;
