@@ -1130,19 +1130,11 @@ function openPD(id){
       const xBase=x.shopeeId.replace(/-[^-]+$/,'');
       if(pBase&&pBase===xBase&&pBase.length>4) return true;
     }
-    // Same code prefix (e.g. SP001-S-Black → SP001) — ต้องตัด "ส่วนไซส์/สี" ออกทั้งคู่ ไม่ใช่แค่ 2 ส่วนแรก
-    // เพื่อป้องกัน SKU แบบ "ชุดแข่-44-Blue" ไปจับคู่กับ "ชุดแข่-44-Red" ของคนละรุ่น (ทั้งคู่มี prefix "ชุดแข่-44" เหมือนกัน)
+    // Same code prefix (e.g. SP001-S-Black → SP001)
     if(p.code&&x.code){
-      const pParts=p.code.split('-');
-      const xParts=x.code.split('-');
-      // ใช้ prefix แบบเดียวกับ getCodePrefix (ตัด 2 ส่วนสุดท้ายออก ไม่ใช่เอาแค่ 2 ส่วนแรก) เพื่อให้ตรงกับชื่อรุ่นจริง ไม่ปนกับไซส์
-      const pPfx=pParts.length>=3?pParts.slice(0,-2).join('-'):'';
-      const xPfx=xParts.length>=3?xParts.slice(0,-2).join('-'):'';
-      // ถ้า prefix นี้สั้นมาก (เช่นแค่ "ชุดแข่" ที่ใช้ร่วมกันทุกรุ่น) ห้ามใช้ตัดสินอย่างเดียว ต้องเช็คชื่อฐานประกอบด้วย
-      if(pPfx&&pPfx===xPfx&&pPfx.length>4){
-        const xBase3=x.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2})\s*[/|]\s*.+$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
-        if(baseName.length>5&&xBase3===baseName) return true;
-      }
+      const pPfx=p.code.split('-').slice(0,2).join('-');
+      const xPfx=x.code.split('-').slice(0,2).join('-');
+      if(pPfx&&pPfx===xPfx&&pPfx.length>2) return true;
     }
     // Same base name
     const xBase2=x.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2})\s*[/|]\s*.+$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
