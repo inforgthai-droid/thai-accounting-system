@@ -1241,28 +1241,8 @@ function openPD(id){
   const specHtml=specRows.map(function(r){return'<tr style="border-bottom:1px solid var(--bd)"><td style="padding:8px;color:#bbb;width:120px">'+r[0]+'</td><td style="padding:8px;color:#ccc">'+r[1]+'</td></tr>';}).join('');
   const deliveryHtml=LANG==='th'?'จัดส่งทั่วประเทศไทย ภายใน 2-5 วันทำการ ติดต่อ '+(CO.tel||'ร้านค้า'):'Nationwide delivery within 2-5 business days.';
 
-  // Thumbnail strip: แสดง 1 รูปต่อสี (ไม่ซ้ำ) แทนการแสดงทุก SKU (ไซส์ละ 1 รูป ทำให้รูปเดียวกันซ้ำหลายอัน)
-  // เลือกตัวแทนของแต่ละสี: ตัวที่ตรงกับไซส์ปัจจุบันก่อน ถ้าไม่มีค่อย fallback เป็นตัวแรกที่เจอของสีนั้น
-  const seenThumb=new Set();
-  const colorReps=[];
-  related.forEach(x=>{
-    const key=(x.imageUrl||'')||x.id; // ใช้รูปเป็น key หลัก ถ้าไม่มีรูปก็แยกตาม id
-    if(seenThumb.has(key)) {
-      // ถ้าเจอรูปซ้ำ แต่ตัวใหม่นี้ตรงกับไซส์ปัจจุบันมากกว่า ให้อัปเดตตัวแทนของกลุ่มนั้นเป็นตัวนี้แทน
-      if(curSize&&x.variations){
-        const vparts=x.variations.split(/[/,|]/).map(s=>s.trim());
-        const matchesSize=vparts.some(v=>/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(v)&&v===curSize);
-        if(matchesSize){
-          const idx=colorReps.findIndex(r=>(r.imageUrl||'')===key);
-          if(idx>=0) colorReps[idx]=x;
-        }
-      }
-      return;
-    }
-    seenThumb.add(key);
-    colorReps.push(x);
-  });
-  const relatedThumbs=colorReps.length>1?colorReps.slice(0,8).map(x=>{
+  // Thumbnail strip for related with same current color/size
+  const relatedThumbs=related.length>1?related.slice(0,8).map(x=>{
     const isActive=x.id===id;
     return'<div onclick="openPD(\''+x.id+'\')" style="width:56px;height:56px;flex-shrink:0;border:2px solid '+(isActive?'var(--red)':'#333')+';border-radius:4px;overflow:hidden;cursor:pointer;background:#111;display:flex;align-items:center;justify-content:center;transition:border .13s">'
       +(x.imageUrl?'<img src="'+x.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:20px;opacity:.3">?</span>')
