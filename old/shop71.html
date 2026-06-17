@@ -1187,24 +1187,27 @@ function openPD(id){
   function buildSelector(type, items, current){
     if(!items.length) return '';
     const label=type==='size'?(LANG==='th'?'ไซส์':'Size'):(LANG==='th'?'สี':'Color');
-    const isSizeRe=v=>/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(v);
     const btns=items.map(val=>{
-      // For each option val, find the product matching (val + the currently-selected value of the OTHER axis)
-      const wantSize=type==='size'?val:curSize;
-      const wantColor=type==='color'?val:curColor;
-      let target=related.find(x=>{
+      // Find which product this maps to
+      const target=related.find(x=>{
         if(!x.variations) return false;
         const vparts=x.variations.split(/[/,|]/).map(s=>s.trim());
-        const sizeOk=!wantSize||vparts.some(v=>isSizeRe(v)&&v===wantSize);
-        const colorOk=!wantColor||vparts.some(v=>v.toLowerCase()===wantColor.toLowerCase());
-        return sizeOk&&colorOk;
-      });
-      // Fallback: if no exact combo exists, just find any product with this val (so button still links somewhere)
-      if(!target) target=related.find(x=>x.variations&&x.variations.split(/[/,|]/).map(s=>s.trim()).some(v=>type==='size'?(isSizeRe(v)&&v===val):v.toLowerCase()===val.toLowerCase()));
+        if(type==='size'){
+          const hasSize=vparts.some(v=>/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(v)&&v===val);
+          if(!hasSize) return false;
+          if(current&&type==='size'&&curColor) return vparts.includes(curColor)||vparts.some(v=>v.toLowerCase()===curColor.toLowerCase());
+          return true;
+        } else {
+          const hasColor=vparts.some(v=>v.toLowerCase()===val.toLowerCase());
+          if(!hasColor) return false;
+          if(curSize) return vparts.some(v=>/^(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})$/i.test(v)&&v===curSize);
+          return true;
+        }
+      })||related.find(x=>x.variations&&x.variations.includes(val));
       const tid=target?target.id:'';
       const isCur=val===current;
-      const oos=!target||target.stock<=0;
-      const borderCol=isCur?'var(--red)':'#333';
+      const oos=target&&target.stock<=0;
+      const borderCol=isCur?'var(--red)':(oos?'#333':'#333');
       const bgCol=isCur?'var(--red)':(oos?'#1a1a1a':'#111');
       const textCol=isCur?'#fff':(oos?'#555':'#ccc');
       return '<button onclick="'+(tid&&!isCur?'openPD(\''+tid+'\')':'')+'"'
