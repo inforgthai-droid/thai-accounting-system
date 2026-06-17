@@ -394,47 +394,7 @@ auth.onAuthStateChanged(async user=>{
   }
 });
 const BRAND_OPTIONS=['OMP','Sparco','Alpinestars','Arai','Stilo','Stand 21','Hans','Other'];
-// ── Generic sort helper for product/stock lists ──
-// sortKey: 'price' or 'stock'; sortDir: 'desc' (high→low, default) or 'asc' (low→high)
-function applyListSort(list, sortKey, sortDir){
-  if(!sortKey) return list;
-  const dir=sortDir==='asc'?1:-1;
-  return [...list].sort((a,b)=>{
-    const av=(sortKey==='price'?a.price:a.stock)||0;
-    const bv=(sortKey==='price'?b.price:b.stock)||0;
-    return (av-bv)*dir;
-  });
-}
-// Builds the 2-button sort control: price (สูง/ต่ำ) + stock (สูง/ต่ำ)
-// page: 'prod' or 'stock' — determines which S._xxxSortKey/_xxxSortDir fields to read/write and which update fn to call
-function buildSortControl(page){
-  const sortKey=page==='prod'?S._prodSortKey:S._stockSortKey;
-  const sortDir=page==='prod'?S._prodSortDir:S._stockSortDir;
-  const mk=(field,label)=>{
-    const active=sortKey===field;
-    const dirLabel=active?(sortDir==='asc'?'ต่ำ→สูง':'สูง→ต่ำ'):'สูง→ต่ำ';
-    return `<button onclick="toggleListSort('${page}','${field}')"
-      style="padding:5px 12px;border:1.5px solid ${active?'var(--accent)':'var(--border)'};border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;
-      background:${active?'var(--accent)':'var(--card)'};color:${active?'#fff':'#888'};white-space:nowrap;flex-shrink:0"
-      title="คลิกเพื่อสลับ สูง↔ต่ำ">${label}: ${dirLabel} ${active?(sortDir==='asc'?'▲':'▼'):''}</button>`;
-  };
-  return mk('price','ราคา')+mk('stock','สต็อก');
-}
-function toggleListSort(page,field){
-  const keyField=page==='prod'?'_prodSortKey':'_stockSortKey';
-  const dirField=page==='prod'?'_prodSortDir':'_stockSortDir';
-  if(S[keyField]===field){
-    // same field clicked again → flip direction
-    S[dirField]=S[dirField]==='asc'?'desc':'asc';
-  } else {
-    // switch to this field, default high→low
-    S[keyField]=field;
-    S[dirField]='desc';
-  }
-  if(page==='prod') _updateProdTable(); else _updateStockTable();
-}
-const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:false,posVatMode:'inclusive',_posCat:'all',posPayMethod:'cash',
- _prodSortKey:'price',_prodSortDir:'desc',_stockSortKey:'price',_stockSortDir:'desc'};
+const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:false,posVatMode:'inclusive',_posCat:'all',posPayMethod:'cash'};
 var _shopDesign={
   colorRed:'#e8172c', colorBg:'#0a0a0a', colorText:'#e8e8e8',
   logoRacing:'Racing', logoGarage:'Garage', logoSize:'30',
@@ -3248,7 +3208,6 @@ function renderProducts(){
   let list=S.products;
   if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase()));
   if(catFilter) list=list.filter(p=>p.category===catFilter);
-  list=applyListSort(list,S._prodSortKey,S._prodSortDir);
 
   const rows=list.map(p=>[
     `<input type="checkbox" class="prod-chk" data-id="${p.id}" onchange="updateBulkProdBar()" style="width:16px;height:16px;cursor:pointer">`,
@@ -3287,8 +3246,6 @@ function renderProducts(){
       <option value="">ทุกหมวด</option>
       ${cats.map(c=>`<option value="${c}"${catFilter===c?' selected':''}>${c}</option>`).join('')}
     </select>
-    <!-- Sort controls: price/stock, high→low default -->
-    <div id="prod-sort-wrap" style="display:flex;gap:6px;flex-shrink:0">${buildSortControl('prod')}</div>
     <div style="font-size:13px;color:var(--muted)" id="prod-count">${list.length}/${S.products.length} รายการ</div>
     <button onclick="toggleProdView()" id="prod-view-btn" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px" title="สลับมุมมอง">${(S._prodView||'list')==='list'?'⊞ Grid':'☰ List'}</button>
 
@@ -3382,14 +3339,13 @@ function toggleProdView(){
   S._prodView = (S._prodView||'list')==='list' ? 'grid' : 'list';
   const wrap = document.getElementById('prod-table-wrap');
   const btn = document.getElementById('prod-view-btn');
-  let vlist=S.products.filter(p=>{
+  if(wrap) wrap.innerHTML = buildProdView(
+    S.products.filter(p=>{
       const q=S._prodQ||''; const cat=S._prodCat||'';
       if(q && !(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase())) return false;
       if(cat && p.category!==cat) return false;
       return true;
-    });
-  vlist=applyListSort(vlist,S._prodSortKey,S._prodSortDir);
-  if(wrap) wrap.innerHTML = buildProdView(vlist, S._prodView);
+    }), S._prodView);
   if(btn) btn.textContent = S._prodView==='list' ? '⊞ Grid' : '☰ List';
 }
 
@@ -3443,15 +3399,10 @@ function _updateProdTable(){
   let list=S.products;
   if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase()));
   if(catFilter) list=list.filter(p=>p.category===catFilter);
-  list=applyListSort(list,S._prodSortKey,S._prodSortDir);
 
   // Update count
   const cnt=document.getElementById('prod-count');
   if(cnt) cnt.textContent=list.length+'/'+S.products.length+' รายการ';
-
-  // Update sort control visual state
-  const sortWrap=document.getElementById('prod-sort-wrap');
-  if(sortWrap) sortWrap.innerHTML=buildSortControl('prod');
 
   // Update table only
   const wrap=document.getElementById('prod-table-wrap');
@@ -4613,7 +4564,6 @@ function renderStock(){
   if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
   if(statusF==='price0') list=list.filter(p=>!(p.price>0));
   if(S._stockCat) list=list.filter(p=>p.category===S._stockCat);
-  list=applyListSort(list,S._stockSortKey,S._stockSortDir);
 
   const rows=list.map(p=>{
     const st=p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
@@ -4673,8 +4623,6 @@ function renderStock(){
       <option value="">ทุกหมวด</option>
       ${cats.map(c=>`<option value="${c}"${S._stockCat===c?' selected':''}>${c}</option>`).join('')}
     </select>
-    <!-- Sort controls: price/stock, high→low default -->
-    <div id="stock-sort-wrap" style="display:flex;gap:6px;flex-shrink:0">${buildSortControl('stock')}</div>
     <div style="font-size:12px;color:var(--muted)" id="stock-count">${list.length}/${S.products.length} รายการ</div>
     <button onclick="toggleStockView()" id="stock-view-btn" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px" title="สลับมุมมอง">${(S._stockView||'list')=='list'?'⊞ Grid':'☰ List'}</button>
   </div>
@@ -4749,7 +4697,6 @@ function toggleStockView(){
   if(statusF==='out') list=list.filter(p=>p.stock<=0);
   if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
   if(S._stockCat) list=list.filter(p=>p.category===S._stockCat);
-  list=applyListSort(list,S._stockSortKey,S._stockSortDir);
   if(wrap) wrap.innerHTML = buildStockView(list, S._stockView);
   if(btn) btn.textContent = S._stockView==='list' ? '⊞ Grid' : '☰ List';
 }
@@ -4773,14 +4720,9 @@ function _updateStockTable(){
   if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
   if(S._stockCat) list=list.filter(p=>p.category===S._stockCat);
   if(statusF==='price0') list=list.filter(p=>!(p.price>0));
-  list=applyListSort(list,S._stockSortKey,S._stockSortDir);
 
   const cnt=document.getElementById('stock-count');
   if(cnt) cnt.textContent=list.length+'/'+S.products.length+' รายการ';
-
-  // Update sort control visual state
-  const sortWrap=document.getElementById('stock-sort-wrap');
-  if(sortWrap) sortWrap.innerHTML=buildSortControl('stock');
 
   // อัปเดต stat cards ตามหมวดที่เลือก
   const statGrid=document.getElementById('stock-stat-grid');
