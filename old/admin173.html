@@ -6965,8 +6965,7 @@ function renderCategories(){
             <td style="padding:8px;text-align:right;color:#7c3aed">${fmt(stockVal)}</td>
             <td style="padding:8px">
               <button class="btn btn-primary btn-xs" onclick="filterProductsByCat('${cat}')">ดูสินค้า</button>
-              <button class="btn btn-gray btn-xs" onclick="editCatByName('${cat}')">แก้ไข</button>
-              <button class="btn btn-danger btn-xs" onclick="deleteCatByName('${cat}')">ลบ</button>
+              <button class="btn btn-gray btn-xs" onclick="bulkRenameCat('${cat}')">เปลี่ยนชื่อ</button>
             </td>
           </tr>`;
         }).join('')||`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">ยังไม่มีหมวดหมู่</td></tr>`}
@@ -7230,107 +7229,6 @@ async function bulkRenameCat(oldName){
     toast(`เปลี่ยนชื่อสำเร็จ — อัปเดต ${prods.length} สินค้า ✓`,'success');
     renderPage('categories');
   }catch(e){toast('เปลี่ยนชื่อไม่สำเร็จ: '+e.message,'error');}
-}
-
-// ── หมวดหมู่ที่มาจากตารางสถิติ (key เป็นชื่อหมวด ไม่ใช่ doc id) ──
-// แก้ไข: เปิดฟอร์มแบบเดียวกับ editCat แต่ถ้าไม่มี doc ใน categories จะสร้างใหม่ให้
-// และถ้าเปลี่ยนชื่อ จะอัปเดต category ของสินค้าทุกตัวในหมวดนั้นด้วย (เหมือน bulkRenameCat)
-async function editCatByName(name){
-  const prods=S.products.filter(p=>p.category===name);
-  const snap=await db.collection('categories').where('name','==',name).get();
-  const existing=snap.empty?null:{id:snap.docs[0].id,...snap.docs[0].data()};
-  const c=existing||{name,icon:'📦',description:'',color:'#0ea5e9',visible:true};
-  openModal('✏️ แก้ไขหมวดหมู่: '+name,`
-    <div class="fg">
-      <div class="fm"><label class="fl">ชื่อหมวดหมู่ *</label>
-        <input class="fc" id="cat-name" value="${c.name.replace(/"/g,'&quot;')}" placeholder="เช่น ชุดแข่ง, ถุงมือ"></div>
-      <div class="fm"><label class="fl">ไอคอน (Emoji)</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input class="fc" id="cat-icon" value="${c.icon||'📦'}" style="width:60px;font-size:22px;text-align:center">
-          <div style="display:flex;gap:4px;flex-wrap:wrap;flex:1">
-            ${CAT_ICON_LIST.map(ico=>`<button onclick="document.getElementById('cat-icon').value='${ico}'"
-              style="font-size:20px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:3px 6px;cursor:pointer"
-              onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f8fafc'">${ico}</button>`).join('')}
-          </div>
-        </div>
-      </div>
-      <div class="fm"><label class="fl">คำอธิบาย</label>
-        <input class="fc" id="cat-desc" value="${(c.description||'').replace(/"/g,'&quot;')}" placeholder="คำอธิบายสั้นๆ (ไม่บังคับ)"></div>
-      <div class="fm"><label class="fl">สีหมวดหมู่</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="color" id="cat-color" value="${c.color||'#0ea5e9'}" style="width:40px;height:32px;border:none;border-radius:6px;cursor:pointer">
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${['#0ea5e9','#10b981','#f59e0b','#ef4444','#7c3aed','#ec4899','#1a3a5c','#06b6d4'].map(col=>`<div onclick="document.getElementById('cat-color').value='${col}'"
-              style="width:24px;height:24px;background:${col};border-radius:4px;cursor:pointer;border:2px solid transparent"
-              onmouseover="this.style.borderColor='#000'" onmouseout="this.style.borderColor='transparent'"></div>`).join('')}
-          </div>
-        </div>
-      </div>
-      <div class="fm" style="grid-column:1/-1"><label class="fl">การแสดงผล</label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-          <input type="checkbox" id="cat-visible" ${c.visible!==false?'checked':''} style="width:16px;height:16px">
-          <span>แสดงในร้านค้าออนไลน์และ POS</span>
-        </label>
-      </div>
-      <div class="fm" style="grid-column:1/-1;font-size:12px;color:var(--muted)">
-        มีสินค้าอยู่ในหมวดนี้ ${prods.length} รายการ — ถ้าเปลี่ยนชื่อ สินค้าทั้งหมดจะถูกอัปเดตตามไปด้วย
-      </div>
-    </div>`,
-    `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
-     <button class="btn" onclick="saveCatByName('${(existing?.id||'').replace(/'/g,"\\'")}','${name.replace(/'/g,"\\'")}')">💾 บันทึก</button>`);
-}
-
-async function saveCatByName(existingId,oldName){
-  const newName=document.getElementById('cat-name')?.value.trim();
-  if(!newName){toast('กรุณากรอกชื่อหมวดหมู่','error');return;}
-  const icon=document.getElementById('cat-icon')?.value||'📦';
-  const description=document.getElementById('cat-desc')?.value||'';
-  const color=document.getElementById('cat-color')?.value||'#0ea5e9';
-  const visible=document.getElementById('cat-visible')?.checked!==false;
-  const prods=S.products.filter(p=>p.category===oldName);
-  const renaming=newName!==oldName;
-  if(renaming&&!confirm(`เปลี่ยนชื่อจาก "${oldName}" เป็น "${newName}"\nจะอัปเดตสินค้า ${prods.length} รายการด้วย`))return;
-  try{
-    toast('⏳ กำลังบันทึก...','info');
-    const data={name:newName,icon,description,color,visible};
-    if(existingId){
-      await updateFB('categories',existingId,{...data,updatedAt:ts()});
-    } else {
-      const snap=await db.collection('categories').get();
-      await addFB('categories',{...data,order:snap.size,createdAt:ts()});
-    }
-    if(renaming&&prods.length){
-      const BSIZ=400;
-      for(let b=0;b<prods.length;b+=BSIZ){
-        const chunk=prods.slice(b,b+BSIZ);
-        const batch=db.batch();
-        chunk.forEach(p=>batch.update(db.collection('products').doc(p.id),{category:newName}));
-        await batch.commit();
-      }
-      S.products.forEach(p=>{if(p.category===oldName)p.category=newName;});
-    }
-    closeModal();
-    await reloadCategories();
-    renderPage('categories');
-    if(S._page==='pos')renderPage('pos');
-    toast('บันทึกหมวดหมู่สำเร็จ ✓','success');
-  }catch(e){toast('บันทึกไม่สำเร็จ: '+e.message,'error');}
-}
-
-async function deleteCatByName(name){
-  const prods=S.products.filter(p=>p.category===name);
-  const msg=prods.length>0
-    ?`ลบหมวดหมู่ "${name}"?\n\n⚠️ มีสินค้า ${prods.length} รายการในหมวดนี้\nสินค้าเหล่านั้นจะยังอยู่ แต่ไม่มีหมวดหมู่`
-    :`ลบหมวดหมู่ "${name}"?`;
-  if(!confirm(msg))return;
-  try{
-    const snap=await db.collection('categories').where('name','==',name).get();
-    if(!snap.empty) await deleteFB('categories',snap.docs[0].id);
-    toast('ลบหมวดหมู่แล้ว','info');
-    await reloadCategories();
-    renderPage('categories');
-    if(S._page==='pos')renderPage('pos');
-  }catch(e){toast('ลบไม่สำเร็จ: '+e.message,'error');}
 }
 
 function pickIcon(catId){
