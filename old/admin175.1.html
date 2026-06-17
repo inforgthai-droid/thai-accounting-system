@@ -4440,7 +4440,12 @@ async function uploadWithFallback(file, statusEl){
       const fname=`products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const ref=storage.ref(fname);
       await ref.put(file);
-      return await ref.getDownloadURL();
+      // ใช้ URL แบบ public bucket ตรงๆ (storage.googleapis.com/<bucket>/<path>)
+      // แทน ref.getDownloadURL() ที่ได้ URL แบบ firebasestorage.googleapis.com/v0/b/...?alt=media&token=...
+      // เพราะ LINE Messaging API ดึงรูปแบบมี token ไปแสดงไม่ได้ (ไลน์เซิร์ฟเวอร์ไม่มี Firebase auth)
+      // ส่วนแบบ public bucket ตรงๆ ใช้ได้ปกติกับทุกที่ รวมถึง LINE
+      const bucket=(firebase.app().options.storageBucket)||'thai-accounting-d3e6b.firebasestorage.app';
+      return `https://storage.googleapis.com/${bucket}/${fname}`;
     })();
     const url=await Promise.race([uploadPromise,timeoutPromise]);
     if(statusEl){statusEl.textContent='✅ อัปโหลด Firebase สำเร็จ';statusEl.style.color='var(--success)';}
