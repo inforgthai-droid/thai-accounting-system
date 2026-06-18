@@ -955,7 +955,21 @@ function applyPriceFilter(){
 
 // ── FILTER ──
 // ── Group variants ──
-function getBaseName(name){
+function getBaseName(name, variations){
+  // วิธีหลัก: ใช้ field variations (ข้อมูลจริงจาก SKU) ตัดส่วนไซส์/สีออกจากชื่อ
+  // แม่นยำกว่าการเดาด้วยรายชื่อสี เพราะไม่พังเวลาพิมพ์สีผิด/สีใหม่ที่ไม่อยู่ใน whitelist (เช่น "Pinl" พิมพ์ผิดจาก "Pink")
+  if(variations && variations.trim()){
+    const parts=variations.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
+    let n=name;
+    parts.forEach(part=>{
+      if(!part) return;
+      // ตัดส่วนท้ายชื่อที่ตรงกับค่า variation นี้พอดี (case-insensitive) ออก พร้อมตัวคั่นก่อนหน้า เช่น " / " หรือเว้นวรรค
+      const esc=part.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      n=n.replace(new RegExp('\\s*[/|]?\\s*'+esc+'\\s*$','i'),'');
+    });
+    return n.trim();
+  }
+  // fallback เดิม: เดาจาก whitelist ไซส์/สีที่รู้จัก (ใช้เมื่อไม่มี field variations ให้อ้างอิง)
   return name
     .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*[/|]\s*\S.*$/i,'')
     .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*$/i,'')
@@ -976,7 +990,7 @@ function groupProducts(list){
     let key;
     if(hasVar){
       const pfx=getCodePrefix(p.code);
-      const bn=getBaseName(p.name);
+      const bn=getBaseName(p.name, p.variations);
       // ใช้ key = pfx+baseName เพื่อป้องกัน code สั้นๆ เช่น "ชุดแข่" group ข้ามรุ่น
       if(pfx && pfx.length>4 && pfx!==p.code){
         key='pfx:'+pfx+':'+bn;
@@ -1339,7 +1353,7 @@ function prodCardGroup(prods){
   // ตัวแทน: เลือกตัวที่มีสต็อก + มีรูป หรือตัวแรก
   const rep=prods.find(p=>p.stock>0&&p.imageUrl)||prods.find(p=>p.imageUrl)||prods[0];
   const brand=(rep.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
-  const baseName=getBaseName(rep.name);
+  const baseName=getBaseName(rep.name, rep.variations);
   const hasImg=rep.imageUrl&&rep.imageUrl.length>0;
 
   // Extract unique sizes and colors
