@@ -879,27 +879,17 @@ function _updateRItemsUI(){
   const el=document.getElementById('r-items-list');
   if(!el) return;
   el.innerHTML=window.__rItems.length?window.__rItems.map((it,i)=>`
-    <div style="display:grid;grid-template-columns:2fr 70px 1fr 1fr auto;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px">
-      <input class="fc" style="font-size:13px;padding:6px" value="${it.name}" onchange="_editRItem(${i},'name',this.value)">
-      <input class="fc" type="number" min="1" style="font-size:12px;padding:6px;width:70px" value="${it.qty}" onchange="_editRItem(${i},'qty',this.value)">
-      <div style="position:relative"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted)">เช่า</span><input class="fc" type="number" style="font-size:12px;padding:6px 6px 6px 32px" value="${it.rentalFee}" onchange="_editRItem(${i},'rentalFee',this.value)"></div>
-      <div style="position:relative"><span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted)">มัดจำ</span><input class="fc" type="number" style="font-size:12px;padding:6px 6px 6px 42px" value="${it.deposit}" onchange="_editRItem(${i},'deposit',this.value)"></div>
+    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px">
+      <span style="flex:1;font-weight:600;font-size:13px">${it.name}</span>
+      <span style="font-size:12px;color:var(--muted)">x${it.qty}</span>
+      <span style="font-size:12px">เช่า <b style="color:var(--accent)">${fmtM(it.rentalFee)}</b></span>
+      <span style="font-size:12px">มัดจำ <b style="color:var(--warning)">${fmtM(it.deposit)}</b></span>
       <button class="btn btn-xs btn-danger" onclick="_removeRItem(${i})">ลบ</button>
     </div>`).join(''):'<div style="color:var(--muted);font-size:12px">ยังไม่มีรายการ</div>';
   const tf=document.getElementById('r-total-fee');
   const td=document.getElementById('r-total-dep');
-  if(tf) tf.textContent=fmtM(window.__rItems.reduce((s,i)=>s+(parseFloat(i.rentalFee)||0),0));
-  if(td) td.textContent=fmtM(window.__rItems.reduce((s,i)=>s+(parseFloat(i.deposit)||0),0));
-}
-function _editRItem(i,field,val){
-  if(!window.__rItems[i]) return;
-  if(field==='name'){
-    window.__rItems[i].name=val;
-  }else{
-    const num=parseFloat(val)||0;
-    window.__rItems[i][field]=field==='qty'?Math.max(1,Math.round(num)):num;
-  }
-  _updateRItemsUI();
+  if(tf) tf.textContent=fmtM(window.__rItems.reduce((s,i)=>s+i.rentalFee,0));
+  if(td) td.textContent=fmtM(window.__rItems.reduce((s,i)=>s+i.deposit,0));
 }
 
 async function _saveNewRental(){
