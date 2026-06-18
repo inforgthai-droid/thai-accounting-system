@@ -1784,17 +1784,13 @@ function renderPOS(){
             <button onclick="S.posPayMethod='credit';updatePOSCart()"
               style="padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='credit'?'#6366f1':'#334155'};background:${S.posPayMethod==='credit'?'#ede9fe':'transparent'};color:${S.posPayMethod==='credit'?'#4338ca':'var(--text)'}">💳 บัตรเครดิต</button>
             <button onclick="S.posPayMethod='shopee_pay';updatePOSCart()"
-              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_pay'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_pay'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_pay'?'#fff':'var(--text)'}">🟠 Shopee Pay<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
+              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_pay'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_pay'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_pay'?'#fff':'var(--text)'}">🟠 Shopee Pay<br><span style="font-size:9px;opacity:.85">(รับ 75%)</span></button>
             <button onclick="S.posPayMethod='shopee_spaylater';updatePOSCart()"
-              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_spaylater'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_spaylater'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_spaylater'?'#fff':'var(--text)'}">🟠 SPayLater<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
+              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_spaylater'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_spaylater'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_spaylater'?'#fff':'var(--text)'}">🟠 SPayLater<br><span style="font-size:9px;opacity:.85">(รับ 71%)</span></button>
             <button onclick="S.posPayMethod='shopee_cc';updatePOSCart()"
-              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_cc'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_cc'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_cc'?'#fff':'var(--text)'}">🟠 บัตรเครดิต Shopee<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
+              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_cc'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_cc'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_cc'?'#fff':'var(--text)'}">🟠 บัตรเครดิต Shopee<br><span style="font-size:9px;opacity:.85">(รับ 78%)</span></button>
             <button onclick="S.posPayMethod='shopee_cc_install';updatePOSCart()"
-              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_cc_install'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_cc_install'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_cc_install'?'#fff':'var(--text)'}">🟠 ผ่อน Shopee<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
-            <button onclick="S.posPayMethod='shopee_mobile_banking';updatePOSCart()"
-              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_mobile_banking'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_mobile_banking'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_mobile_banking'?'#fff':'var(--text)'}">🟠 Shopee Mobile Banking<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
-            <button onclick="S.posPayMethod='shopee_qr_promptpay';updatePOSCart()"
-              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_qr_promptpay'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_qr_promptpay'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_qr_promptpay'?'#fff':'var(--text)'}">🟠 Shopee QR Promptpay<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
+              style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_cc_install'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_cc_install'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_cc_install'?'#fff':'var(--text)'}">🟠 ผ่อน Shopee<br><span style="font-size:9px;opacity:.85">(รับ 73%)</span></button>
           </div>
         </div>
         <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
@@ -1935,17 +1931,13 @@ function updatePOSCart(){
         <button onclick="S.posPayMethod='credit';updatePOSCart()"
           style="padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='credit'?'#6366f1':'#334155'};background:${S.posPayMethod==='credit'?'#ede9fe':'transparent'};color:${S.posPayMethod==='credit'?'#4338ca':'var(--text)'}">💳 บัตรเครดิต</button>
         <button onclick="S.posPayMethod='shopee_pay';updatePOSCart()"
-          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_pay'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_pay'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_pay'?'#fff':'var(--text)'}">🟠 Shopee Pay<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
+          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_pay'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_pay'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_pay'?'#fff':'var(--text)'}">🟠 Shopee Pay<br><span style="font-size:9px;opacity:.85">(รับ 75%)</span></button>
         <button onclick="S.posPayMethod='shopee_spaylater';updatePOSCart()"
-          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_spaylater'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_spaylater'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_spaylater'?'#fff':'var(--text)'}">🟠 SPayLater<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
+          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_spaylater'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_spaylater'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_spaylater'?'#fff':'var(--text)'}">🟠 SPayLater<br><span style="font-size:9px;opacity:.85">(รับ 71%)</span></button>
         <button onclick="S.posPayMethod='shopee_cc';updatePOSCart()"
-          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_cc'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_cc'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_cc'?'#fff':'var(--text)'}">🟠 บัตรเครดิต Shopee<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
+          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_cc'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_cc'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_cc'?'#fff':'var(--text)'}">🟠 บัตรเครดิต Shopee<br><span style="font-size:9px;opacity:.85">(รับ 78%)</span></button>
         <button onclick="S.posPayMethod='shopee_cc_install';updatePOSCart()"
-          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_cc_install'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_cc_install'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_cc_install'?'#fff':'var(--text)'}">🟠 ผ่อน Shopee<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
-        <button onclick="S.posPayMethod='shopee_mobile_banking';updatePOSCart()"
-          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_mobile_banking'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_mobile_banking'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_mobile_banking'?'#fff':'var(--text)'}">🟠 Shopee Mobile Banking<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
-        <button onclick="S.posPayMethod='shopee_qr_promptpay';updatePOSCart()"
-          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_qr_promptpay'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_qr_promptpay'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_qr_promptpay'?'#fff':'var(--text)'}">🟠 Shopee QR Promptpay<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
+          style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_cc_install'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_cc_install'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_cc_install'?'#fff':'var(--text)'}">🟠 ผ่อน Shopee<br><span style="font-size:9px;opacity:.85">(รับ 73%)</span></button>
       </div>
     </div>
     <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
@@ -1957,7 +1949,7 @@ function updatePOSCart(){
 function calcNetProfit(total, totalCost, payMethod, shopeeRate){
   // ถ้าเป็น Shopee: กำไร = ยอดที่รับจริง - ต้นทุน = (total * rate) - totalCost
   // ถ้าไม่ใช่: กำไร = total - totalCost  (ใช้ afterDisc จริงๆ แต่ total ≈ afterDisc+vat)
-  const rate = shopeeRate || {'shopee_pay':0.70,'shopee_spaylater':0.70,'shopee_cc':0.70,'shopee_cc_install':0.70,'shopee_mobile_banking':0.70,'shopee_qr_promptpay':0.70,'credit':0.9735}[payMethod] || null;
+  const rate = shopeeRate || {'shopee_pay':0.75,'shopee_spaylater':0.71,'shopee_cc':0.78,'shopee_cc_install':0.73,'credit':0.9735}[payMethod] || null;
   if(rate) return Math.round(total * rate) - totalCost;
   return total - totalCost;
 }
@@ -1979,7 +1971,7 @@ async function checkout(){
   const docNo=await nextNo('POS','sales');
   const saleDate=document.getElementById('pos-sale-date')?.value||S.posSaleDate||todayISO();
   const payMethod=S.posPayMethod||'cash';
-  const SHOPEE_RATE={'shopee_pay':0.70,'shopee_spaylater':0.70,'shopee_cc':0.70,'shopee_cc_install':0.70,'shopee_mobile_banking':0.70,'shopee_qr_promptpay':0.70};
+  const SHOPEE_RATE={'shopee_pay':0.75,'shopee_spaylater':0.71,'shopee_cc':0.78,'shopee_cc_install':0.73};
   const shopeeRate=SHOPEE_RATE[payMethod]||null;
   const netRevenue=shopeeRate?Math.round(total*shopeeRate):total;
   const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',payMethod,shopeeRate,netRevenue,
@@ -2060,7 +2052,7 @@ function showReceiptModal(sale){
       </table>
       <hr style="border:none;border-top:1px dashed #000;margin:5px 0">
       <div style="text-align:center;font-size:10px;color:#555;margin-bottom:4px">${bahtText(sale.total)}</div>
-      <div style="text-align:center;font-size:11px;font-weight:700;margin-bottom:4px">${{'cash':'💵 เงินสด / โอนเงิน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[sale.payMethod]||'💵 เงินสด / โอนเงิน'}</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;margin-bottom:4px">${{'cash':'💵 เงินสด / โอนเงิน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee'}[sale.payMethod]||'💵 เงินสด / โอนเงิน'}</div>
       <div style="text-align:center;margin-top:8px;padding-top:6px;border-top:1px dashed #000">
         <div style="font-weight:700;font-size:13px">${c.receiptFooter||'ขอบคุณที่ใช้บริการ'}</div>
         ${c.receiptFooter2?`<div style="font-size:11px;color:#555">${c.receiptFooter2}</div>`:''}
@@ -2578,7 +2570,7 @@ function viewSale(id){
       <div><span style="color:var(--muted)">วันที่:</span> <b>${s.date}</b></div>
       <div><span style="color:var(--muted)">ลูกค้า:</span> <b>${s.customerName||'-'}</b></div>
       <div><span style="color:var(--muted)">สถานะ:</span> ${statusBadge}</div>
-      <div><span style="color:var(--muted)">ชำระด้วย:</span> <b>${{'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[s.payMethod]||'💵 เงินสด/โอน'}</b></div>
+      <div><span style="color:var(--muted)">ชำระด้วย:</span> <b>${{'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee'}[s.payMethod]||'💵 เงินสด/โอน'}</b></div>
     </div>
     <div class="tbl"><table style="font-size:12px">
       <thead><tr>
@@ -2930,7 +2922,7 @@ th.r{text-align:right}th.c{text-align:center}
     <div style="font-size:13px;line-height:1.8">
       <div>เลขที่: <b>${s.docNo}</b></div>
       <div>วันที่: <b>${s.date}</b></div>
-      <div>ชำระด้วย: <b>${{'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[s.payMethod]||'💵 เงินสด/โอน'}</b></div>
+      <div>ชำระด้วย: <b>${{'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee'}[s.payMethod]||'💵 เงินสด/โอน'}</b></div>
     </div>
   </div>
 </div>
@@ -7610,7 +7602,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
         <div>เลขที่: <b>${docNo}</b></div>
         <div>วันที่: <b>${todayISO()}</b></div>
         <div>พนักงาน: <b>${currentUser?.displayName||currentUser?.email||'-'}</b></div>
-        <div>ชำระด้วย: <b>${{'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[S.posPayMethod||'cash']||'💵 เงินสด/โอน'}</b></div>
+        <div>ชำระด้วย: <b>${{'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee'}[S.posPayMethod||'cash']||'💵 เงินสด/โอน'}</b></div>
         ${S.posNote&&S.posNote!==name?`<div>หมายเหตุ: ${S.posNote}</div>`:''}
       </div>
     </div>
