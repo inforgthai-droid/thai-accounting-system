@@ -509,10 +509,6 @@ const fmt=n=>new Intl.NumberFormat('th-TH').format(Math.round(n||0));
 const fmtM=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(n||0);
 const badge=(t,c)=>`<span class="badge badge-${c}">${t}</span>`;
 const todayISO=()=>new Date().toISOString().split('T')[0];
-function _warnIfSaleDateNotToday(elId,val){
-  const el=document.getElementById(elId);
-  if(el)el.style.display=(val&&val!==todayISO())?'block':'none';
-}
 const todayTH=()=>new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 function toast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className=`show ${type}`;clearTimeout(t._t);t._t=setTimeout(()=>t.className='',3200);}
 function tbl(headers,rows,empty='ไม่มีข้อมูล'){
@@ -1758,9 +1754,8 @@ function renderPOS(){
             value="${S.posSaleDate||todayISO()}"
             min="${(()=>{const d=new Date();d.setFullYear(d.getFullYear()-20);return d.toISOString().split('T')[0];})()} "
             max="${(()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toISOString().split('T')[0];})()} "
-            onchange="S.posSaleDate=this.value;_warnIfSaleDateNotToday('pos-sale-date-warn',this.value);"
+            onchange="S.posSaleDate=this.value"
             style="font-size:13px;font-family:'Sarabun',sans-serif">
-          <div id="pos-sale-date-warn" style="display:${(S.posSaleDate&&S.posSaleDate!==todayISO())?'block':'none'};color:#f59e0b;font-size:12px;font-weight:700;margin-top:4px">⚠️ วันที่ขายนี้ไม่ใช่วันนี้ กรุณาตรวจสอบก่อนบันทึก</div>
         </div>
         <div style="margin-bottom:8px">
           <label class="fl">ลูกค้า / หมายเหตุ</label>
@@ -1905,9 +1900,8 @@ function updatePOSCart(){
         value="${S.posSaleDate||todayISO()}"
         min="${(()=>{const d=new Date();d.setFullYear(d.getFullYear()-20);return d.toISOString().split('T')[0];})()} "
         max="${(()=>{const d=new Date();d.setFullYear(d.getFullYear()+1);return d.toISOString().split('T')[0];})()} "
-        onchange="S.posSaleDate=this.value;const o=document.getElementById('pos-sale-date');if(o)o.value=this.value;_warnIfSaleDateNotToday('pos-sale-date-warn-2',this.value);"
+        onchange="S.posSaleDate=this.value;const o=document.getElementById('pos-sale-date');if(o)o.value=this.value;"
         style="font-size:13px;font-family:'Sarabun',sans-serif">
-      <div id="pos-sale-date-warn-2" style="display:${(S.posSaleDate&&S.posSaleDate!==todayISO())?'block':'none'};color:#f59e0b;font-size:12px;font-weight:700;margin-top:4px">⚠️ วันที่ขายนี้ไม่ใช่วันนี้ กรุณาตรวจสอบก่อนบันทึก</div>
     </div>
     <div style="margin-bottom:8px">
       <label class="fl">ลูกค้า / หมายเหตุ</label>
@@ -1978,11 +1972,6 @@ async function checkout(){
     toast('บันทึกการขาย '+docNo+' สำเร็จ ✓','success');
     const rec={id:sRef.id,...saleData};
     cartClear();
-    // ป้องกันค่าวันที่ขายย้อนหลังติดค้างไปใช้กับรายการขายครั้งต่อไปโดยไม่ตั้งใจ
-    // (สาเหตุที่ POS-0075/POS-0076 มี date ผิดเพี้ยนไปจาก createdAt ก่อนหน้านี้)
-    S.posSaleDate=todayISO();
-    const dEl1=document.getElementById('pos-sale-date');if(dEl1)dEl1.value=S.posSaleDate;
-    const dEl2=document.getElementById('pos-sale-date-2');if(dEl2)dEl2.value=S.posSaleDate;
     showReceiptModal(rec);
   }catch(e){toast('Error: '+e.message,'error');}
 }
@@ -4451,12 +4440,7 @@ async function uploadWithFallback(file, statusEl){
       const fname=`products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const ref=storage.ref(fname);
       await ref.put(file);
-      // ใช้ URL แบบ public bucket ตรงๆ (storage.googleapis.com/<bucket>/<path>)
-      // แทน ref.getDownloadURL() ที่ได้ URL แบบ firebasestorage.googleapis.com/v0/b/...?alt=media&token=...
-      // เพราะ LINE Messaging API ดึงรูปแบบมี token ไปแสดงไม่ได้ (ไลน์เซิร์ฟเวอร์ไม่มี Firebase auth)
-      // ส่วนแบบ public bucket ตรงๆ ใช้ได้ปกติกับทุกที่ รวมถึง LINE
-      const bucket=(firebase.app().options.storageBucket)||'thai-accounting-d3e6b.firebasestorage.app';
-      return `https://storage.googleapis.com/${bucket}/${fname}`;
+      return await ref.getDownloadURL();
     })();
     const url=await Promise.race([uploadPromise,timeoutPromise]);
     if(statusEl){statusEl.textContent='✅ อัปโหลด Firebase สำเร็จ';statusEl.style.color='var(--success)';}
