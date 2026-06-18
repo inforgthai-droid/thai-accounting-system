@@ -2443,8 +2443,8 @@ function renderSales(){
   const rentCount=activeAll.filter(s=>s._ch==='rental').length;
   const cancelCount=all.filter(s=>s.status==='ยกเลิก').length;
 
-  // ── รายได้จากเช่า (ตามช่วงวันที่ที่เลือก, นับทั้งสัญญาที่กำลังเช่าและคืนแล้ว) ──
-  const returnedRentRows=activeAll.filter(s=>s._ch==='rental');
+  // ── รายได้จากเช่า (ตามช่วงวันที่ที่เลือก, นับเฉพาะสัญญาที่คืนแล้ว) ──
+  const returnedRentRows=activeAll.filter(s=>s._ch==='rental'&&s._rentalRef?.status==='returned');
   const rentalRevFiltered=returnedRentRows.reduce((a,s)=>a+(s.rentalFee||0),0);
   const rentalCountFiltered=returnedRentRows.length;
 
