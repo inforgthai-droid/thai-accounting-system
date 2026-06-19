@@ -915,10 +915,13 @@ function buildSidebar(){
 }
 function buildBrands(q){
   let list=PRODS.filter(p=>CAT==='all'||p.category===CAT);
-  // นับจำนวนสินค้าต่อ brand จาก field p.brand เท่านั้น
+  // นับจำนวนสินค้าต่อ brand (ใช้ p.brand field ก่อน fallback regex)
   const counts={};
-  list.forEach(p=>{if(p.brand)counts[p.brand]=(counts[p.brand]||0)+1;});
-  // แสดงเฉพาะ brand ที่อยู่ใน BRANDS (จาก admin) เท่านั้น
+  list.forEach(p=>{
+    const b=p.brand||(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
+    if(b)counts[b]=(counts[b]||0)+1;
+  });
+  // ใช้ BRANDS จาก Firestore ถ้ามี ไม่งั้น fallback จาก counts
   let bl;
   if(BRANDS.length){
     bl=BRANDS
@@ -926,10 +929,9 @@ function buildBrands(q){
       .filter(b=>!q||b.name.toLowerCase().includes(q.toLowerCase()))
       .map(b=>[b.name,counts[b.name]||0]);
   } else {
-    // fallback: ดึงจาก p.brand field เท่านั้น (ไม่ใช้ regex)
     bl=Object.entries(counts)
       .filter(([b])=>!q||b.toLowerCase().includes(q.toLowerCase()))
-      .sort((a,b2)=>b2[1]-a[1]).slice(0,20);
+      .sort((a,b2)=>b2[1]-a[1]).slice(0,12);
   }
   $('sb-brands').innerHTML=bl.map(([b,n])=>`
     <div class="sb-item${BRAND_FILTER===b?' on':''}" onclick="setBrand('${b}')">
@@ -1023,7 +1025,7 @@ function doFilter(resetPage=true){
   let list=PRODS.filter(p=>{
     if(CAT!=='all'&&p.category!==CAT)return false;
     if(q&&!(p.name+p.code+(p.description||'')+(p.category||'')).toLowerCase().includes(q))return false;
-    if(BRAND_FILTER){if((p.brand||'')!==BRAND_FILTER)return false;}
+    if(BRAND_FILTER){const b=p.brand||(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';if(b!==BRAND_FILTER)return false;}
     if(STOCK_ONLY&&p.stock<=0)return false;
     if(p.price>PRICE_MAX)return false;
     if(p.price<PRICE_MIN)return false;
