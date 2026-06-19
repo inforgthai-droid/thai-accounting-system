@@ -572,7 +572,7 @@ const db=firebase.firestore(),auth=firebase.auth(),gp=new firebase.auth.GoogleAu
 const fts=()=>firebase.firestore.FieldValue.serverTimestamp(),inc=n=>firebase.firestore.FieldValue.increment(n);
 
 // ── STATE ──
-let PRODS=[],BRANDS=[],CO={name:'Racing Garage',vatRate:7,tel:'',address:'',email:'',promptpay:'',bankName:'',bankAccount:'',bankAccountName:'',receiptFooter:'ขอบคุณที่ใช้บริการ'},
+let PRODS=[],CO={name:'Racing Garage',vatRate:7,tel:'',address:'',email:'',promptpay:'',bankName:'',bankAccount:'',bankAccountName:'',receiptFooter:'ขอบคุณที่ใช้บริการ'},
     CATS=[],  // loaded from Firestore categories collection
     CART=[],CAT='all',LANG='en',shopUser=null;
 let BRAND_FILTER='',STOCK_ONLY=false,PRICE_MIN=0,PRICE_MAX=500000;
@@ -720,16 +720,14 @@ async function init(){
   const hideLd=()=>{const l=$('ld');if(l){l.style.opacity='0';setTimeout(()=>l.style.display='none',500);}};
   setTimeout(hideLd,3000);
   try{
-    const[cd,ps,cs,sd,bs]=await Promise.all([
+    const[cd,ps,cs,sd]=await Promise.all([
       db.collection('settings').doc('company').get(),
       db.collection('products').get(),
       db.collection('categories').orderBy('order','asc').get(),
-      db.collection('settings').doc('shopDesign').get(),
-      db.collection('brands').orderBy('order','asc').get()
+      db.collection('settings').doc('shopDesign').get()
     ]);
     if(cd.exists)Object.assign(CO,cd.data());
     PRODS=ps.docs.map(d=>({id:d.id,...d.data()}));
-    BRANDS=bs.empty?[]:bs.docs.map(d=>({id:d.id,...d.data()}));
     if(!cs.empty){
       CATS=cs.docs.map(d=>({id:d.id,...d.data()})).filter(c=>c.visible!==false);
     } else {
@@ -915,27 +913,11 @@ function buildSidebar(){
 }
 function buildBrands(q){
   let list=PRODS.filter(p=>CAT==='all'||p.category===CAT);
-  // นับจำนวนสินค้าต่อ brand (ใช้ p.brand field ก่อน fallback regex)
-  const counts={};
-  list.forEach(p=>{
-    const b=p.brand||(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
-    if(b)counts[b]=(counts[b]||0)+1;
-  });
-  // ใช้ BRANDS จาก Firestore ถ้ามี ไม่งั้น fallback จาก counts
-  let bl;
-  if(BRANDS.length){
-    bl=BRANDS
-      .filter(b=>counts[b.name]>0)
-      .filter(b=>!q||b.name.toLowerCase().includes(q.toLowerCase()))
-      .map(b=>[b.name,counts[b.name]||0]);
-  } else {
-    bl=Object.entries(counts)
-      .filter(([b])=>!q||b.toLowerCase().includes(q.toLowerCase()))
-      .sort((a,b2)=>b2[1]-a[1]).slice(0,12);
-  }
+  const brands={};list.forEach(p=>{const b=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1];if(b)brands[b]=(brands[b]||0)+1;});
+  const bl=Object.entries(brands).filter(([b])=>!q||b.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>b[1]-a[1]).slice(0,12);
   $('sb-brands').innerHTML=bl.map(([b,n])=>`
     <div class="sb-item${BRAND_FILTER===b?' on':''}" onclick="setBrand('${b}')">
-      <div class="sb-dot" style="${BRAND_FILTER===b?'background:var(--red);border-color:var(--red)':''}"></div><span>${b}</span><span class="sb-count">(${n})</span>
+      <div class="sb-dot"></div><span>${b}</span><span class="sb-count">(${n})</span>
     </div>`).join('');
 }
 function filterBrands(q){buildBrands(q);}
@@ -1025,7 +1007,7 @@ function doFilter(resetPage=true){
   let list=PRODS.filter(p=>{
     if(CAT!=='all'&&p.category!==CAT)return false;
     if(q&&!(p.name+p.code+(p.description||'')+(p.category||'')).toLowerCase().includes(q))return false;
-    if(BRAND_FILTER){const b=p.brand||(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';if(b!==BRAND_FILTER)return false;}
+    if(BRAND_FILTER){const b=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1];if(b!==BRAND_FILTER)return false;}
     if(STOCK_ONLY&&p.stock<=0)return false;
     if(p.price>PRICE_MAX)return false;
     if(p.price<PRICE_MIN)return false;
@@ -1096,7 +1078,7 @@ function renderPagination(totalPages){
 function prodCard(p){
   const hasImg=p.imageUrl&&p.imageUrl.length>0;
   const inCart=CART.find(x=>x.id===p.id);
-  const brand=p.brand||(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
+  const brand=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
   const stockClass=p.stock<=0?'ou-s':p.stock<=5?'lo-s':'in-s';
   const stockTx=p.stock<=0?t('out_stock'):p.stock<=5?t('low_stock')+' ('+p.stock+')':t('in_stock');
   return`<div class="pcard" onclick="openPD('${p.id}')">
@@ -1238,7 +1220,7 @@ function openPD(id){
 
   // ─── Build product detail HTML ───
   const hasImg=p.imageUrl&&p.imageUrl.length>0;
-  const brand=p.brand||(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
+  const brand=(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
   const inCart=CART.find(x=>x.id===id);
   const stockCls=p.stock<=0?'ou-s':p.stock<=5?'lo-s':'in-s';
   const stockTx=p.stock<=0?t('out_stock'):p.stock<=5?t('low_stock')+' ('+p.stock+')':t('in_stock');
@@ -1350,7 +1332,7 @@ function addPD(){
 function prodCardGroup(prods){
   // ตัวแทน: เลือกตัวที่มีสต็อก + มีรูป หรือตัวแรก
   const rep=prods.find(p=>p.stock>0&&p.imageUrl)||prods.find(p=>p.imageUrl)||prods[0];
-  const brand=rep.brand||(rep.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
+  const brand=(rep.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
   const baseName=getBaseName(rep.name);
   const hasImg=rep.imageUrl&&rep.imageUrl.length>0;
 
