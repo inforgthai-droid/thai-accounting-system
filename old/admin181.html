@@ -411,56 +411,26 @@ function sortCatsByPriority(names){
 function applyListSort(list, sortKey, sortDir){
   if(!sortKey) return list;
   const dir=sortDir==='asc'?1:-1;
-  if(sortKey==='color'||sortKey==='size'){
-    // ดึงค่าสี หรือ ไซส์ จาก field variations (เช่น "XS / Black" → size="XS", color="Black")
-    const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL'];
-    return [...list].sort((a,b)=>{
-      const getPart=(p,part)=>{
-        const v=(p.variations||p.name||'');
-        const parts=v.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
-        // size = part ที่ตรง regex ตัวเลขหรือตัวอักษรไซส์, color = ที่เหลือ
-        const sizeParts=parts.filter(s=>/^(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|\d{2,3})$/i.test(s));
-        const colorParts=parts.filter(s=>!/^(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|\d{2,3})$/i.test(s));
-        return part==='size'?sizeParts[0]||'':colorParts[0]||'';
-      };
-      const av=getPart(a,sortKey).toLowerCase();
-      const bv=getPart(b,sortKey).toLowerCase();
-      if(sortKey==='size'){
-        // ไซส์ตัวเลข sort ตามตัวเลข, ตัวอักษร sort ตาม sizeOrder
-        const ai=sizeOrder.indexOf(av.toUpperCase()),bi=sizeOrder.indexOf(bv.toUpperCase());
-        const an=/^\d+$/.test(av),bn=/^\d+$/.test(bv);
-        let cmp=0;
-        if(ai>=0&&bi>=0) cmp=ai-bi;
-        else if(ai>=0) cmp=-1;
-        else if(bi>=0) cmp=1;
-        else if(an&&bn) cmp=parseInt(av)-parseInt(bv);
-        else cmp=av.localeCompare(bv);
-        return cmp*dir;
-      }
-      return av.localeCompare(bv,'th')*dir;
-    });
-  }
   return [...list].sort((a,b)=>{
     const av=(sortKey==='price'?a.price:a.stock)||0;
     const bv=(sortKey==='price'?b.price:b.stock)||0;
     return (av-bv)*dir;
   });
 }
-// Builds the sort control buttons: ราคา + สต็อก + สี + ไซส์
+// Builds the 2-button sort control: price (สูง/ต่ำ) + stock (สูง/ต่ำ)
 // page: 'prod' or 'stock' — determines which S._xxxSortKey/_xxxSortDir fields to read/write and which update fn to call
 function buildSortControl(page){
   const sortKey=page==='prod'?S._prodSortKey:S._stockSortKey;
   const sortDir=page==='prod'?S._prodSortDir:S._stockSortDir;
   const mk=(field,label)=>{
     const active=sortKey===field;
-    const isTextSort=field==='color'||field==='size';
-    const dirLabel=active?(sortDir==='asc'?(isTextSort?'A→Z':'ต่ำ→สูง'):(isTextSort?'Z→A':'สูง→ต่ำ')):(isTextSort?'A→Z':'สูง→ต่ำ');
+    const dirLabel=active?(sortDir==='asc'?'ต่ำ→สูง':'สูง→ต่ำ'):'สูง→ต่ำ';
     return `<button onclick="toggleListSort('${page}','${field}')"
       style="padding:5px 12px;border:1.5px solid ${active?'var(--accent)':'var(--border)'};border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;
       background:${active?'var(--accent)':'var(--card)'};color:${active?'#fff':'#888'};white-space:nowrap;flex-shrink:0"
-      title="คลิกเพื่อสลับทิศทางการเรียง">${label}: ${dirLabel} ${active?(sortDir==='asc'?'▲':'▼'):''}</button>`;
+      title="คลิกเพื่อสลับ สูง↔ต่ำ">${label}: ${dirLabel} ${active?(sortDir==='asc'?'▲':'▼'):''}</button>`;
   };
-  return mk('price','ราคา')+mk('stock','สต็อก')+mk('color','สี')+mk('size','ไซส์');
+  return mk('price','ราคา')+mk('stock','สต็อก');
 }
 function toggleListSort(page,field){
   const keyField=page==='prod'?'_prodSortKey':'_stockSortKey';
