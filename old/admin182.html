@@ -3786,13 +3786,6 @@ function prodForm(p={}){
       ${BRAND_OPTIONS.map(b=>`<option value="${b}" ${ (p.brand||'')===b?'selected':''}>${b}</option>`).join('')}
     </select>
   </div>
-  <div class="fm">
-    <label class="fl">FIA</label>
-    <select class="fc" id="pFia">
-      <option value="FIA" ${(p.fia||'FIA')==='FIA'?'selected':''}>FIA</option>
-      <option value="NON FIA" ${p.fia==='NON FIA'?'selected':''}>NON FIA</option>
-    </select>
-  </div>
   <div class="fm"><label class="fl">หน่วยนับ</label><input class="fc" id="pUnit" value="${p.unit||''}" placeholder="เช่น ชิ้น, คู่, อัน"></div>
   <div class="fm"><label class="fl">ราคาต้นทุน ()</label><input type="number" class="fc" id="pCost" value="${p.cost||''}" min="0"></div>
   <div class="fm"><label class="fl">ราคาขาย ()</label><input type="number" class="fc" id="pPrice" value="${p.price||''}" min="0"></div>
@@ -3878,7 +3871,6 @@ async function saveProduct(id){
     name:document.getElementById('pName').value,
     category:document.getElementById('pCat').value,
     brand:document.getElementById('pBrand')?.value||'',
-    fia:document.getElementById('pFia')?.value||'',
     unit:document.getElementById('pUnit').value,
     cost:parseFloat(document.getElementById('pCost').value)||0,
     price:parseFloat(document.getElementById('pPrice').value)||0,
@@ -4106,12 +4098,6 @@ function openBulkProduct(){
         <div><label class="fl">แบรนด์</label>
           <select class="fc" id="bpBrand" style="font-size:13px">
             ${BRAND_OPTIONS.map(b=>`<option value="${b}">${b}</option>`).join('')}
-          </select>
-        </div>
-        <div><label class="fl">FIA</label>
-          <select class="fc" id="bpFia" style="font-size:13px">
-            <option value="FIA">FIA</option>
-            <option value="NON FIA">NON FIA</option>
           </select>
         </div>
         <div><label class="fl">รหัสสินค้า prefix</label><input class="fc" id="bpCodePfx" placeholder="เช่น SP001" style="font-size:13px"></div>
@@ -4446,7 +4432,6 @@ async function saveBulkProducts(){
 
   const cat=document.getElementById('bpCat')?.value||'';
   const brand=document.getElementById('bpBrand')?.value||'';
-  const fia=document.getElementById('bpFia')?.value||'';
   const unit=document.getElementById('bpUnit')?.value||'ชิ้น';
   const cost=parseFloat(document.getElementById('bpCost')?.value)||0;
   const minStock=parseInt(document.getElementById('bpMin')?.value)||2;
@@ -4480,7 +4465,6 @@ async function saveBulkProducts(){
     code:r.code.trim(),
     name:r.name||name,
     category:cat,brand,unit,cost,
-    fia,
     price:r.price||0,
     stock:r.stock||0,
     minStock,
