@@ -3785,7 +3785,6 @@ function prodForm(p={}){
     </div>
   </div>
   <div class="fm" style="grid-column:1/-1"><label class="fl">คำอธิบายสินค้า (แสดงในร้านค้าออนไลน์)</label><textarea class="fc" id="pDesc" rows="2" style="resize:vertical">${p.description||''}</textarea></div>
-  <div class="fm" style="grid-column:1/-1"><label class="fl" style="color:#7c3aed;font-weight:700">🔧 ไซส์ / สี (variations) <span style="font-weight:400;font-size:11px;color:var(--muted)">เช่น XS / Black หรือ 44 / Red — ใช้แสดงตัวเลือกใน shop</span></label><input class="fc" id="pVariations" value="${p.variations||''}" placeholder="เช่น XS / Black"></div>
   <div class="fm" style="grid-column:1/-1"><label class="fl" style="color:#e85d04;font-weight:700">🔗 SKU Demon Tweeks</label><input class="fc" id="pSkuDemon" value="${p.skuDemonTweeks||''}" placeholder="เช่น DT-12345 (กรอกถ้ามี)" style="border-color:#e85d04"></div>
 </div>`;
 }
@@ -3849,7 +3848,6 @@ async function saveProduct(id){
     imageUrl:imgUrl,
     images:imgUrls,
     description:document.getElementById('pDesc').value||'',
-    variations:document.getElementById('pVariations')?.value?.trim()||'',
     skuDemonTweeks:document.getElementById('pSkuDemon')?.value?.trim()||''
   };
   if(!data.code||!data.name){toast('กรุณากรอกรหัสและชื่อ','error');return;}
@@ -3866,7 +3864,7 @@ function openBulkEdit(){
   S.products.forEach(p=>{
     const bn=p.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*[/|]\s*\S.*$/i,'')
       .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*$/i,'')
-      .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Cream|Gold|Brown|Carbon)\s*$/i,'')
+      .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon)\s*$/i,'')
       .trim();
     if(!groups.has(bn)) groups.set(bn,[]);
     groups.get(bn).push(p);
@@ -3903,7 +3901,7 @@ function openBulkEditGroup(baseName){
   const prods=S.products.filter(p=>{
     const bn=p.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*[/|]\s*\S.*$/i,'')
       .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*$/i,'')
-      .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Cream|Gold|Brown|Carbon)\s*$/i,'')
+      .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon)\s*$/i,'')
       .trim();
     return bn===baseName;
   });
@@ -4119,7 +4117,7 @@ function openBulkProduct(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div style="font-weight:700;color:var(--primary);font-size:13px">สี (Color)</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${['Black','White','Red','Blue','Navy','Grey','Silver','Yellow','Orange','Green','Pink','Purple','Cream','Gold','Brown'].map(s=>`
+          ${['Black','White','Red','Blue','Navy','Grey','Silver','Yellow','Orange','Green'].map(s=>`
             <button onclick="toggleBpTag('color','${s}',this)"
               style="padding:3px 10px;border:1.5px solid var(--border);border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#888;font-family:'Sarabun',sans-serif;transition:all .13s"
               data-tag="${s}">${s}</button>`).join('')}
