@@ -975,8 +975,14 @@ function groupProducts(list){
     const hasVar=p.variations&&p.variations.trim();
     let key;
     if(hasVar){
+      const pfx=getCodePrefix(p.code);
       const bn=getBaseName(p.name);
-      key='name:'+bn;
+      // ใช้ key = pfx+baseName เพื่อป้องกัน code สั้นๆ เช่น "ชุดแข่" group ข้ามรุ่น
+      if(pfx && pfx.length>4 && pfx!==p.code){
+        key='pfx:'+pfx+':'+bn;
+      } else {
+        key='name:'+bn;
+      }
     } else {
       key='solo:'+p.id;
     }
