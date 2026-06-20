@@ -3955,12 +3955,9 @@ function openBulkEditGroup(baseName){
   });
   if(!prods.length) return;
 
-  // เลือก rep ที่มีต้นทุน > 0 ก่อน แล้วค่อย fallback
-  const rep=prods.find(p=>(p.cost||0)>0&&(p.price||0)>0)
-    ||prods.find(p=>(p.price||0)>0)
-    ||prods[0];
-  const repImg=prods.find(p=>p.imageUrl||p.image)||rep;
-  const imgVal=(repImg.imageUrl||repImg.image||'').replace(/"/g,'&quot;');
+  // ใช้ตัวที่มีข้อมูลครบที่สุดเป็น rep (มีราคา + รูป)
+  const rep=prods.find(p=>(p.price||0)>0&&(p.imageUrl||p.image))||prods.find(p=>(p.price||0)>0)||prods[0];
+  const imgVal=(rep.imageUrl||rep.image||'').replace(/"/g,'&quot;');
   const descVal=(rep.description||rep.desc||'').replace(/"/g,'&quot;');
   const cats=sortCatsByPriority([...new Set(S.products.map(p=>p.category).filter(Boolean))]);
 
