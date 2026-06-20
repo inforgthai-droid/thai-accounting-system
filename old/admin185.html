@@ -3954,27 +3954,13 @@ function openBulkEditGroup(baseName){
     return bn===baseName;
   });
   if(!prods.length) return;
-
-  // ใช้ตัวที่มีข้อมูลครบที่สุดเป็น rep (มีราคา + รูป)
-  const rep=prods.find(p=>(p.price||0)>0&&(p.imageUrl||p.image))||prods.find(p=>(p.price||0)>0)||prods[0];
-  const imgVal=(rep.imageUrl||rep.image||'').replace(/"/g,'&quot;');
-  const descVal=(rep.description||rep.desc||'').replace(/"/g,'&quot;');
+  const rep=prods[0];
   const cats=sortCatsByPriority([...new Set(S.products.map(p=>p.category).filter(Boolean))]);
-
   window._beRows=prods.map(p=>({
     id:p.id, name:p.name, code:p.code||'',
     price:p.price||0, cost:p.cost||0,
-    stock:p.stock||0, minStock:p.minStock||p.min||1,
-    imageUrl:p.imageUrl||p.image||'',
-    variations:p.variations||''
+    stock:p.stock||0, minStock:p.minStock||p.min||1
   }));
-
-  // helper แยก size/color จาก variations หรือชื่อ
-  const getVariant=(p)=>{
-    if(p.variations&&p.variations.trim()) return p.variations.trim();
-    const m=p.name.match(/\s+((?:XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})(?:\s*[\/|]\s*\S+)?)\s*$/i);
-    return m?m[1]:'';
-  };
 
   openModal(`✏️ แก้ไขกลุ่ม: ${baseName}`,`
     <!-- ข้อมูลหลัก -->
@@ -4008,26 +3994,26 @@ function openBulkEditGroup(baseName){
             <option value="1" ${rep.countStock==1?'selected':''}>นับมูลค่าสต็อก</option>
           </select>
         </div>
+        <div><label class="fl">รหัสสินค้า prefix</label>
+          <input class="fc" id="be-codePfx" placeholder="เช่น SP001" style="font-size:13px">
+        </div>
         <div><label class="fl">ราคาต้นทุน ()</label>
-          <input type="number" class="fc" id="be-cost" value="${rep.cost||0}" min="0" style="font-size:13px"
-            placeholder="(เว้นว่าง = ไม่เปลี่ยน)">
+          <input type="number" class="fc" id="be-cost" value="${rep.cost||0}" min="0" style="font-size:13px">
         </div>
         <div><label class="fl">ราคาขาย ()</label>
-          <input type="number" class="fc" id="be-price" value="${rep.price||0}" min="0" style="font-size:13px"
-            placeholder="(เว้นว่าง = ไม่เปลี่ยน)">
+          <input type="number" class="fc" id="be-price" value="${rep.price||0}" min="0" style="font-size:13px">
         </div>
-        <div></div>
         <div style="grid-column:1/-1">
           <label class="fl">รูปภาพ URL (ใช้ร่วมกันทุก variant)</label>
           <div style="display:flex;gap:8px;align-items:center">
-            <input class="fc" id="be-img" value="${imgVal}" placeholder="https://..." style="flex:1;font-size:13px"
+            <input class="fc" id="be-img" placeholder="https://..." style="flex:1;font-size:13px"
               oninput="const img=document.getElementById('beImgPreview');if(img){img.src=this.value;img.style.display=this.value?'block':'none'}">
-            <img id="beImgPreview" src="${imgVal}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:${imgVal?'block':'none'}">
+            <img id="beImgPreview" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:none">
           </div>
         </div>
         <div style="grid-column:1/-1">
           <label class="fl">คำอธิบาย</label>
-          <textarea class="fc" id="be-desc" rows="2" style="font-size:13px;resize:vertical">${descVal}</textarea>
+          <textarea class="fc" id="be-desc" rows="2" style="font-size:13px;resize:vertical"></textarea>
         </div>
       </div>
     </div>
@@ -4039,24 +4025,18 @@ function openBulkEditGroup(baseName){
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead>
             <tr style="background:var(--bg2);color:var(--muted);text-align:left">
-              <th style="padding:7px 8px;font-weight:600;white-space:nowrap">สี / ไซส์ / Variant</th>
+              <th style="padding:7px 8px;font-weight:600;white-space:nowrap">ชื่อ / Variant</th>
               <th style="padding:7px 8px;font-weight:600;white-space:nowrap">รหัสสินค้า</th>
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">ราคาขาย</th>
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">ต้นทุน</th>
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">สต็อก</th>
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">Min</th>
-              <th style="padding:7px 8px;font-weight:600;white-space:nowrap">รูป</th>
             </tr>
           </thead>
           <tbody id="beVariantTbody">
-            ${prods.map((p,i)=>{
-              const varLabel=getVariant(p)||p.name.replace(baseName,'').trim()||'-';
-              const pImg=p.imageUrl||p.image||'';
-              return`<tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:6px 8px;white-space:nowrap">
-                <div style="font-weight:700;font-size:12px;color:var(--primary)">${varLabel}</div>
-                <div style="font-size:10px;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-              </td>
+            ${prods.map((p,i)=>`
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:6px 8px;font-weight:600;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis" title="${p.name}">${p.name}</td>
               <td style="padding:4px 8px">
                 <input type="text" value="${(p.code||'').replace(/"/g,'&quot;')}"
                   onchange="window._beRows[${i}].code=this.value.trim()" onclick="this.select()"
@@ -4082,14 +4062,11 @@ function openBulkEditGroup(baseName){
                   onchange="window._beRows[${i}].minStock=parseInt(this.value)||1" onclick="this.select()"
                   style="width:55px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
               </td>
-              <td style="padding:4px 8px">
-                ${pImg?`<img src="${pImg}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">`:'<span style="color:var(--muted);font-size:10px">ไม่มีรูป</span>'}
-              </td>
-            </tr>`;}).join('')}
+            </tr>`).join('')}
           </tbody>
         </table>
       </div>
-      <!-- bulk set ทุก variant -->
+      <!-- bulk set ราคา/ต้นทุนทุก variant -->
       <div style="margin-top:10px;padding:8px 10px;background:var(--bg2);border-radius:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--muted);font-weight:600">ตั้งค่าทุก variant:</span>
         <input type="number" id="be-bulk-price" placeholder="ราคาขาย" style="width:90px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
@@ -4107,6 +4084,17 @@ function openBulkEditGroup(baseName){
      <button class="btn" style="background:#065f46;color:#fff" onclick="saveBulkEditGroup()">💾 บันทึกทั้งกลุ่ม (${prods.length} รายการ)</button>`,
     {wide:true}
   );
+  setTimeout(()=>{
+    const imgInput=document.getElementById('be-img');
+    const imgPreview=document.getElementById('beImgPreview');
+    const descInput=document.getElementById('be-desc');
+    const imgVal=rep.image||rep.imageUrl||'';
+    if(imgInput && !imgVal.startsWith('data:')) {
+      imgInput.value=imgVal;
+      if(imgPreview && imgVal){imgPreview.src=imgVal;imgPreview.style.display='block';}
+    }
+    if(descInput) descInput.value=rep.description||rep.desc||'';
+  },50);
 }
 
 async function saveBulkEditGroup(){
