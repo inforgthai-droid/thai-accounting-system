@@ -3793,13 +3793,6 @@ function prodForm(p={}){
       <option value="NON FIA" ${p.fia==='NON FIA'?'selected':''}>NON FIA</option>
     </select>
   </div>
-  <div class="fm">
-    <label class="fl">มูลค่าสต็อก</label>
-    <select class="fc" id="pCountStock">
-      <option value="0" ${!p.countStock||p.countStock==0?'selected':''}>ไม่นับมูลค่าสต็อก</option>
-      <option value="1" ${p.countStock==1?'selected':''}>นับมูลค่าสต็อก</option>
-    </select>
-  </div>
   <div class="fm"><label class="fl">หน่วยนับ</label><input class="fc" id="pUnit" value="${p.unit||''}" placeholder="เช่น ชิ้น, คู่, อัน"></div>
   <div class="fm"><label class="fl">ราคาต้นทุน ()</label><input type="number" class="fc" id="pCost" value="${p.cost||''}" min="0"></div>
   <div class="fm"><label class="fl">ราคาขาย ()</label><input type="number" class="fc" id="pPrice" value="${p.price||''}" min="0"></div>
@@ -3886,7 +3879,6 @@ async function saveProduct(id){
     category:document.getElementById('pCat').value,
     brand:document.getElementById('pBrand')?.value||'',
     fia:document.getElementById('pFia')?.value||'',
-    countStock:parseInt(document.getElementById('pCountStock')?.value)||0,
     unit:document.getElementById('pUnit').value,
     cost:parseFloat(document.getElementById('pCost').value)||0,
     price:parseFloat(document.getElementById('pPrice').value)||0,
@@ -4120,12 +4112,6 @@ function openBulkProduct(){
           <select class="fc" id="bpFia" style="font-size:13px">
             <option value="FIA">FIA</option>
             <option value="NON FIA">NON FIA</option>
-          </select>
-        </div>
-        <div><label class="fl">มูลค่าสต็อก</label>
-          <select class="fc" id="bpCountStock" style="font-size:13px">
-            <option value="0" selected>ไม่นับมูลค่าสต็อก</option>
-            <option value="1">นับมูลค่าสต็อก</option>
           </select>
         </div>
         <div><label class="fl">รหัสสินค้า prefix</label><input class="fc" id="bpCodePfx" placeholder="เช่น SP001" style="font-size:13px"></div>
@@ -4461,7 +4447,6 @@ async function saveBulkProducts(){
   const cat=document.getElementById('bpCat')?.value||'';
   const brand=document.getElementById('bpBrand')?.value||'';
   const fia=document.getElementById('bpFia')?.value||'';
-  const countStock=parseInt(document.getElementById('bpCountStock')?.value)||0;
   const unit=document.getElementById('bpUnit')?.value||'ชิ้น';
   const cost=parseFloat(document.getElementById('bpCost')?.value)||0;
   const minStock=parseInt(document.getElementById('bpMin')?.value)||2;
@@ -4495,7 +4480,7 @@ async function saveBulkProducts(){
     code:r.code.trim(),
     name:r.name||name,
     category:cat,brand,unit,cost,
-    fia,countStock,
+    fia,
     price:r.price||0,
     stock:r.stock||0,
     minStock,
@@ -4710,7 +4695,7 @@ function renderStock(){
   const q=S._stockQ||'';
   const statusF=S._stockStatus||'all';
   const catList=S._stockCat?S.products.filter(p=>p.category===S._stockCat):S.products;
-  const totalVal=catList.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+  const totalVal=catList.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
   const cats=sortCatsByPriority([...new Set(S.products.map(p=>p.category).filter(Boolean))]);
   const catLabel=S._stockCat?` — ${S._stockCat}`:'';
 
@@ -4896,7 +4881,7 @@ function _updateStockTable(){
   if(statGrid){
     const catList=S._stockCat?S.products.filter(p=>p.category===S._stockCat):S.products;
     const catLabel=S._stockCat?` — ${S._stockCat}`:'';
-    const mv=catList.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+    const mv=catList.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
     statGrid.innerHTML=
       sc('สินค้าทั้งหมด'+catLabel,catList.length+' ชนิด','#0ea5e9')+
       sc('มูลค่าสต็อก'+catLabel,''+fmt(mv),'#7c3aed')+
@@ -7065,7 +7050,7 @@ function renderCategories(){
           const prods=S.products.filter(p=>p.category===cat);
           const withPrice=prods.filter(p=>p.price>0).length;
           const withStock=prods.filter(p=>p.stock>0).length;
-          const stockVal=prods.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+          const stockVal=prods.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
           return`<tr style="background:${i%2===0?'#fff':'#f8fafc'};border-bottom:1px solid var(--border)">
             <td style="padding:8px;font-weight:600">${cat}</td>
             <td style="padding:8px;text-align:right">${prods.length}</td>
@@ -8717,7 +8702,7 @@ function printStockReport(mode){
   const instockP=allP.filter(p=>(p.stock||0)>0);
   const list=mode==='instock'?instockP:allP;
   const label=mode==='instock'?'สต็อกสินค้าที่มีอยู่':'สต็อกสินค้าทั้งหมด';
-  const mv=list.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+  const mv=list.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
   const hdr=`<div class="ph"><div class="ph-logo">${c.logoUrl?`<img src="${c.logoUrl}" style="width:56px;height:56px;object-fit:cover;border-radius:8px">`:(c.logoEmoji||'🏪')}</div><div class="ph-name">${c.name||'ร้านค้า'}</div>`+
     `<div class="ph-info">${[c.address,c.tel?'โทร '+c.tel:'',c.taxId?'เลขภาษี '+c.taxId:''].filter(Boolean).join(' | ')}</div>`+
     `<div class="ph-title">📄 ${label}</div><div class="ph-date">${now}</div></div>`;
@@ -8782,13 +8767,13 @@ function printPage(){
         ''+fmt(s.subtotal),s.discount>0?'-'+fmt(s.discount):'-',''+fmt(s.vat),''+fmt(s.total),''+fmt((s.subtotal||0)-(s.totalCost||0))]));
   }
   else if(currentPage==='products'){
-    const mv=S.products.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+    const mv=S.products.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
     body=pStats([['สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9'],['มูลค่าสต็อก',''+fmt(mv),'#7c3aed'],['ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length+' ชนิด','#f59e0b'],['หมดสต็อก',S.products.filter(p=>p.stock<=0).length+' ชนิด','#ef4444']]);
     body+=pTable(['รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย'],
       S.products.map(p=>[p.code,p.name,p.category||'-',p.unit||'-',''+fmt(p.cost),''+fmt(p.price),p.stock,p.minStock||5,''+fmt((p.price||0)-(p.cost||0))]));
   }
   else if(currentPage==='stock'){
-    const mv=S.products.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+    const mv=S.products.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
     body=pStats([['สินค้าทั้งหมด',S.products.length+' ชนิด','#0ea5e9'],['มูลค่าสต็อก',''+fmt(mv),'#7c3aed'],['ใกล้หมด',S.products.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length+' ชนิด','#f59e0b'],['หมดสต็อก',S.products.filter(p=>p.stock<=0).length+' ชนิด','#ef4444']]);
     body+=pTable(['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','สถานะ'],
       S.products.map(p=>[p.code,p.name,p.category||'-',p.unit||'-',p.stock,p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),p.stock<=0?'หมด':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ']));
