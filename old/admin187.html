@@ -4775,11 +4775,7 @@ function renderStock(){
   const q=S._stockQ||'';
   const statusF=S._stockStatus||'all';
   const catList=S._stockCat?S.products.filter(p=>p.category===S._stockCat):S.products;
-  // mode: 'counted' = นับเฉพาะที่ตั้งค่าไว้, 'all' = นับทั้งหมด (ต้นทุน*สต็อก รวม 0 สต็อก)
-  if(!S._stockValMode) S._stockValMode='counted';
-  const totalVal=S._stockValMode==='all'
-    ? catList.filter(p=>(p.cost||0)>0).reduce((a,p)=>a+(p.cost||0)*((p.stock||0)>0?(p.stock||0):1),0)
-    : catList.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+  const totalVal=catList.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
   const cats=sortCatsByPriority([...new Set(S.products.map(p=>p.category).filter(Boolean))]);
   const catLabel=S._stockCat?` — ${S._stockCat}`:'';
 
@@ -4809,9 +4805,6 @@ function renderStock(){
       `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button> <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>`];
   });
 
-  const modeLabel=S._stockValMode==='all'?'สต็อกรวมทั้งหมด':'นับตามที่กำหนด';
-  const modeColor=S._stockValMode==='all'?'#0ea5e9':'#7c3aed';
-
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">สต็อกสินค้า</div>
   <div style="display:flex;gap:8px">
@@ -4822,29 +4815,7 @@ function renderStock(){
   </div>
   <div class="stat-grid" id="stock-stat-grid" style="grid-template-columns:repeat(4,1fr)">
     ${sc('สินค้าทั้งหมด'+catLabel,catList.length+' ชนิด','#0ea5e9')}
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1rem;position:relative">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:2px">มูลค่าสต็อก${catLabel}</div>
-      <div style="font-size:22px;font-weight:800;color:${modeColor}">${fmt(totalVal)}</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">
-        ${S._stockValMode==='counted'
-          ?'เฉพาะสินค้าที่ตั้งค่า "นับมูลค่าสต็อก" × จำนวนสต็อก'
-          :'ทุกสินค้าที่มีต้นทุน × สต็อก (สต็อก 0 = นับ 1 หน่วย)'}
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <div style="display:flex;background:#f1f5f9;border-radius:20px;padding:2px;gap:2px">
-          <button onclick="S._stockValMode='counted';renderPage('stock')"
-            title="นับเฉพาะสินค้าที่เลือก 'นับมูลค่าสต็อก' ใน admin"
-            style="padding:3px 10px;border:none;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;
-            background:${S._stockValMode==='counted'?'#7c3aed':'transparent'};
-            color:${S._stockValMode==='counted'?'#fff':'#888'}">🔖 นับตามที่กำหนด</button>
-          <button onclick="S._stockValMode='all';renderPage('stock')"
-            title="นับทุกสินค้าที่มีต้นทุน รวมสต็อก 0 ด้วย"
-            style="padding:3px 10px;border:none;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;
-            background:${S._stockValMode==='all'?'#0ea5e9':'transparent'};
-            color:${S._stockValMode==='all'?'#fff':'#888'}">📊 รวมทั้งหมด</button>
-        </div>
-      </div>
-    </div>
+    ${sc('มูลค่าสต็อก'+catLabel,''+fmt(totalVal),'#7c3aed')}
     ${sc('ใกล้หมด'+catLabel,catList.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0).length+' ชนิด','#f59e0b')}
     ${sc('หมดสต็อก'+catLabel,catList.filter(p=>p.stock<=0).length+' ชนิด','#ef4444')}
   </div>
@@ -8784,77 +8755,52 @@ const PRINT_TITLES={
 
 // สร้าง HTML หัวกระดาษ
 function openStockPrintDialog(){
-  const vm=S._stockValMode||'counted';
-  const vmLabel=vm==='all'?'รวมทั้งหมด':'นับตามที่กำหนด';
   openModal('🖨️ พิมพ์รายงานสต็อก',`
-    <div style="margin-bottom:10px;padding:8px 12px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;font-size:13px">
-      โหมดมูลค่าสต็อกปัจจุบัน: <strong style="color:#0ea5e9">${vmLabel}</strong>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);padding:0 2px">เลือกรายการสินค้าที่ต้องการพิมพ์:</div>
-      <button class="btn btn-primary" style="padding:14px;font-size:15px;justify-content:flex-start;gap:12px" onclick="closeModal();printStockReport('instock','${vm}')">
+    <div style="display:flex;flex-direction:column;gap:12px;padding:4px 0">
+      <button class="btn btn-primary" style="padding:14px;font-size:15px;justify-content:flex-start;gap:12px" onclick="closeModal();printStockReport('instock')">
         <span style="font-size:20px">📦</span>
         <div style="text-align:left">
           <div style="font-weight:700">สต็อกสินค้าที่มีอยู่</div>
-          <div style="font-size:12px;opacity:.8;margin-top:2px">เฉพาะสินค้าคงเหลือ > 0 | มูลค่า: ${vmLabel}</div>
+          <div style="font-size:12px;opacity:.8;margin-top:2px">เฉพาะสินค้าที่คงเหลือ > 0</div>
         </div>
       </button>
-      <button class="btn btn-gray" style="padding:14px;font-size:15px;justify-content:flex-start;gap:12px;border:1px solid #e5e7eb" onclick="closeModal();printStockReport('all','${vm}')">
+      <button class="btn btn-gray" style="padding:14px;font-size:15px;justify-content:flex-start;gap:12px;border:1px solid #e5e7eb" onclick="closeModal();printStockReport('all')">
         <span style="font-size:20px">📋</span>
         <div style="text-align:left">
           <div style="font-weight:700">สต็อกสินค้าทั้งหมด</div>
-          <div style="font-size:12px;opacity:.8;margin-top:2px">รวมสินค้าหมดสต็อกด้วย | มูลค่า: ${vmLabel}</div>
+          <div style="font-size:12px;opacity:.8;margin-top:2px">รวมสินค้าหมดสต็อกด้วย</div>
         </div>
       </button>
-    </div>
-    <div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">เลือกพิมพ์แบบอื่น (override โหมด):</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="closeModal();printStockReport('instock','counted')" title="นับเฉพาะสินค้าที่ตั้งค่าไว้">📦 มีอยู่ | 🔖 นับตามที่กำหนด</button>
-        <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="closeModal();printStockReport('instock','all')" title="นับทุกสินค้าที่มีต้นทุน">📦 มีอยู่ | 📊 รวมทั้งหมด</button>
-        <button class="btn btn-sm" style="background:#475569;color:#fff" onclick="closeModal();printStockReport('all','counted')" title="นับเฉพาะสินค้าที่ตั้งค่าไว้">📋 ทั้งหมด | 🔖 นับตามที่กำหนด</button>
-        <button class="btn btn-sm" style="background:#0f172a;color:#fff" onclick="closeModal();printStockReport('all','all')">📋 ทั้งหมด | รวมทั้งหมด</button>
-      </div>
     </div>
   `,`<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>`);
 }
 
-function printStockReport(mode,valMode){
-  valMode=valMode||S._stockValMode||'counted';
+function printStockReport(mode){
   const c=S.company;
   const now=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
   const allP=S.products;
   const instockP=allP.filter(p=>(p.stock||0)>0);
   const list=mode==='instock'?instockP:allP;
-  const stockLabel=mode==='instock'?'สต็อกสินค้าที่มีอยู่':'สต็อกสินค้าทั้งหมด';
-  const valLabel=valMode==='all'?'รวมทั้งหมด':'นับตามที่กำหนด';
-  const label=`${stockLabel} (มูลค่า: ${valLabel})`;
-  const mv=valMode==='all'
-    ? list.filter(p=>(p.cost||0)>0).reduce((a,p)=>a+(p.cost||0)*((p.stock||0)>0?(p.stock||0):1),0)
-    : list.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+  const label=mode==='instock'?'สต็อกสินค้าที่มีอยู่':'สต็อกสินค้าทั้งหมด';
+  const mv=list.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
   const hdr=`<div class="ph"><div class="ph-logo">${c.logoUrl?`<img src="${c.logoUrl}" style="width:56px;height:56px;object-fit:cover;border-radius:8px">`:(c.logoEmoji||'🏪')}</div><div class="ph-name">${c.name||'ร้านค้า'}</div>`+
     `<div class="ph-info">${[c.address,c.tel?'โทร '+c.tel:'',c.taxId?'เลขภาษี '+c.taxId:''].filter(Boolean).join(' | ')}</div>`+
     `<div class="ph-title">📄 ${label}</div><div class="ph-date">${now}</div></div>`;
   let body=pStats([
     ['สินค้าในรายงาน',list.length+' ชนิด','#0ea5e9'],
-    ['มูลค่าสต็อก ('+valLabel+')',''+fmt(mv),'#7c3aed'],
+    ['มูลค่าสต็อก',''+fmt(mv),'#7c3aed'],
     ['ใกล้หมด',list.filter(p=>p.stock>0&&p.stock<=(p.minStock||5)).length+' ชนิด','#f59e0b'],
     ['หมดสต็อก',list.filter(p=>(p.stock||0)<=0).length+' ชนิด','#ef4444']
   ]);
   body+=pTable(
     ['รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','สถานะ'],
-    list.map(p=>{
-      const sv=valMode==='all'
-        ?(p.cost||0)*((p.stock||0)>0?(p.stock||0):1)
-        :(p.countStock==1?(p.cost||0)*(p.stock||0):0);
-      return[p.code,p.name,p.category||'-',p.unit||'-',p.stock,p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt(sv),(p.stock||0)<=0?'หมด':(p.stock||0)<=(p.minStock||5)?'ใกล้หมด':'ปกติ'];
-    })
+    list.map(p=>[p.code,p.name,p.category||'-',p.unit||'-',p.stock,p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),(p.stock||0)<=0?'หมด':(p.stock||0)<=(p.minStock||5)?'ใกล้หมด':'ปกติ'])
   );
   const pw=window.open('','_blank','width=900,height=750,scrollbars=yes');
   if(!pw){alert('กรุณาอนุญาต Popup ในเบราว์เซอร์เพื่อพิมพ์ครับ');return;}
   pw.document.open();
   pw.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">');
-  pw.document.write('<title>'+stockLabel+'</title>');
+  pw.document.write('<title>'+label+'</title>');
   pw.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">');
   pw.document.write('<style>');
   pw.document.write('*{box-sizing:border-box;margin:0;padding:0}');
@@ -8875,7 +8821,7 @@ function printStockReport(mode,valMode){
   pw.document.write('@page{size:A4;margin:0}@media print{body{padding:1cm}}');
   pw.document.write('</style></head><body>');
   pw.document.write(hdr+body);
-  pw.document.write('<div class="footer">'+c.name+' | '+now+' | โหมดมูลค่า: '+valLabel+'</div>');
+  pw.document.write('<div class="footer">'+c.name+' | '+now+'</div>');
   pw.document.write('<script>window.onload=function(){window.print();}<\/script>');
   pw.document.write('</body></html>');
   pw.document.close();
