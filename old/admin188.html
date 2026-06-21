@@ -4023,10 +4023,9 @@ function openBulkEditGroup(baseName){
         <div style="grid-column:1/-1">
           <label class="fl">รูปภาพ URL (ใช้ร่วมกันทุก variant)</label>
           <div style="display:flex;gap:8px;align-items:center">
-            <input class="fc" id="be-img" value="" placeholder="เว้นว่าง = คงรูปเดิมของแต่ละ variant | ใส่ URL ใหม่ = ใช้รูปนี้ทุก variant" style="flex:1;font-size:12px"
+            <input class="fc" id="be-img" value="${imgVal}" placeholder="https://..." style="flex:1;font-size:13px"
               oninput="const img=document.getElementById('beImgPreview');if(img){img.src=this.value;img.style.display=this.value?'block':'none'}">
-            ${imgVal?`<div style="text-align:center;font-size:10px;color:var(--muted)">ปัจจุบัน<br><img src="${imgVal}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:block;margin-top:2px"></div>`:''}
-            <img id="beImgPreview" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:2px solid #0ea5e9;display:none" title="รูปใหม่ที่จะใช้">
+            <img id="beImgPreview" src="${imgVal}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:${imgVal?'block':'none'}">
           </div>
         </div>
         <div style="grid-column:1/-1">
@@ -4121,8 +4120,9 @@ async function saveBulkEditGroup(){
   const brand=document.getElementById('be-brand')?.value||'';
   const fia=document.getElementById('be-fia')?.value||'FIA';
   const countStock=parseInt(document.getElementById('be-countStock')?.value)||0;
-  const newImage=document.getElementById('be-img')?.value?.trim()||''; // ว่าง = ไม่ override
+  const image=document.getElementById('be-img')?.value||'';
   const description=document.getElementById('be-desc')?.value||'';
+  // ราคา/ต้นทุนจาก field หลัก (ถ้ากรอก ให้ override ทุก variant)
   const masterPrice=parseFloat(document.getElementById('be-price')?.value);
   const masterCost=parseFloat(document.getElementById('be-cost')?.value);
   try{
@@ -4136,8 +4136,7 @@ async function saveBulkEditGroup(){
         minStock:r.minStock,
         unit,category,brand,fia,countStock
       };
-      // อัปเดตรูปเฉพาะเมื่อกรอก URL ใหม่ — ไม่งั้นคง imageUrl เดิมของแต่ละ variant
-      if(newImage) upd.imageUrl=newImage;
+      if(image) upd.imageUrl=image;
       if(description) upd.description=description;
       batch.update(db.collection('products').doc(r.id),upd);
     });
@@ -4152,7 +4151,7 @@ async function saveBulkEditGroup(){
         cost:isNaN(masterCost)?r.cost:masterCost,
         stock:r.stock,minStock:r.minStock,
         unit,category,brand,fia,countStock,
-        ...(newImage?{imageUrl:newImage}:{}),  // ไม่ override ถ้าไม่ได้กรอกใหม่
+        ...(image?{imageUrl:image}:{}),
         ...(description?{description}:{})
       };
     });
