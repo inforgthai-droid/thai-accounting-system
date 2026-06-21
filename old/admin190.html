@@ -4126,19 +4126,13 @@ async function saveBulkEditGroup(){
   const brand=document.getElementById('be-brand')?.value||'';
   const fia=document.getElementById('be-fia')?.value||'FIA';
   const countStock=parseInt(document.getElementById('be-countStock')?.value)||0;
-  const newImage=document.getElementById('be-img')?.value?.trim()||'';
+  const newImage=document.getElementById('be-img')?.value?.trim()||''; // ว่าง = ไม่ override
   const description=document.getElementById('be-desc')?.value||'';
   const masterPrice=parseFloat(document.getElementById('be-price')?.value);
   const masterCost=parseFloat(document.getElementById('be-cost')?.value);
   try{
-    // ตรวจสอบก่อนว่า document มีอยู่จริงใน Firestore
-    const checks=await Promise.all(rows.map(r=>db.collection('products').doc(r.id).get()));
-    const validRows=rows.filter((_,i)=>checks[i].exists);
-    const skipped=rows.length-validRows.length;
-    if(!validRows.length){toast('ไม่พบสินค้าใน Firestore เลย อาจถูกลบไปแล้ว','error');return;}
-
     const batch=db.batch();
-    validRows.forEach(r=>{
+    rows.forEach(r=>{
       const upd={
         code:r.code,
         price:isNaN(masterPrice)?r.price:masterPrice,
@@ -4147,13 +4141,13 @@ async function saveBulkEditGroup(){
         minStock:r.minStock,
         unit,category,brand,fia,countStock
       };
+      // อัปเดตรูปเฉพาะเมื่อกรอก URL ใหม่ — ไม่งั้นคง imageUrl เดิมของแต่ละ variant
       if(newImage) upd.imageUrl=newImage;
       if(description) upd.description=description;
       batch.update(db.collection('products').doc(r.id),upd);
     });
     await batch.commit();
-
-    const idMap=Object.fromEntries(validRows.map(r=>[r.id,r]));
+    const idMap=Object.fromEntries(rows.map(r=>[r.id,r]));
     S.products=S.products.map(p=>{
       if(!idMap[p.id]) return p;
       const r=idMap[p.id];
@@ -4163,15 +4157,12 @@ async function saveBulkEditGroup(){
         cost:isNaN(masterCost)?r.cost:masterCost,
         stock:r.stock,minStock:r.minStock,
         unit,category,brand,fia,countStock,
-        ...(newImage?{imageUrl:newImage}:{}),
+        ...(newImage?{imageUrl:newImage}:{}),  // ไม่ override ถ้าไม่ได้กรอกใหม่
         ...(description?{description}:{})
       };
     });
     closeModal();
-    const msg=skipped>0
-      ?`อัปเดต ${validRows.length} variants สำเร็จ ✓ (ข้าม ${skipped} รายการที่ถูกลบไปแล้ว)`
-      :`อัปเดต ${validRows.length} variants สำเร็จ ✓`;
-    toast(msg,'success');
+    toast(`อัปเดต ${rows.length} variants สำเร็จ ✓`,'success');
     renderPage('products');
   }catch(e){
     toast('Error: '+e.message,'error');
