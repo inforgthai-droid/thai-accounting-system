@@ -4020,24 +4020,6 @@ function openBulkEditGroup(baseName){
             placeholder="(เว้นว่าง = ไม่เปลี่ยน)">
         </div>
         <div></div>
-        <!-- ตั้งค่าทุก variant — ย้ายมาอยู่เหนือรูปภาพ -->
-        <div style="grid-column:1/-1">
-          <label class="fl">ตั้งค่าทุก Variant พร้อมกัน</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:var(--bg2);border-radius:6px;border:1px solid var(--border)">
-            <input type="number" id="be-bulk-price" placeholder="ราคาขาย" style="width:90px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
-            <button onclick="(()=>{const v=parseFloat(document.getElementById('be-bulk-price').value)||0;window._beRows.forEach((r,i)=>{r.price=v;const inp=document.querySelectorAll('#beVariantTbody tr')[i]?.querySelectorAll('input[type=number]')[0];if(inp)inp.value=v;});toast('ตั้งราคาครบแล้ว','success')})()" 
-              style="padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">ตั้งราคา</button>
-            <input type="number" id="be-bulk-cost" placeholder="ต้นทุน" style="width:90px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
-            <button onclick="(()=>{const v=parseFloat(document.getElementById('be-bulk-cost').value)||0;window._beRows.forEach((r,i)=>{r.cost=v;const inp=document.querySelectorAll('#beVariantTbody tr')[i]?.querySelectorAll('input[type=number]')[1];if(inp)inp.value=v;});toast('ตั้งต้นทุนครบแล้ว','success')})()"
-              style="padding:4px 10px;background:#065f46;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">ตั้งต้นทุน</button>
-            <input type="number" id="be-bulk-stock" placeholder="สต็อก" style="width:80px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
-            <button onclick="(()=>{const v=parseInt(document.getElementById('be-bulk-stock').value)||0;window._beRows.forEach((r,i)=>{r.stock=v;const inp=document.querySelectorAll('#beVariantTbody tr')[i]?.querySelectorAll('input[type=number]')[2];if(inp)inp.value=v;});toast('ตั้งสต็อกครบแล้ว','success')})()"
-              style="padding:4px 10px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">ตั้งสต็อก</button>
-            <input type="number" id="be-bulk-min" placeholder="Min" style="width:70px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
-            <button onclick="(()=>{const v=parseInt(document.getElementById('be-bulk-min').value)||1;window._beRows.forEach((r,i)=>{r.minStock=v;const inp=document.querySelectorAll('#beVariantTbody tr')[i]?.querySelectorAll('input[type=number]')[3];if(inp)inp.value=v;});toast('ตั้ง Min ครบแล้ว','success')})()"
-              style="padding:4px 10px;background:#b45309;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">ตั้ง Min</button>
-          </div>
-        </div>
         <div style="grid-column:1/-1">
           <label class="fl">รูปภาพ URL (ใช้ร่วมกันทุก variant)</label>
           <div style="display:flex;gap:8px;align-items:center">
@@ -4110,6 +4092,19 @@ function openBulkEditGroup(baseName){
             </tr>`;}).join('')}
           </tbody>
         </table>
+      </div>
+      <!-- bulk set ทุก variant -->
+      <div style="margin-top:10px;padding:8px 10px;background:var(--bg2);border-radius:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--muted);font-weight:600">ตั้งค่าทุก variant:</span>
+        <input type="number" id="be-bulk-price" placeholder="ราคาขาย" style="width:90px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
+        <button onclick="(()=>{const v=parseFloat(document.getElementById('be-bulk-price').value)||0;window._beRows.forEach((r,i)=>{r.price=v;const inp=document.querySelectorAll('#beVariantTbody tr')[i]?.querySelectorAll('input[type=number]')[0];if(inp)inp.value=v;});toast('ตั้งราคาครบแล้ว','success')})()" 
+          style="padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">ตั้งราคา</button>
+        <input type="number" id="be-bulk-cost" placeholder="ต้นทุน" style="width:90px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
+        <button onclick="(()=>{const v=parseFloat(document.getElementById('be-bulk-cost').value)||0;window._beRows.forEach((r,i)=>{r.cost=v;const inp=document.querySelectorAll('#beVariantTbody tr')[i]?.querySelectorAll('input[type=number]')[1];if(inp)inp.value=v;});toast('ตั้งต้นทุนครบแล้ว','success')})()"
+          style="padding:4px 10px;background:#065f46;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">ตั้งต้นทุน</button>
+        <input type="number" id="be-bulk-stock" placeholder="สต็อก" style="width:80px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg)">
+        <button onclick="(()=>{const v=parseInt(document.getElementById('be-bulk-stock').value)||0;window._beRows.forEach((r,i)=>{r.stock=v;const inp=document.querySelectorAll('#beVariantTbody tr')[i]?.querySelectorAll('input[type=number]')[2];if(inp)inp.value=v;});toast('ตั้งสต็อกครบแล้ว','success')})()"
+          style="padding:4px 10px;background:#6d28d9;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">ตั้งสต็อก</button>
       </div>
     </div>`,
     `<button class="btn btn-gray" onclick="openBulkEdit()">← กลับ</button>
