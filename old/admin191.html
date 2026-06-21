@@ -5040,27 +5040,7 @@ function _updateStockTable(){
       badge(st,sc2),
       `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button> <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>`];
   });
-  // คำนวณ summary row
-  const sumStock=list.reduce((a,p)=>a+(p.stock||0),0);
-  const sumCost=list.length?Math.round(list.reduce((a,p)=>a+(p.cost||0),0)/list.length):0;
-  const sumPrice=list.length?Math.round(list.reduce((a,p)=>a+(p.price||0),0)/list.length):0;
-  const sumVal=S._stockValMode==='all'
-    ? list.filter(p=>(p.cost||0)>0).reduce((a,p)=>a+(p.cost||0)*((p.stock||0)>0?(p.stock||0):1),0)
-    : list.filter(p=>p.countStock==1).reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
-
-  const tableHtml=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
-
-  // แทรก summary row ก่อน </tbody>
-  const summaryRow=`<tr style="background:#1a1a2e;border-top:2px solid var(--accent);font-weight:700;font-size:13px">
-    <td colspan="5" style="padding:8px 12px;color:var(--primary);text-align:left">📊 รวมทั้งหมด ${list.length} รายการ</td>
-    <td style="padding:8px 12px;text-align:right;color:#0ea5e9;font-size:14px">${sumStock.toLocaleString()}</td>
-    <td style="padding:8px 12px;text-align:right;color:var(--muted)">—</td>
-    <td style="padding:8px 12px;text-align:right;color:#f59e0b">${fmt(sumCost)}</td>
-    <td style="padding:8px 12px;text-align:right;color:#10b981">${fmt(sumPrice)}</td>
-    <td style="padding:8px 12px;text-align:right;color:#7c3aed;font-size:14px">${fmt(sumVal)}</td>
-    <td colspan="3" style="padding:8px 12px;text-align:right;color:var(--muted);font-size:11px">${S._stockValMode==='all'?'📊 รวมทั้งหมด':'🔖 นับตามที่กำหนด'}</td>
-  </tr>`;
-  wrap.innerHTML=tableHtml.replace('</tbody>','</tbody>'+summaryRow);
+  wrap.innerHTML=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 }
 
 
