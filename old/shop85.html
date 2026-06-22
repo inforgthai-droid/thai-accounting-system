@@ -913,10 +913,15 @@ function restoreState(){
   if(params.get('brand')) BRAND_FILTER=params.get('brand');
   if(params.get('fia')){FIA_FILTER=params.get('fia');setFia(FIA_FILTER);}
   if(params.get('stock')) STOCK_ONLY=true;
+  // เปิด product detail ถ้ามี pid ใน hash — รอ PRODS โหลดเสร็จ
   const pid=params.get('pid');
-  if(pid&&PRODS.length){
-    const p=PRODS.find(x=>x.id===pid);
-    if(p) openPD(pid);
+  if(pid){
+    const tryOpen=(attempt)=>{
+      const p=PRODS.find(x=>x.id===pid);
+      if(p){openPD(pid);}
+      else if(attempt<10){setTimeout(()=>tryOpen(attempt+1),200);}
+    };
+    tryOpen(0);
   }
 }
 

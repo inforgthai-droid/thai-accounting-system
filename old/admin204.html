@@ -581,23 +581,6 @@ function buildNav(){document.getElementById('nav').innerHTML=MENU.map(m=>m.g?`<d
 function navigate(key){
   currentPage=key;
   sessionStorage.setItem('rg_page',key);
-  // restore state เฉพาะหน้า stock ครั้งแรกหลัง refresh
-  if(key==='stock'){
-    try{
-      const saved=sessionStorage.getItem('rg_stock');
-      if(saved){
-        const st=JSON.parse(saved);
-        if(st.q!==undefined) S._stockQ=st.q;
-        if(st.cat!==undefined) S._stockCat=st.cat;
-        if(st.status!==undefined) S._stockStatus=st.status;
-        if(st.sortKey!==undefined) S._stockSortKey=st.sortKey;
-        if(st.sortDir!==undefined) S._stockSortDir=st.sortDir;
-        if(st.view!==undefined) S._stockView=st.view;
-        if(st.valMode!==undefined) S._stockValMode=st.valMode;
-        sessionStorage.removeItem('rg_stock'); // ใช้แล้วลบทิ้ง restore ครั้งเดียว
-      }
-    }catch(e){}
-  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('p-'+key).classList.add('active');
   const m=MENU.find(x=>x.key===key);
@@ -4820,6 +4803,20 @@ async function confirmBulkAdjust(){
 
 // ===== STOCK =====
 function renderStock(){
+  // restore stock state จาก sessionStorage
+  try{
+    const saved=sessionStorage.getItem('rg_stock');
+    if(saved){
+      const st=JSON.parse(saved);
+      if(st.q!==undefined) S._stockQ=st.q;
+      if(st.cat!==undefined) S._stockCat=st.cat;
+      if(st.status!==undefined) S._stockStatus=st.status;
+      if(st.sortKey!==undefined) S._stockSortKey=st.sortKey;
+      if(st.sortDir!==undefined) S._stockSortDir=st.sortDir;
+      if(st.view!==undefined) S._stockView=st.view;
+      if(st.valMode!==undefined) S._stockValMode=st.valMode;
+    }
+  }catch(e){}
   const q=S._stockQ||'';
   const statusF=S._stockStatus||'all';
   const catList=S._stockCat?S.products.filter(p=>p.category===S._stockCat):S.products;
