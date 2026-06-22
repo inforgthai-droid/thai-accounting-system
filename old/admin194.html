@@ -4905,17 +4905,6 @@ function renderStock(){
     <button class="btn btn-gray btn-sm" onclick="document.querySelectorAll('.stock-chk').forEach(c=>c.checked=false);updateBulkStockBar()">ยกเลิก</button>
   </div>
 
-  <!-- Summary Bar -->
-  <div id="stock-summary-bar" style="display:flex;align-items:center;gap:0;background:#1a1a2e;border:2px solid var(--accent);border-radius:8px;padding:8px 14px;margin-bottom:6px;font-weight:700;font-size:13px;flex-wrap:wrap;gap:4px">
-    <span style="color:var(--primary);flex:2;min-width:120px">📊 รวม ${list.length} รายการ</span>
-    <span style="color:var(--muted);font-size:11px;min-width:60px">คงเหลือ: <span style="color:#0ea5e9">${list.reduce((a,p)=>a+(p.stock||0),0).toLocaleString()}</span></span>
-    <span style="color:var(--muted);font-size:11px;min-width:50px;margin-left:12px">Min: <span style="color:#64748b">${list.reduce((a,p)=>a+(p.minStock||p.min||0),0).toLocaleString()}</span></span>
-    <span style="color:var(--muted);font-size:11px;min-width:80px;margin-left:12px">ต้นทุนรวม: <span style="color:#f59e0b">${fmt(list.reduce((a,p)=>a+(p.cost||0),0))}</span></span>
-    <span style="color:var(--muted);font-size:11px;min-width:80px;margin-left:12px">ราคารวม: <span style="color:#10b981">${fmt(list.reduce((a,p)=>a+(p.price||0),0))}</span></span>
-    <span style="color:var(--muted);font-size:11px;min-width:90px;margin-left:12px">มูลค่าสต็อก: <span style="color:#7c3aed">${fmt(list.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0))}</span></span>
-    <span style="color:var(--muted);font-size:10px;margin-left:auto">cost×stock ทุกตัว</span>
-  </div>
-
   <!-- Table / List / Grid -->
   <div id="stock-table-wrap">
     ${buildStockView(list, S._stockView||'list')}
@@ -5051,9 +5040,26 @@ function _updateStockTable(){
       badge(st,sc2),
       `<button class="btn btn-primary btn-xs" onclick="adjustStock('${p.id}')">ปรับ</button> <button class="btn btn-gray btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProductFromStock('${p.id}','${p.name||p.code||''}')">ลบ</button>`];
   });
+  // คำนวณ summary row — รวมทั้งหมด ไม่เฉลี่ย
+  const sumStock=list.reduce((a,p)=>a+(p.stock||0),0);
+  const sumMin=list.reduce((a,p)=>a+(p.minStock||p.min||0),0);
+  const sumCost=list.reduce((a,p)=>a+(p.cost||0),0);
+  const sumPrice=list.reduce((a,p)=>a+(p.price||0),0);
+  const sumVal=list.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
+
   const tableHtml=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 
-  wrap.innerHTML=tableHtml;
+  // แทรก summary row ก่อน </tbody>
+  const summaryRow=`<tr style="background:#1a1a2e;border-top:2px solid var(--accent);font-weight:700;font-size:13px">
+    <td colspan="5" style="padding:8px 12px;color:var(--primary);text-align:left">📊 รวมทั้งหมด ${list.length} รายการ</td>
+    <td style="padding:8px 12px;text-align:right;color:#0ea5e9;font-size:14px">${sumStock.toLocaleString()}</td>
+    <td style="padding:8px 12px;text-align:right;color:#64748b">${sumMin.toLocaleString()}</td>
+    <td style="padding:8px 12px;text-align:right;color:#f59e0b">${fmt(sumCost)}</td>
+    <td style="padding:8px 12px;text-align:right;color:#10b981">${fmt(sumPrice)}</td>
+    <td style="padding:8px 12px;text-align:right;color:#7c3aed;font-size:14px">${fmt(sumVal)}</td>
+    <td colspan="3" style="padding:8px 12px;text-align:right;color:var(--muted);font-size:11px">cost×stock ทุกตัว</td>
+  </tr>`;
+  wrap.innerHTML=tableHtml.replace('</tbody>','</tbody>'+summaryRow);
 }
 
 
