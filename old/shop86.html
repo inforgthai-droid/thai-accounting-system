@@ -747,51 +747,9 @@ function shopScanKey(e, inp){
 }
 
 // ── INIT ──
-const CACHE_KEY='rg_shop_cache';
-const CACHE_TTL=5*60*1000; // 5 นาที
-
-function loadFromCache(){
-  try{
-    const raw=localStorage.getItem(CACHE_KEY);
-    if(!raw) return false;
-    const {ts,prods,cats,brands,co,design}=JSON.parse(raw);
-    if(Date.now()-ts>CACHE_TTL) return false;
-    PRODS=prods||[];
-    CATS=cats||[];
-    BRANDS=brands||[];
-    if(co) Object.assign(CO,co);
-    if(design) applyShopDesign(design);
-    return true;
-  }catch{return false;}
-}
-
-function saveToCache(prods,cats,brands,co,design){
-  try{
-    localStorage.setItem(CACHE_KEY,JSON.stringify({
-      ts:Date.now(),prods,cats,brands,co,design
-    }));
-  }catch{}
-}
-
 async function init(){
   const hideLd=()=>{const l=$('ld');if(l){l.style.opacity='0';setTimeout(()=>l.style.display='none',500);}};
   setTimeout(hideLd,3000);
-
-  // โหลด cache ก่อน — แสดงผลทันทีโดยไม่รอ Firestore
-  const hasCached=loadFromCache();
-  if(hasCached){
-    restoreState();
-    applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
-    if($('price-max')){
-      const maxP=Math.max(...PRODS.map(p=>p.price||0),500000);
-      $('price-max').max=maxP;PRICE_MAX=maxP;
-      if($('price-max-input'))$('price-max-input').max=maxP;
-      updatePriceFilter(maxP);
-    }
-    hideLd();
-  }
-
-  // Fetch Firestore ใน background (หรือครั้งแรกที่ไม่มี cache)
   try{
     const[cd,ps,cs,sd,bs]=await Promise.all([
       db.collection('settings').doc('company').get(),
@@ -800,42 +758,31 @@ async function init(){
       db.collection('settings').doc('shopDesign').get(),
       db.collection('brands').orderBy('order','asc').get()
     ]);
-    const co={};if(cd.exists)Object.assign(co,cd.data());
-    const prods=ps.docs.map(d=>({id:d.id,...d.data()}));
-    const brands=bs.empty?[]:bs.docs.map(d=>({id:d.id,...d.data()}));
-    const cats=!cs.empty
-      ?cs.docs.map(d=>({id:d.id,...d.data()})).filter(c=>c.visible!==false)
-      :[...new Set(prods.map(p=>p.category).filter(Boolean))].sort().map(name=>({name,icon:'',color:'#0ea5e9',visible:true}));
-    const design=sd.exists?sd.data():null;
-
-    // บันทึก cache
-    saveToCache(prods,cats,brands,co,design);
-
-    // อัปเดต state
-    Object.assign(CO,co);
-    PRODS=prods;CATS=cats;BRANDS=brands;
-    if(design) applyShopDesign(design);
-
-    if(!hasCached){
-      restoreState();
-      applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
-      if($('price-max')){
-        const maxP=Math.max(...PRODS.map(p=>p.price||0),500000);
-        $('price-max').max=maxP;PRICE_MAX=maxP;
-        if($('price-max-input'))$('price-max-input').max=maxP;
-        updatePriceFilter(maxP);
-      }
+    if(cd.exists)Object.assign(CO,cd.data());
+    PRODS=ps.docs.map(d=>({id:d.id,...d.data()}));
+    BRANDS=bs.empty?[]:bs.docs.map(d=>({id:d.id,...d.data()}));
+    if(!cs.empty){
+      CATS=cs.docs.map(d=>({id:d.id,...d.data()})).filter(c=>c.visible!==false);
     } else {
-      // มี cache อยู่แล้ว — แค่ refresh สินค้าใหม่เงียบๆ
-      doFilter();
+      CATS=[...new Set(PRODS.map(p=>p.category).filter(Boolean))].sort()
+        .map(name=>({name,icon:'',color:'#0ea5e9',visible:true}));
     }
-    if(!hasCached) toast(LANG==='th'?'โหลดสินค้า '+PRODS.length+' รายการ':'Loaded '+PRODS.length+' products','ok');
+    // Apply shopDesign from admin
+    if(sd.exists) applyShopDesign(sd.data());
+
+    restoreState();
+    applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
+    if($('price-max')){
+      const maxP=Math.max(...PRODS.map(p=>p.price||0),500000);
+      $('price-max').max=maxP;PRICE_MAX=maxP;
+      if($('price-max-input'))$('price-max-input').max=maxP;
+      updatePriceFilter(maxP);
+    }
+    toast(LANG==='th'?'โหลดสินค้า '+PRODS.length+' รายการ':'Loaded '+PRODS.length+' products','ok');
   }catch(e){
-    if(!hasCached){
-      applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
-      if(location.protocol==='file:')toast('กรุณาเปิดจาก GitHub Pages','err',6000);
-      else toast('Error: '+e.message,'err');
-    }
+    applyBrand();buildNav();buildCatHeroGrid();buildSidebar();doFilter();applyLang();
+    if(location.protocol==='file:')toast('กรุณาเปิดจาก GitHub Pages','err',6000);
+    else toast('Error: '+e.message,'err');
   }finally{hideLd();}
 }
 
