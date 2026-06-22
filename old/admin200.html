@@ -4899,6 +4899,34 @@ function renderStock(){
     <button onclick="toggleStockView()" id="stock-view-btn" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px" title="สลับมุมมอง">${(S._stockView||'list')=='list'?'⊞ Grid':'☰ List'}</button>
   </div>
 
+  <!-- Summary Bar ตำแหน่งสีแดง — ใช้ table layout ตรงกับ column -->
+  <table style="width:100%;border-collapse:collapse;background:#1a1a2e;border:2px solid var(--accent);border-radius:8px;margin-bottom:4px;font-weight:700;font-size:12px;table-layout:fixed">
+    <colgroup>
+      <col style="width:38px"><!-- checkbox -->
+      <col style="width:11%"><!-- รหัส -->
+      <col style="width:18%"><!-- ชื่อ -->
+      <col style="width:9%"><!-- หมวด -->
+      <col style="width:5%"><!-- หน่วย -->
+      <col style="width:7%"><!-- คงเหลือ -->
+      <col style="width:5%"><!-- Min -->
+      <col style="width:8%"><!-- ต้นทุน -->
+      <col style="width:7%"><!-- ราคา -->
+      <col style="width:8%"><!-- มูลค่า -->
+      <col style="width:10%"><!-- SKU -->
+      <col style="width:6%"><!-- สถานะ -->
+      <col style="width:9%"><!-- actions -->
+    </colgroup>
+    <tbody><tr>
+      <td style="padding:7px 6px;color:var(--primary)" colspan="5">📊 รวม ${list.length} รายการ</td>
+      <td style="padding:7px 8px;text-align:right;color:#0ea5e9">${list.reduce((a,p)=>a+(p.stock||0),0).toLocaleString()}</td>
+      <td style="padding:7px 8px;text-align:right;color:#64748b">${list.reduce((a,p)=>a+(p.minStock||p.min||0),0).toLocaleString()}</td>
+      <td style="padding:7px 8px;text-align:right;color:#f59e0b">${list.reduce((a,p)=>a+(p.cost||0),0).toLocaleString()}</td>
+      <td style="padding:7px 8px;text-align:right;color:#10b981">${list.reduce((a,p)=>a+(p.price||0),0).toLocaleString()}</td>
+      <td style="padding:7px 8px;text-align:right;color:#7c3aed">${list.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0).toLocaleString()}</td>
+      <td colspan="3" style="padding:7px 8px;text-align:right;color:var(--muted);font-size:10px">cost×stock</td>
+    </tr></tbody>
+  </table>
+
   <!-- Bulk Delete Bar -->
   <div id="bulk-stock-bar" style="display:none;align-items:center;gap:10px;padding:8px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:10px;margin-bottom:.75rem">
     <span id="bulk-stock-count" style="font-weight:700;color:#856404"></span>
@@ -4906,9 +4934,6 @@ function renderStock(){
     <button class="btn btn-danger btn-sm" onclick="bulkDeleteStock()">🗑️ ลบที่เลือก</button>
     <button class="btn btn-gray btn-sm" onclick="document.querySelectorAll('.stock-chk').forEach(c=>c.checked=false);updateBulkStockBar()">ยกเลิก</button>
   </div>
-
-  <!-- Summary Bar ตำแหน่งสีแดง (clone จาก tfoot) -->
-  <div id="stock-sum-top" style="background:#1a1a2e;border:2px solid var(--accent);border-radius:8px;margin-bottom:4px;overflow:hidden"></div>
 
   <!-- Table / List / Grid -->
   <div id="stock-table-wrap">
@@ -5047,7 +5072,7 @@ function _updateStockTable(){
   });
   const tableHtml=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 
-  const tfoot=`<tfoot id="stock-sum-tfoot"><tr style="background:#1a1a2e;border-top:2px solid var(--accent);font-weight:700;font-size:13px;position:sticky;bottom:0">
+  const tfoot=`<tfoot><tr style="background:#1a1a2e;border-top:2px solid var(--accent);font-weight:700;font-size:13px;position:sticky;bottom:0">
     <td style="padding:8px 10px;white-space:nowrap;color:var(--primary)">📊 รวม ${list.length} รายการ</td>
     <td colspan="4" style="padding:8px 4px;color:var(--muted);font-size:10px">ผลรวมสินค้าที่แสดง</td>
     <td style="padding:8px 10px;text-align:right;color:#0ea5e9;font-size:14px">${list.reduce((a,p)=>a+(p.stock||0),0).toLocaleString()}</td>
@@ -5058,22 +5083,6 @@ function _updateStockTable(){
     <td colspan="3" style="padding:8px 10px;text-align:right;color:var(--muted);font-size:10px">cost×stock</td>
   </tr></tfoot>`;
   wrap.innerHTML=tableHtml.replace('</table>',tfoot+'</table>');
-
-  // Clone tfoot ขึ้น top bar ให้ตรงกัน
-  setTimeout(()=>{
-    const tfootEl=document.getElementById('stock-sum-tfoot');
-    const topBar=document.getElementById('stock-sum-top');
-    if(tfootEl&&topBar){
-      const clone=document.createElement('table');
-      clone.style.cssText='width:100%;border-collapse:collapse;table-layout:fixed';
-      clone.innerHTML='<tbody>'+tfootEl.innerHTML+'</tbody>';
-      // เอา border-top ออก (เพราะ top bar มี border ของตัวเอง)
-      const tr=clone.querySelector('tr');
-      if(tr) tr.style.borderTop='none';
-      topBar.innerHTML='';
-      topBar.appendChild(clone);
-    }
-  },0);
 }
 
 function orderDemonTweeks(){
