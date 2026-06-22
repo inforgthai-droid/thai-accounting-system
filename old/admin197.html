@@ -5044,29 +5044,69 @@ function _updateStockTable(){
   });
   const tableHtml=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 
-  // คำนวณผลรวมจาก list ที่กรองอยู่ทันที
-  const sStock=list.reduce((a,p)=>a+(p.stock||0),0);
-  const sMin=list.reduce((a,p)=>a+(p.minStock||p.min||0),0);
-  const sCost=list.reduce((a,p)=>a+(p.cost||0),0);
-  const sPrice=list.reduce((a,p)=>a+(p.price||0),0);
-  const sVal=list.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
-  const fmtN=n=>n.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0});
-
-  const tfoot=`<tfoot><tr style="background:#1a1a2e;border-top:2px solid var(--accent);font-weight:700;font-size:13px;position:sticky;bottom:0">
-    <td style="padding:8px 10px;white-space:nowrap;color:var(--primary)">📊 รวม ${list.length} รายการ</td>
-    <td colspan="4" style="padding:8px 4px;color:var(--muted);font-size:10px">ผลรวมสินค้าที่แสดง</td>
-    <td style="padding:8px 10px;text-align:right;color:#0ea5e9;font-size:14px">${sStock.toLocaleString()}</td>
-    <td style="padding:8px 10px;text-align:right;color:#64748b">${sMin.toLocaleString()}</td>
-    <td style="padding:8px 10px;text-align:right;color:#f59e0b">${fmtN(sCost)}</td>
-    <td style="padding:8px 10px;text-align:right;color:#10b981">${fmtN(sPrice)}</td>
-    <td style="padding:8px 10px;text-align:right;color:#7c3aed;font-size:14px">${fmtN(sVal)}</td>
+  // เพิ่ม tfoot summary และ data-id ให้แต่ละ row
+  const tfoot=`<tfoot><tr id="stock-sum-row" style="background:#1a1a2e;border-top:2px solid var(--accent);font-weight:700;font-size:13px;position:sticky;bottom:0">
+    <td style="padding:8px 10px;white-space:nowrap;color:var(--primary)">📊 <span id="sum-label">ทั้งหมด ${list.length}</span></td>
+    <td colspan="4" style="padding:8px 4px;color:var(--muted);font-size:11px">เลือกสินค้าเพื่อดูผลรวม</td>
+    <td style="padding:8px 10px;text-align:right;color:#0ea5e9;font-size:14px" id="sum-stock">—</td>
+    <td style="padding:8px 10px;text-align:right;color:#64748b" id="sum-min">—</td>
+    <td style="padding:8px 10px;text-align:right;color:#f59e0b" id="sum-cost">—</td>
+    <td style="padding:8px 10px;text-align:right;color:#10b981" id="sum-price">—</td>
+    <td style="padding:8px 10px;text-align:right;color:#7c3aed;font-size:14px" id="sum-val">—</td>
     <td colspan="3" style="padding:8px 10px;text-align:right;color:var(--muted);font-size:10px">cost×stock</td>
   </tr></tfoot>`;
 
   wrap.innerHTML=tableHtml.replace('</table>',tfoot+'</table>');
+
+  // ฝัง data-id และ data-* ใน checkbox ทุก row เพื่อคำนวณ
+  wrap.querySelectorAll('tbody tr').forEach((tr,i)=>{
+    const p=list[i];
+    if(!p) return;
+    const chk=tr.querySelector('.stock-chk');
+    if(chk){
+      chk.dataset.id=p.id;
+      chk.dataset.stock=p.stock||0;
+      chk.dataset.min=p.minStock||p.min||0;
+      chk.dataset.cost=p.cost||0;
+      chk.dataset.price=p.price||0;
+      chk.dataset.val=(p.cost||0)*(p.stock||0);
+      chk.addEventListener('change',updateStockSummary);
+    }
+  });
+  // all checkbox ก็ trigger update
+  const allChk=wrap.querySelector('#stock-chk-all');
+  if(allChk) allChk.addEventListener('change',()=>setTimeout(updateStockSummary,50));
 }
 
-function updateStockSummary(){}
+function updateStockSummary(){
+  const checked=[...document.querySelectorAll('.stock-chk:checked')];
+  const n=checked.length;
+  const label=document.getElementById('sum-label');
+  const hint=document.querySelector('#stock-sum-row td:nth-child(2)');
+  if(!n){
+    if(label) label.textContent=`ทั้งหมด`;
+    if(hint) hint.textContent='เลือกสินค้าเพื่อดูผลรวม';
+    ['sum-stock','sum-min','sum-cost','sum-price','sum-val'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.textContent='—';
+    });
+    return;
+  }
+  const s=checked.reduce((a,c)=>({
+    stock:a.stock+parseInt(c.dataset.stock||0),
+    min:a.min+parseInt(c.dataset.min||0),
+    cost:a.cost+parseFloat(c.dataset.cost||0),
+    price:a.price+parseFloat(c.dataset.price||0),
+    val:a.val+parseFloat(c.dataset.val||0)
+  }),{stock:0,min:0,cost:0,price:0,val:0});
+  if(label) label.textContent=`เลือก ${n} รายการ`;
+  if(hint) hint.textContent='';
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('sum-stock',s.stock.toLocaleString());
+  set('sum-min',s.min.toLocaleString());
+  set('sum-cost',s.cost.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0}));
+  set('sum-price',s.price.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0}));
+  set('sum-val',s.val.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0}));
+}
 
 function orderDemonTweeks(){
   // ดึงสินค้าหมดสต็อก และมี SKU Demon Tweeks
