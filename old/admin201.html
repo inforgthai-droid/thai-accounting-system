@@ -5059,33 +5059,20 @@ function _updateStockTable(){
   </tr></tfoot>`;
   wrap.innerHTML=tableHtml.replace('</table>',tfoot+'</table>');
 
-  // อัปเดต top bar ให้ตรงกับ column ของตาราง
+  // Clone tfoot ขึ้น top bar ให้ตรงกัน
   setTimeout(()=>{
+    const tfootEl=document.getElementById('stock-sum-tfoot');
     const topBar=document.getElementById('stock-sum-top');
-    const mainTable=wrap.querySelector('table');
-    if(!topBar||!mainTable) return;
-    // ดึง colgroup จากตารางหลักมาใช้
-    const colgroup=mainTable.querySelector('colgroup');
-    const sStock=list.reduce((a,p)=>a+(p.stock||0),0);
-    const sMin=list.reduce((a,p)=>a+(p.minStock||p.min||0),0);
-    const sCost=list.reduce((a,p)=>a+(p.cost||0),0);
-    const sPrice=list.reduce((a,p)=>a+(p.price||0),0);
-    const sVal=list.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
-    const fmt2=n=>Math.round(n).toLocaleString();
-    topBar.innerHTML=`<table style="width:100%;border-collapse:collapse;table-layout:fixed">
-      ${colgroup?colgroup.outerHTML:''}
-      <tbody><tr style="font-weight:700;font-size:13px">
-        <td style="padding:8px 6px;color:var(--primary);white-space:nowrap">📊 ${list.length} รายการ</td>
-        <td style="padding:8px 4px;color:var(--muted);font-size:10px">ผลรวมที่แสดง</td>
-        <td colspan="3" style="padding:8px 4px"></td>
-        <td style="padding:8px 10px;text-align:right;color:#0ea5e9">${sStock.toLocaleString()}</td>
-        <td style="padding:8px 10px;text-align:right;color:#64748b">${sMin.toLocaleString()}</td>
-        <td style="padding:8px 10px;text-align:right;color:#f59e0b">${fmt2(sCost)}</td>
-        <td style="padding:8px 10px;text-align:right;color:#10b981">${fmt2(sPrice)}</td>
-        <td style="padding:8px 10px;text-align:right;color:#7c3aed">${fmt2(sVal)}</td>
-        <td colspan="3" style="padding:8px 8px;text-align:right;color:var(--muted);font-size:10px">cost×stock</td>
-      </tr></tbody>
-    </table>`;
+    if(tfootEl&&topBar){
+      const clone=document.createElement('table');
+      clone.style.cssText='width:100%;border-collapse:collapse;table-layout:fixed';
+      clone.innerHTML='<tbody>'+tfootEl.innerHTML+'</tbody>';
+      // เอา border-top ออก (เพราะ top bar มี border ของตัวเอง)
+      const tr=clone.querySelector('tr');
+      if(tr) tr.style.borderTop='none';
+      topBar.innerHTML='';
+      topBar.appendChild(clone);
+    }
   },0);
 }
 
