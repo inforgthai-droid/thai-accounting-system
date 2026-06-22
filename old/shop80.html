@@ -160,7 +160,7 @@ body{font-family:var(--thai);background:var(--bg);color:var(--text);min-height:1
 .page-ellipsis{color:#bbb;padding:0 4px}
 
 /* PROD CARD */
-.pcard{background:var(--bg2);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;position:relative;border:1px solid transparent;text-decoration:none;color:inherit}
+.pcard{background:var(--bg2);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;position:relative;border:1px solid transparent}
 .pcard:hover{border-color:var(--red);box-shadow:0 4px 24px rgba(232,23,44,.15);transform:translateY(-2px)}
 .pcard-img-wrap{position:relative;aspect-ratio:1;background:var(--bg3);overflow:hidden;display:flex;align-items:center;justify-content:center}
 .pcard-img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
@@ -1141,13 +1141,13 @@ function prodCard(p){
   const brand=p.brand||(p.name.match(/^([A-Za-z]+(?:\s[A-Za-z]+)?)\s/)||[])[1]||'';
   const stockClass=p.stock<=0?'ou-s':p.stock<=5?'lo-s':'in-s';
   const stockTx=p.stock<=0?t('out_stock'):p.stock<=5?t('low_stock')+' ('+p.stock+')':t('in_stock');
-  return`<a class="pcard" href="#pid=${p.id}" onclick="openPD('${p.id}');return false;">
+  return`<div class="pcard" onclick="openPD('${p.id}')">
     <div class="pcard-img-wrap">
       ${hasImg?`<img class="pcard-img" src="${p.imageUrl}" alt="${p.name.replace(/"/g,'')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:''}
       <div class="pcard-ph" style="${hasImg?'display:none':''}">${''}</div>
       ${p.stock<=0?('<div class="pcard-badge oos">'+t('out_stock')+'</div>'):p.stock<=5?'<div class="pcard-badge sale">LOW</div>':''}
       <div class="pcard-overlay">
-        <button class="pcard-add-btn" onclick="event.preventDefault();event.stopPropagation();qadd('${p.id}')">${p.stock>0&&p.price>0?t('add_cart'):t('sold_out')}</button>
+        <button class="pcard-add-btn" onclick="event.stopPropagation();qadd('${p.id}')">${p.stock>0&&p.price>0?t('add_cart'):t('sold_out')}</button>
       </div>
     </div>
     <div class="pcard-body">
@@ -1159,10 +1159,10 @@ function prodCard(p){
           <div class="pcard-price has">${fmt(p.price)}</div>
           <div class="pcard-stock ${stockClass}">${stockTx}</div>
         </div>
-        ${p.stock>0&&p.price>0?`<button class="pcard-plus${inCart?' in-cart':''}" onclick="event.preventDefault();event.stopPropagation();qadd('${p.id}')">${inCart?'✓':'+'}</button>`:''}
+        ${p.stock>0&&p.price>0?`<button class="pcard-plus${inCart?' in-cart':''}" onclick="event.stopPropagation();qadd('${p.id}')">${inCart?'✓':'+'}</button>`:''}
       </div>
     </div>
-  </a>`;
+  </div>`;
 }
 
 // ── PRODUCT DETAIL ──
@@ -1444,13 +1444,13 @@ function prodCardGroup(prods){
 
   const variantCount=prods.length;
 
-  return`<a class="pcard" href="#pid=${rep.id}" onclick="openPD('${rep.id}');return false;">
+  return`<div class="pcard" onclick="openPD('${rep.id}')">
     <div class="pcard-img-wrap">
       ${hasImg?`<img class="pcard-img" src="${rep.imageUrl}" alt="${baseName.replace(/"/g,'')}" loading="lazy" onerror="this.style.display='none'">`:
         '<div class="pcard-ph"></div>'}
       ${totalStock<=0?`<div class="pcard-badge oos">${t('out_stock')}</div>`:totalStock<=5?`<div class="pcard-badge sale">LOW</div>`:''}
       <div class="pcard-overlay">
-        <button class="pcard-add-btn" onclick="event.preventDefault();event.stopPropagation();openPD('${rep.id}')">
+        <button class="pcard-add-btn" onclick="event.stopPropagation();openPD('${rep.id}')">
           ${sizes.length||colors.length?t('var_label')+' →':t('add_cart')}
         </button>
       </div>
@@ -1469,7 +1469,7 @@ function prodCardGroup(prods){
         <div style="font-size:10px;color:#bbb;text-align:right">${variantCount} ${LANG==='th'?'ตัวเลือก':'options'}</div>
       </div>
     </div>
-  </a>`;
+  </div>`;
 }
 
 // ── CART ──
