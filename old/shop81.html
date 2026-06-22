@@ -912,14 +912,6 @@ function restoreState(){
   if(params.get('brand')) BRAND_FILTER=params.get('brand');
   if(params.get('fia')) FIA_FILTER=params.get('fia');
   if(params.get('stock')) STOCK_ONLY=true;
-  // เปิด product detail ถ้ามี pid ใน hash
-  if(params.get('pid')){
-    const pid=params.get('pid');
-    setTimeout(()=>{
-      const p=PRODS.find(x=>x.id===pid);
-      if(p) openPD(pid);
-    },300);
-  }
 }
 
 function setcat(c,el){
