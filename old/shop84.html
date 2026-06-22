@@ -899,7 +899,6 @@ function saveState(){
   if(BRAND_FILTER) params.set('brand',BRAND_FILTER);
   if(FIA_FILTER) params.set('fia',FIA_FILTER);
   if(STOCK_ONLY) params.set('stock','1');
-  if(_dpid) params.set('pid',_dpid);
   const hash=params.toString();
   history.replaceState(null,'',hash?'#'+hash:'#');
 }
@@ -911,17 +910,15 @@ function restoreState(){
   if(params.get('q')&&$('sinput')) $('sinput').value=params.get('q');
   if(params.get('srt')&&$('srt')) $('srt').value=params.get('srt');
   if(params.get('brand')) BRAND_FILTER=params.get('brand');
-  if(params.get('fia')){FIA_FILTER=params.get('fia');setFia(FIA_FILTER);}
+  if(params.get('fia')) FIA_FILTER=params.get('fia');
   if(params.get('stock')) STOCK_ONLY=true;
-  // เปิด product detail ถ้ามี pid ใน hash — รอ PRODS โหลดเสร็จ
-  const pid=params.get('pid');
-  if(pid){
-    const tryOpen=(attempt)=>{
+  // เปิด product detail ถ้ามี pid ใน hash
+  if(params.get('pid')){
+    const pid=params.get('pid');
+    setTimeout(()=>{
       const p=PRODS.find(x=>x.id===pid);
-      if(p){openPD(pid);}
-      else if(attempt<10){setTimeout(()=>tryOpen(attempt+1),200);}
-    };
-    tryOpen(0);
+      if(p) openPD(pid);
+    },300);
   }
 }
 
@@ -1182,7 +1179,6 @@ let _dpid='';
 function openPD(id){
   const p=PRODS.find(x=>x.id===id);if(!p)return;
   _dpid=id;_dQty=1;
-  saveState();
 
   // ─── Find related variants ───
   // Products are "related" if they share the same base name (before " S /", " M /", etc.)
@@ -1378,7 +1374,7 @@ function openPD(id){
   window.scrollTo(0,0);
   history.pushState({pdOpen:true},'','');
 }
-function closePD(fromPop){$('pdpage').classList.remove('show');document.body.style.overflow='';_dpid='';saveState();if(!fromPop&&history.state&&history.state.pdOpen)history.back();}
+function closePD(fromPop){$('pdpage').classList.remove('show');document.body.style.overflow='';if(!fromPop&&history.state&&history.state.pdOpen)history.back();}
 function pdSetImg(el,src){
   const img=$('pd-mimg');if(img)img.src=src;
   document.querySelectorAll('.pd-gallery-thumb').forEach(function(t){t.classList.remove('on')});

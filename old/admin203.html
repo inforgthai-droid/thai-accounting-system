@@ -532,12 +532,8 @@ async function initApp(){
     document.getElementById('sb-footer').textContent=`VAT ${(S.company.vatRate??7)}% • ${S.company.currency||'THB'}`;
     document.title=S.company.name+' | ระบบบัญชี & POS';
     document.getElementById('loading-overlay').classList.add('hidden');
-    buildNav();
-    // restore หน้าที่อยู่ก่อน refresh
-    const lastPage=sessionStorage.getItem('rg_page')||'dashboard';
-    navigate(lastPage);
-    toast('เชื่อมต่อ Firebase สำเร็จ ✓','success');
-  }catch(e){document.getElementById('loading-overlay').classList.add('hidden');toast('Error: '+e.message,'error');buildNav();navigate('dashboard');}
+    buildNav();renderPage('dashboard');toast('เชื่อมต่อ Firebase สำเร็จ ✓','success');
+  }catch(e){document.getElementById('loading-overlay').classList.add('hidden');toast('Error: '+e.message,'error');buildNav();renderPage('dashboard');}
 }
 const fmt=n=>new Intl.NumberFormat('th-TH').format(Math.round(n||0));
 const fmtM=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(n||0);
@@ -578,15 +574,7 @@ const MENU=[
 ];
 let currentPage='dashboard',sidebarOpen=true;
 function buildNav(){document.getElementById('nav').innerHTML=MENU.map(m=>m.g?`<div class="nav-group">${m.g}</div>`:`<button class="nav-btn${currentPage===m.key?' active':''}" onclick="navigate('${m.key}')"><span class="nav-icon">${m.icon}</span><span class="nav-label">${m.label}</span><span class="nav-short">${m.short||m.label}</span></button>`).join('');}
-function navigate(key){
-  currentPage=key;
-  sessionStorage.setItem('rg_page',key);
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('p-'+key).classList.add('active');
-  const m=MENU.find(x=>x.key===key);
-  document.getElementById('topbar-title').textContent=(m?.icon||'')+' '+(m?.label||'');
-  buildNav();renderPage(key);
-}
+function navigate(key){currentPage=key;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('p-'+key).classList.add('active');const m=MENU.find(x=>x.key===key);document.getElementById('topbar-title').textContent=(m?.icon||'')+' '+(m?.label||'');buildNav();renderPage(key);}
 function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').classList.toggle('collapsed',!sidebarOpen);}
 function renderPage(key){
   const el=document.getElementById('p-'+key);
@@ -4803,20 +4791,6 @@ async function confirmBulkAdjust(){
 
 // ===== STOCK =====
 function renderStock(){
-  // restore stock state จาก sessionStorage
-  try{
-    const saved=sessionStorage.getItem('rg_stock');
-    if(saved){
-      const st=JSON.parse(saved);
-      if(st.q!==undefined) S._stockQ=st.q;
-      if(st.cat!==undefined) S._stockCat=st.cat;
-      if(st.status!==undefined) S._stockStatus=st.status;
-      if(st.sortKey!==undefined) S._stockSortKey=st.sortKey;
-      if(st.sortDir!==undefined) S._stockSortDir=st.sortDir;
-      if(st.view!==undefined) S._stockView=st.view;
-      if(st.valMode!==undefined) S._stockValMode=st.valMode;
-    }
-  }catch(e){}
   const q=S._stockQ||'';
   const statusF=S._stockStatus||'all';
   const catList=S._stockCat?S.products.filter(p=>p.category===S._stockCat):S.products;
@@ -5012,12 +4986,6 @@ function stockSearch(val){
   _stockSearchTimer=setTimeout(()=>_updateStockTable(),300);
 }
 function stockFilter(){
-  // save stock state ไว้ใช้หลัง refresh
-  try{sessionStorage.setItem('rg_stock',JSON.stringify({
-    q:S._stockQ||'',cat:S._stockCat||'',status:S._stockStatus||'all',
-    sortKey:S._stockSortKey||'price',sortDir:S._stockSortDir||'desc',
-    view:S._stockView||'list',valMode:S._stockValMode||'counted'
-  }));}catch(e){}
   _updateStockTable();
 }
 function _updateStockTable(){
