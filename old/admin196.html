@@ -5044,6 +5044,8 @@ function _updateStockTable(){
   });
   const tableHtml=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
 
+  const tableHtml=tbl(['<input type="checkbox" id="stock-chk-all" onchange="toggleAllStock(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','คงเหลือ','Min','ต้นทุน/หน่วย','ราคาขาย','มูลค่าสต็อก','SKU Demon Tweeks','สถานะ',''],rows,'ไม่พบสินค้า');
+
   // เพิ่ม tfoot summary และ data-id ให้แต่ละ row
   const tfoot=`<tfoot><tr id="stock-sum-row" style="background:#1a1a2e;border-top:2px solid var(--accent);font-weight:700;font-size:13px;position:sticky;bottom:0">
     <td style="padding:8px 10px;white-space:nowrap;color:var(--primary)">📊 <span id="sum-label">ทั้งหมด ${list.length}</span></td>
