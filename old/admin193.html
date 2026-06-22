@@ -5042,7 +5042,6 @@ function _updateStockTable(){
   });
   // คำนวณ summary row — รวมทั้งหมด ไม่เฉลี่ย
   const sumStock=list.reduce((a,p)=>a+(p.stock||0),0);
-  const sumMin=list.reduce((a,p)=>a+(p.minStock||p.min||0),0);
   const sumCost=list.reduce((a,p)=>a+(p.cost||0),0);
   const sumPrice=list.reduce((a,p)=>a+(p.price||0),0);
   const sumVal=list.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
@@ -5053,7 +5052,7 @@ function _updateStockTable(){
   const summaryRow=`<tr style="background:#1a1a2e;border-top:2px solid var(--accent);font-weight:700;font-size:13px">
     <td colspan="5" style="padding:8px 12px;color:var(--primary);text-align:left">📊 รวมทั้งหมด ${list.length} รายการ</td>
     <td style="padding:8px 12px;text-align:right;color:#0ea5e9;font-size:14px">${sumStock.toLocaleString()}</td>
-    <td style="padding:8px 12px;text-align:right;color:#64748b">${sumMin.toLocaleString()}</td>
+    <td style="padding:8px 12px;text-align:right;color:var(--muted)">—</td>
     <td style="padding:8px 12px;text-align:right;color:#f59e0b">${fmt(sumCost)}</td>
     <td style="padding:8px 12px;text-align:right;color:#10b981">${fmt(sumPrice)}</td>
     <td style="padding:8px 12px;text-align:right;color:#7c3aed;font-size:14px">${fmt(sumVal)}</td>
