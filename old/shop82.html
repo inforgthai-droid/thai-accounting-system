@@ -1024,10 +1024,9 @@ function applyPriceFilter(){
 // ── Group variants ──
 function getBaseName(name){
   return name
-    .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*[/|]\s*.*$/i,'')
-    .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*$/i,'')
-    .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon|Cream|Gold)\s*$/i,'')
-    .replace(/\s*[/|]\s*$/, '')
+    .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*[/|]\s*\S.*$/i,'')
+    .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})\s*$/i,'')
+    .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon)\s*$/i,'')
     .trim();
 }
 function getCodePrefix(code){
