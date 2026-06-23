@@ -393,7 +393,7 @@ auth.onAuthStateChanged(async user=>{
     document.getElementById('loading-overlay').classList.add('hidden');
   }
 });
-const BRAND_OPTIONS=['OMP','Sparco','Alpinestars','Arai','Stilo','Stand 21','Hans','Sabelt','RCX RACE WEAR','Other'];
+const BRAND_OPTIONS=['OMP','Sparco','Alpinestars','Arai','Stilo','Stand 21','Hans','Other'];
 // ── Custom category display order (default sort for category lists/filters everywhere) ──
 // หมวดหมู่ที่ไม่อยู่ใน list นี้ จะถูกเรียงต่อท้ายตามตัวอักษร
 const CATEGORY_PRIORITY_ORDER=['Race Suits','Race Gloves','Race Boots','Balaclavas','Fireproof Tops','Fireproof Bottoms','Race Socks','Helmets & Accessories','Race Hans','Seats & Harnesses','Steering Wheels & Accessories','A Rent Suit','Car Parts','Electrical','Racing Gear','Safety Equipment','Wheels & Nuts','อุปกรณ์','เครื่องเขียน'];
@@ -532,22 +532,6 @@ async function initApp(){
     document.getElementById('sb-footer').textContent=`VAT ${(S.company.vatRate??7)}% • ${S.company.currency||'THB'}`;
     document.title=S.company.name+' | ระบบบัญชี & POS';
     document.getElementById('loading-overlay').classList.add('hidden');
-
-    // Sync BRAND_OPTIONS ลง Firestore brands collection (เพิ่มเฉพาะที่ยังไม่มี)
-    (async()=>{
-      try{
-        const bs=await db.collection('brands').get();
-        const existing=new Set(bs.docs.map(d=>d.data().name));
-        const batch=db.batch();let changed=false;
-        BRAND_OPTIONS.filter(b=>b!=='Other'&&!existing.has(b)).forEach((name,i)=>{
-          const ref=db.collection('brands').doc(name.replace(/\s+/g,'_'));
-          batch.set(ref,{name,order:(bs.size||0)+i},{ merge:true });
-          changed=true;
-        });
-        if(changed) await batch.commit();
-      }catch{}
-    })();
-
     buildNav();
     // restore หน้าที่อยู่ก่อน refresh
     const lastPage=sessionStorage.getItem('rg_page')||'dashboard';
