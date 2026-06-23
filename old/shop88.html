@@ -802,7 +802,7 @@ async function init(){
     ]);
     const co={};if(cd.exists)Object.assign(co,cd.data());
     const prods=ps.docs.map(d=>({id:d.id,...d.data()}));
-    const FALLBACK_BRANDS=['OMP','Sparco','Alpinestars','Arai','Stilo','Stand 21','Hans','Sabelt','RCX RACE WEAR','Bell Helmet','ChillOut Motorsports','Schroth','Schuberth','Simpson','Bengio','Tillett','Hydrorace','Recaro','TRS Epman Racing','AEM Electronics','ATL','Auto Meter','Haltech','Link Engine Management','Stack','AIM','Racelogic','Other'];
+    const FALLBACK_BRANDS=['OMP','Sparco','Alpinestars','Arai','Stilo','Stand 21','Hans','Sabelt','RCX RACE WEAR','Other'];
     const brands=bs.empty
       ?FALLBACK_BRANDS.map((name,i)=>({id:name,name,order:i}))
       :bs.docs.map(d=>({id:d.id,...d.data()}));
