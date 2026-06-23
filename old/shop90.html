@@ -1078,8 +1078,8 @@ function applyPriceFilter(){
 // ── Group variants ──
 function getBaseName(name){
   return name
-    .replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*[/|]\s*.*$/i,'')
-    .replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*$/i,'')
+    .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*[/|]\s*.*$/i,'')
+    .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*$/i,'')
     .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon|Cream|Gold)\s*$/i,'')
     .replace(/\s*[/|]\s*$/, '')
     .trim();
@@ -1238,7 +1238,7 @@ function openPD(id){
   // ─── Find related variants ───
   // Products are "related" if they share the same base name (before " S /", " M /", etc.)
   // OR same shopeeId (Shopee parent product)
-  const baseName=p.name.replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2})\s*[/|]\s*.*$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
+  const baseName=p.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2})\s*[/|]\s*.*$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
   const related=PRODS.filter(x=>{
     if(x.price<=0) return false;
     if(x.id===p.id) return true;
@@ -1258,12 +1258,12 @@ function openPD(id){
       const xPfx=xParts.length>=3?xParts.slice(0,-2).join('-'):'';
       // ถ้า prefix นี้สั้นมาก (เช่นแค่ "ชุดแข่" ที่ใช้ร่วมกันทุกรุ่น) ห้ามใช้ตัดสินอย่างเดียว ต้องเช็คชื่อฐานประกอบด้วย
       if(pPfx&&pPfx===xPfx&&pPfx.length>4){
-        const xBase3=x.name.replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2})\s*[/|]\s*.*$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
+        const xBase3=x.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2})\s*[/|]\s*.*$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
         if(baseName.length>5&&xBase3===baseName) return true;
       }
     }
     // Same base name
-    const xBase2=x.name.replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2})\s*[/|]\s*.*$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
+    const xBase2=x.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2})\s*[/|]\s*.*$/i,'').replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown)\s*$/i,'').trim();
     return baseName.length>5&&xBase2===baseName;
   });
 

@@ -3955,8 +3955,8 @@ function openBulkEdit(){
   // สร้าง list กลุ่มสินค้า โดย group จาก baseName
   const groups=new Map();
   S.products.forEach(p=>{
-    const bn=p.name.replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*[/|]\s*.*$/i,'')
-      .replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*$/i,'')
+    const bn=p.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*[/|]\s*.*$/i,'')
+      .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*$/i,'')
       .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Cream|Gold|Brown|Carbon)\s*$/i,'')
       .replace(/\s*[\/|]\s*$/,'')
       .trim();
@@ -3993,8 +3993,8 @@ function filterBulkEditList(q){
 
 function openBulkEditGroup(baseName){
   const prods=S.products.filter(p=>{
-    const bn=p.name.replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*[/|]\s*.*$/i,'')
-      .replace(/\s+(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*$/i,'')
+    const bn=p.name.replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*[/|]\s*.*$/i,'')
+      .replace(/\s+(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})\s*$/i,'')
       .replace(/\s+(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Cream|Gold|Brown|Carbon)\s*$/i,'')
       .replace(/\s*[\/|]\s*$/,'')
       .trim();
