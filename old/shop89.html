@@ -1273,7 +1273,7 @@ function openPD(id){
     if(x.variations){
       const parts=x.variations.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
       parts.forEach(part=>{
-        if(/^(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(part)){if(!sizes.includes(part))sizes.push(part);}
+        if(/^(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(part)){if(!sizes.includes(part))sizes.push(part);}
         else if(/^(Black|White|Red|Blue|Navy|Grey|Gray|Silver|Yellow|Orange|Green|Pink|Purple|Brown|Carbon|Gold)/i.test(part)){if(!colors.includes(part))colors.push(part);}
       });
     }
@@ -1284,13 +1284,13 @@ function openPD(id){
   if(p.variations){
     const parts=p.variations.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
     parts.forEach(part=>{
-      if(/^(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(part)) curSize=part;
+      if(/^(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(part)) curSize=part;
       else curColor=part;
     });
   }
 
   // Sort sizes logically: letter sizes first (XS..4XL) in fixed order, then numeric sizes ascending
-  const sizeOrder=['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL','7XL'];
+  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL','7XL'];
   sizes.sort((a,b)=>{
     const ai=sizeOrder.indexOf(a.toUpperCase()),bi=sizeOrder.indexOf(b.toUpperCase());
     const an=/^\d+$/.test(a),bn=/^\d+$/.test(b);
@@ -1305,7 +1305,7 @@ function openPD(id){
   function buildSelector(type, items, current){
     if(!items.length) return '';
     const label=type==='size'?(LANG==='th'?'ไซส์':'Size'):(LANG==='th'?'สี':'Color');
-    const isSizeRe=v=>/^(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(v);
+    const isSizeRe=v=>/^(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(v);
     const btns=items.map(val=>{
       // For each option val, find the product matching (val + the currently-selected value of the OTHER axis)
       const wantSize=type==='size'?val:curSize;
@@ -1369,7 +1369,7 @@ function openPD(id){
       // ถ้าเจอรูปซ้ำ แต่ตัวใหม่นี้ตรงกับไซส์ปัจจุบันมากกว่า ให้อัปเดตตัวแทนของกลุ่มนั้นเป็นตัวนี้แทน
       if(curSize&&x.variations){
         const vparts=x.variations.split(/[/,|]/).map(s=>s.trim());
-        const matchesSize=vparts.some(v=>/^(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(v)&&v===curSize);
+        const matchesSize=vparts.some(v=>/^(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(v)&&v===curSize);
         if(matchesSize){
           const idx=colorReps.findIndex(r=>(r.imageUrl||'')===key);
           if(idx>=0) colorReps[idx]=x;
@@ -1462,12 +1462,12 @@ function prodCardGroup(prods){
 
   // Extract unique sizes and colors
   const sizes=[]; const colors=[];
-  const sizeOrder=['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL','7XL'];
+  const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL','7XL'];
   prods.forEach(p=>{
     if(!p.variations) return;
     const parts=p.variations.split(/[/,|]/).map(s=>s.trim()).filter(Boolean);
     parts.forEach(part=>{
-      if(/^(XXS|XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(part)){if(!sizes.includes(part))sizes.push(part);}
+      if(/^(XS|S|M|L|XL|XXL|3XL|4XL|5XL|6XL|7XL|\d{2,3})$/i.test(part)){if(!sizes.includes(part))sizes.push(part);}
       else if(part){if(!colors.includes(part))colors.push(part);}
     });
   });

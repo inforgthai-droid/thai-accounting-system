@@ -413,7 +413,7 @@ function applyListSort(list, sortKey, sortDir){
   const dir=sortDir==='asc'?1:-1;
   if(sortKey==='color'||sortKey==='size'){
     // ดึงค่าสี หรือ ไซส์ จาก field variations (เช่น "XS / Black" → size="XS", color="Black")
-    const sizeOrder=['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL'];
+    const sizeOrder=['XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL'];
     return [...list].sort((a,b)=>{
       const getPart=(p,part)=>{
         const v=(p.variations||p.name||'');
@@ -4285,7 +4285,7 @@ function openBulkProduct(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div style="font-weight:700;color:var(--primary);font-size:13px">ไซส์ (Size)</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${['XXS','XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL','38','39','40','41','42','43','44','45','46','47','48','50','52','54','56','58','60','62','64','66','68'].map(s=>`
+          ${['XS','S','M','L','XL','XXL','3XL','4XL','5XL','6XL','38','39','40','41','42','43','44','45','46','48','50','52','54','56','58','60','62','64','66'].map(s=>`
             <button onclick="toggleBpTag('size','${s}',this)"
               style="padding:3px 10px;border:1.5px solid var(--border);border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:#888;font-family:'Sarabun',sans-serif;transition:all .13s"
               data-tag="${s}">${s}</button>`).join('')}
