@@ -5281,7 +5281,8 @@ async function saveSkuDemon(id,val){
   toast('บันทึก SKU แล้ว ✓','success');
 }
 
-async function showImgZoom(url, name){
+async 
+function showImgZoom(url, name){
   url = decodeURIComponent(url);
   name = decodeURIComponent(name);
   // สร้าง overlay
@@ -8024,7 +8025,6 @@ function bahtText(amount){
 function renderInfographic(){
   const el=document.getElementById('p-infographic');
   if(!el)return;
-  if(!S.sales||!S.products){el.innerHTML='<div style="padding:2rem;color:#888">กำลังโหลดข้อมูล...</div>';setTimeout(renderInfographic,1500);return;}
   const today=todayISO();
   const thisMonth=today.slice(0,7);
   const lastMonth=(()=>{const d=new Date(today);d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7);})();
@@ -8033,7 +8033,7 @@ function renderInfographic(){
   const sales=S.sales.filter(s=>s.status!=='ยกเลิก');
   const online=S.onlineOrders.filter(o=>o.status!=='ยกเลิก'&&o.status!=='รอชำระบัตร');
   const prods=S.products;
-  const rentals=(typeof _rentals!=='undefined'&&_rentals?_rentals:[]).filter(r=>r.status!=='ยกเลิก');
+  const rentals=(_rentals||[]).filter(r=>r.status!=='ยกเลิก');
   const mSales=sales.filter(s=>s.date&&s.date.startsWith(thisMonth));
   const mOnline=online.filter(o=>(o.date||'').startsWith(thisMonth));
   const mRent=rentals.filter(r=>(r.startDate||'').startsWith(thisMonth));
