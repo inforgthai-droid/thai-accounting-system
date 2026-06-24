@@ -1631,6 +1631,7 @@ function renderCO(){
       ${pm('qr','QR','QR PROMPTPAY',LANG==='th'?'สแกนจ่ายทุกธนาคาร':'Scan any bank app')}
       ${pm('transfer','Bank','BANK TRANSFER',LANG==='th'?'โอนแล้วแนบสลิป':'Transfer & attach slip')}
       ${pm('credit','Card','CREDIT / DEBIT CARD','Visa, Mastercard, JCB')}
+      ${pm('cod','Cash','CASH ON DELIVERY',LANG==='th'?'ชำระเมื่อรับสินค้า':'Pay on arrival')}
       <div style="display:flex;gap:8px;margin-top:1rem">
         <button onclick="O.step=1;renderCO()" class="act-btn sec" style="flex:1">← ${LANG==='th'?'ย้อนกลับ':'Back'}</button>
         <button onclick="step3()" class="act-btn" style="flex:2">${t('confirm_order')} ${fmtD(grand)} →</button>
@@ -1664,7 +1665,7 @@ function renderPayScreen(grand,steps){
         <div style="font-size:13px;color:#444;margin:.5rem 0">${LANG==='th'?'ชำระภายใน':'Pay within'} <span style="font-family:var(--font);font-size:22px;font-weight:900;color:var(--red)" id="tmel">05:00</span></div>
         <div class="qr-acct">
           <div style="font-family:var(--font);font-weight:800;color:var(--red);letter-spacing:.5px;margin-bottom:6px">PROMPTPAY</div>
-          <div>${LANG==='th'?'ชื่อบัญชี':'Account Name'}: <strong>PONGPOJ AUTHANA</strong></div>
+          <div>${LANG==='th'?'ชื่อบัญชี':'Account Name'}: <strong>${CO.bankAccountName||'PONGPOJ AUTHANA'}</strong></div>
           <div>${LANG==='th'?'เบอร์พร้อมเพย์':'PromptPay'}: <strong>${CO.promptpay||CO.tel||'(กรุณาตั้งค่า)'}</strong></div>
         </div>
       </div>
