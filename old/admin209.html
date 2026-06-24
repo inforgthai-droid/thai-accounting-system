@@ -2761,12 +2761,11 @@ async function cancelOnlineOrder(id){
   try{
     const batch=db.batch();
     batch.update(db.collection('onlineOrders').doc(id),{status:'ยกเลิก',cancelNote:note||'',cancelledAt:ts()});
-    // คืนสต็อก (รองรับทั้ง item.id และ item.pid)
+    // คืนสต็อก (ถ้าออเดอร์มี pid อ้างถึงสินค้า)
     (o.items||[]).forEach(item=>{
-      const pid=item.id||item.pid;
-      if(pid){
-        batch.update(db.collection('products').doc(pid),{stock:inc(item.qty)});
-        const p=S.products.find(x=>x.id===pid);
+      if(item.pid){
+        batch.update(db.collection('products').doc(item.pid),{stock:inc(item.qty)});
+        const p=S.products.find(x=>x.id===item.pid);
         if(p) p.stock+=item.qty;
       }
     });
@@ -6449,12 +6448,8 @@ async function updateOrderStatus(id,status){
   toast('อัปเดตสถานะ: '+status,'success');
 }
 
-async function viewOrder(id){
-  let o=S.onlineOrders.find(x=>x.id===id);
-  if(!o){
-    try{const doc=await db.collection('onlineOrders').doc(id).get();if(doc.exists){o={id:doc.id,...doc.data()};S.onlineOrders.push(o);}}catch(e){}
-  }
-  if(!o){toast('ไม่พบออเดอร์','error');return;}
+function viewOrder(id){
+  const o=S.onlineOrders.find(x=>x.id===id);if(!o)return;
   const PAY_LABEL={qr:'📱 QR พร้อมเพย์',transfer:'🏦 โอนเงิน',credit:'💳 บัตรเครดิต',cod:'💵 COD'};
   const itemRows=o.items?o.items.map((i,idx)=>`
     <tr>
