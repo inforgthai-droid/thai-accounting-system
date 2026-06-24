@@ -8024,7 +8024,7 @@ function bahtText(amount){
 function renderInfographic(){
   const el=document.getElementById('p-infographic');
   if(!el)return;
-  if(!S.sales||!S.products){el.innerHTML='<div style="padding:2rem;color:#888;text-align:center;margin-top:4rem">กำลังโหลดข้อมูล...</div>';setTimeout(renderInfographic,1500);return;}
+  if(!S.sales||!S.products){el.innerHTML='<div style="padding:2rem;color:#888">กำลังโหลดข้อมูล...</div>';setTimeout(renderInfographic,1500);return;}
   const today=todayISO();
   const thisMonth=today.slice(0,7);
   const lastMonth=(()=>{const d=new Date(today);d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7);})();
@@ -8071,104 +8071,80 @@ function renderInfographic(){
   const pctChg=(cur,prev)=>{if(!prev)return null;const p=((cur-prev)/prev*100);return{v:p,up:p>=0};};
   const revChg=pctChg(mRev,lRev);
   const profitChg=pctChg(mProfit,lProfit);
-  const chgBadge=(chg)=>chg===null?'':'<span style="font-size:11px;color:'+(chg.up?'#10b981':'#ef4444')+';margin-left:6px">'+(chg.up?'▲':'▼')+Math.abs(chg.v).toFixed(1)+'%</span>';
-
-  // KPI cards
-  const kpiData=[
-    {label:'ยอดขายวันนี้',val:fmtK(todRev),sub:todSales.length+' บิล',color:'#10b981'},
-    {label:'กำไรวันนี้',val:fmtK(todProfit),sub:'ขั้นต้น',color:'#8b5cf6'},
-    {label:'ยอดขายเดือนนี้',val:fmtK(mTotal),sub:chgBadge(revChg)||'รวมเช่า',color:'#0ea5e9'},
-    {label:'กำไรเดือนนี้',val:fmtK(mProfit),sub:chgBadge(profitChg)||'ขั้นต้น',color:'#f59e0b'},
-    {label:'รายได้เช่า',val:fmtK(mRentRev),sub:mRent.length+' สัญญา',color:'#f97316'},
-    {label:'ออเดอร์ออนไลน์',val:String(mOnline.length),sub:'เดือนนี้',color:'#ec4899'},
-  ];
-  const kpiHtml=kpiData.map(k=>'<div style="background:var(--bg2);border:1px solid var(--bd);border-top:3px solid '+k.color+';padding:14px 16px"><div style="font-size:11px;color:#888;margin-bottom:4px">'+k.label+'</div><div style="font-size:24px;font-weight:900;font-family:var(--font);color:#fff">'+k.val+'</div><div style="font-size:11px;color:#aaa;margin-top:2px">'+k.sub+'</div></div>').join('');
-
-  // กราฟ 6 เดือน
-  const barsHtml=m6data.map(function(d){
-    var rh=Math.round((d.rev/maxRev)*120)||2;
-    var ph=Math.round((d.profit/maxRev)*120)||2;
-    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-size:9px;color:#888">'+fmtK(d.rev)+'</div><div style="display:flex;align-items:flex-end;gap:2px;height:120px"><div style="width:12px;height:'+rh+'px;background:#0ea5e9;border-radius:2px 2px 0 0"></div><div style="width:12px;height:'+ph+'px;background:#8b5cf6;border-radius:2px 2px 0 0"></div></div><div style="font-size:10px;color:#aaa">'+d.m+'</div></div>';
-  }).join('');
-
-  // สินค้าขายดี
-  const topColors=['#f59e0b','#94a3b8','#cd7f32','#10b981','#0ea5e9'];
-  const topHtml=topItems.length?topItems.map(function(item,i){
-    var name=item[0],qty=item[1];
-    var pct=Math.round(qty/topItems[0][1]*100);
-    return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:'+topColors[i]+';font-weight:700">#'+(i+1)+'</span><span style="flex:1;margin:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+name+'</span><span style="color:#fff;font-weight:700">'+qty+' ชิ้น</span></div><div style="height:4px;background:var(--bd);border-radius:2px"><div style="height:4px;background:'+topColors[i]+';border-radius:2px;width:'+pct+'%"></div></div></div>';
-  }).join(''):'<div style="color:#555;font-size:13px;text-align:center;margin-top:30px">ยังไม่มีข้อมูลการขายเดือนนี้</div>';
-
-  // ช่องทางชำระ
-  const payHtml=Object.entries(payCount).length?Object.entries(payCount).sort(function(a,b){return b[1]-a[1];}).map(function(entry){
-    var k=entry[0],v=entry[1];
-    var pct=Math.round(v/payTotal*100);
-    var c=payColors[k]||'#64748b';
-    return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>'+k+'</span><span style="color:#fff;font-weight:700">'+pct+'% ('+v+')</span></div><div style="height:6px;background:var(--bd);border-radius:3px"><div style="height:6px;background:'+c+';border-radius:3px;width:'+pct+'%"></div></div></div>';
-  }).join(''):'<div style="color:#555;font-size:13px;text-align:center;margin-top:30px">ยังไม่มีข้อมูล</div>';
-
-  // สรุปรวม
-  const summaryRows=[
-    {label:'ยอดขาย POS รวม',val:'฿'+fmtK(sales.reduce(function(a,s){return a+(s.subtotal||0);},0)),color:'#10b981'},
-    {label:'ยอดขายออนไลน์รวม',val:'฿'+fmtK(online.reduce(function(a,o){return a+(o.total||0);},0)),color:'#0ea5e9'},
-    {label:'กำไรขั้นต้นรวม',val:'฿'+fmtK(sales.reduce(function(a,s){return a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null);},0)),color:'#8b5cf6'},
-    {label:'บิลทั้งหมด',val:(sales.length+online.length)+' รายการ',color:'#f59e0b'},
-    {label:'ลูกค้าทั้งหมด',val:(S.customers||[]).length+' ราย',color:'#ec4899'},
-    {label:'ซัพพลายเออร์',val:(S.suppliers||[]).length+' ราย',color:'#f97316'},
-  ];
-  const summaryHtml=summaryRows.map(function(r){return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd)"><span style="font-size:12px;color:#aaa">'+r.label+'</span><span style="font-size:13px;font-weight:700;color:'+r.color+'">'+r.val+'</span></div>';}).join('');
-
-  // กราฟรายวัน
-  var daysInMonth=new Date(new Date(today).getFullYear(),new Date(today).getMonth()+1,0).getDate();
-  var byDay={};
-  mSales.concat(mOnline).forEach(function(s){var d=(s.date||'').slice(8,10);if(d)byDay[d]=(byDay[d]||0)+(s.subtotal||s.total||0);});
-  var maxD=Math.max.apply(null,Object.values(byDay).concat([1]));
-  var dailyBars='';
-  for(var di=1;di<=daysInMonth;di++){
-    var ds=String(di).padStart(2,'0');
-    var dv=byDay[ds]||0;
-    var dh=Math.round((dv/maxD)*80)||1;
-    var isToday=ds===today.slice(8,10);
-    dailyBars+='<div style="flex:1;min-width:12px;display:flex;flex-direction:column;align-items:center"><div title="'+ds+': ฿'+fmt(dv)+'" style="width:100%;max-width:20px;height:'+dh+'px;background:'+(isToday?'#f59e0b':'#0ea5e9')+';border-radius:2px 2px 0 0;opacity:'+(dv?'1':'0.2')+'"></div><div style="font-size:8px;color:'+(isToday?'#f59e0b':'#666')+';margin-top:2px">'+di+'</div></div>';
-  }
-
-  el.innerHTML=
-    '<div style="padding:16px;max-width:1100px">'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">'+
-      '<div><h2 style="font-family:var(--font);font-size:22px;font-weight:900;margin:0">📊 อินโฟกราฟิก</h2><div style="font-size:12px;color:#888;margin-top:2px">ข้อมูล ณ วันที่ '+today+'</div></div>'+
-      '<button onclick="renderInfographic()" style="background:var(--accent);color:#fff;border:none;padding:7px 16px;font-size:12px;cursor:pointer;font-family:var(--font)">↻ รีเฟรช</button>'+
-    '</div>'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">'+kpiHtml+'</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">'+
-      '<div style="background:var(--bg2);border:1px solid var(--bd);padding:16px">'+
-        '<div style="font-size:13px;font-weight:700;margin-bottom:14px">ยอดขาย vs กำไร (6 เดือน)</div>'+
-        '<div style="display:flex;align-items:flex-end;gap:8px;height:140px">'+barsHtml+'</div>'+
-        '<div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:#aaa"><span><span style="display:inline-block;width:10px;height:10px;background:#0ea5e9;border-radius:1px;margin-right:3px"></span>ยอดขาย</span><span><span style="display:inline-block;width:10px;height:10px;background:#8b5cf6;border-radius:1px;margin-right:3px"></span>กำไร</span></div>'+
-      '</div>'+
-      '<div style="background:var(--bg2);border:1px solid var(--bd);padding:16px">'+
-        '<div style="font-size:13px;font-weight:700;margin-bottom:14px">🏆 สินค้าขายดีเดือนนี้</div>'+topHtml+
-      '</div>'+
-    '</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">'+
-      '<div style="background:var(--bg2);border:1px solid var(--bd);padding:16px"><div style="font-size:13px;font-weight:700;margin-bottom:14px">💳 ช่องทางชำระเงิน</div>'+payHtml+'</div>'+
-      '<div style="background:var(--bg2);border:1px solid var(--bd);padding:16px">'+
-        '<div style="font-size:13px;font-weight:700;margin-bottom:14px">📦 สถานะสต็อก</div>'+
-        '<div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:16px">'+
-          '<div><div style="font-size:28px;font-weight:900;color:#ef4444">'+outStock+'</div><div style="font-size:11px;color:#888">หมด</div></div>'+
-          '<div><div style="font-size:28px;font-weight:900;color:#f59e0b">'+lowStock+'</div><div style="font-size:11px;color:#888">ใกล้หมด</div></div>'+
-          '<div><div style="font-size:28px;font-weight:900;color:#10b981">'+(prods.length-outStock-lowStock)+'</div><div style="font-size:11px;color:#888">ปกติ</div></div>'+
-        '</div>'+
-        '<div style="border-top:1px solid var(--bd);padding-top:12px"><div style="font-size:11px;color:#888">มูลค่าสต็อกรวม</div><div style="font-size:20px;font-weight:900;font-family:var(--font);color:#0ea5e9">฿'+fmt(stockVal)+'</div><div style="font-size:11px;color:#888;margin-top:4px">สินค้าทั้งหมด '+prods.length+' SKU</div></div>'+
-      '</div>'+
-      '<div style="background:var(--bg2);border:1px solid var(--bd);padding:16px"><div style="font-size:13px;font-weight:700;margin-bottom:14px">📈 สรุปรวมทั้งหมด</div>'+summaryHtml+'</div>'+
-    '</div>'+
-    '<div style="background:var(--bg2);border:1px solid var(--bd);padding:16px;margin-bottom:20px">'+
-      '<div style="font-size:13px;font-weight:700;margin-bottom:14px">📅 ยอดขายรายวัน — เดือนนี้</div>'+
-      '<div style="display:flex;align-items:flex-end;gap:3px;height:100px;overflow-x:auto">'+dailyBars+'</div>'+
-    '</div>'+
-    '</div>';
+  const chgBadge=(chg)=>chg===null?'':('<span style="font-size:11px;color:'+(chg.up?'#10b981':'#ef4444')+(';margin-left:6px">')+(chg.up?'▲':'▼')+Math.abs(chg.v).toFixed(1)+'%</span>');
+  el.innerHTML=`
+<div style="padding:16px;max-width:1100px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+    <div>
+      <h2 style="font-family:var(--font);font-size:22px;font-weight:900;margin:0">📊 อินโฟกราฟิก</h2>
+      <div style="font-size:12px;color:#888;margin-top:2px">ข้อมูล ณ วันที่ ${today}</div>
+    </div>
+    <button onclick="renderInfographic()" style="background:var(--accent);color:#fff;border:none;padding:7px 16px;font-size:12px;cursor:pointer;font-family:var(--font)">↻ รีเฟรช</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+    ${[
+      {label:'ยอดขายวันนี้',val:fmtK(todRev),sub:todSales.length+' บิล',color:'#10b981'},
+      {label:'กำไรวันนี้',val:fmtK(todProfit),sub:'ขั้นต้น',color:'#8b5cf6'},
+      {label:'ยอดขายเดือนนี้',val:fmtK(mTotal),sub:chgBadge(revChg)||'รวมเช่า',color:'#0ea5e9'},
+      {label:'กำไรเดือนนี้',val:fmtK(mProfit),sub:chgBadge(profitChg)||'ขั้นต้น',color:'#f59e0b'},
+      {label:'รายได้เช่า',val:fmtK(mRentRev),sub:mRent.length+' สัญญา',color:'#f97316'},
+      {label:'ออเดอร์ออนไลน์',val:mOnline.length+'',sub:'เดือนนี้',color:'#ec4899'},
+    ].map(k=>`<div style="background:var(--bg2);border:1px solid var(--bd);border-top:3px solid ${k.color};padding:14px 16px"><div style="font-size:11px;color:#888;margin-bottom:4px">${k.label}</div><div style="font-size:24px;font-weight:900;font-family:var(--font);color:#fff">${k.val}</div><div style="font-size:11px;color:#aaa;margin-top:2px">${k.sub}</div></div>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div style="background:var(--bg2);border:1px solid var(--bd);padding:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px">ยอดขาย vs กำไร (6 เดือน)</div>
+      <div style="display:flex;align-items:flex-end;gap:8px;height:140px">
+        ${m6data.map(d=>{const rh=Math.round((d.rev/maxRev)*120)||2;const ph=Math.round((d.profit/maxRev)*120)||2;return'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-size:9px;color:#888">'+fmtK(d.rev)+'</div><div style="display:flex;align-items:flex-end;gap:2px;height:120px"><div title="ยอดขาย '+fmtK(d.rev)+'" style="width:12px;height:'+rh+'px;background:#0ea5e9;border-radius:2px 2px 0 0"></div><div title="กำไร '+fmtK(d.profit)+'" style="width:12px;height:'+ph+'px;background:#8b5cf6;border-radius:2px 2px 0 0"></div></div><div style="font-size:10px;color:#aaa">'+d.m+'</div></div>';}).join('')}
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:#aaa">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#0ea5e9;border-radius:1px;margin-right:3px"></span>ยอดขาย</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#8b5cf6;border-radius:1px;margin-right:3px"></span>กำไร</span>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--bd);padding:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px">🏆 สินค้าขายดีเดือนนี้</div>
+      ${topItems.length?topItems.map(([name,qty],i)=>{const pct=Math.round(qty/topItems[0][1]*100);const colors=['#f59e0b','#94a3b8','#cd7f32','#10b981','#0ea5e9'];return'<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:'+colors[i]+';font-weight:700">#'+(i+1)+'</span><span style="flex:1;margin:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+name+'</span><span style="color:#fff;font-weight:700">'+qty+' ชิ้น</span></div><div style="height:4px;background:var(--bd);border-radius:2px"><div style="height:4px;background:'+colors[i]+';border-radius:2px;width:'+pct+'%"></div></div></div>';}).join(''):'<div style="color:#555;font-size:13px;text-align:center;margin-top:30px">ยังไม่มีข้อมูลการขายเดือนนี้</div>'}
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+    <div style="background:var(--bg2);border:1px solid var(--bd);padding:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px">💳 ช่องทางชำระเงิน</div>
+      ${Object.entries(payCount).length?Object.entries(payCount).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{const pct=Math.round(v/payTotal*100);const c=payColors[k]||'#64748b';return'<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>'+k+'</span><span style="color:#fff;font-weight:700">'+pct+'% ('+v+')</span></div><div style="height:6px;background:var(--bd);border-radius:3px"><div style="height:6px;background:'+c+';border-radius:3px;width:'+pct+'%"></div></div></div>';}).join(''):'<div style="color:#555;font-size:13px;text-align:center;margin-top:30px">ยังไม่มีข้อมูล</div>'}
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--bd);padding:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px">📦 สถานะสต็อก</div>
+      <div style="display:flex;justify-content:space-around;text-align:center;margin-bottom:16px">
+        <div><div style="font-size:28px;font-weight:900;color:#ef4444">${outStock}</div><div style="font-size:11px;color:#888">หมด</div></div>
+        <div><div style="font-size:28px;font-weight:900;color:#f59e0b">${lowStock}</div><div style="font-size:11px;color:#888">ใกล้หมด</div></div>
+        <div><div style="font-size:28px;font-weight:900;color:#10b981">${prods.length-outStock-lowStock}</div><div style="font-size:11px;color:#888">ปกติ</div></div>
+      </div>
+      <div style="border-top:1px solid var(--bd);padding-top:12px">
+        <div style="font-size:11px;color:#888">มูลค่าสต็อกรวม</div>
+        <div style="font-size:20px;font-weight:900;font-family:var(--font);color:#0ea5e9">฿${fmt(stockVal)}</div>
+        <div style="font-size:11px;color:#888;margin-top:4px">สินค้าทั้งหมด ${prods.length} SKU</div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--bd);padding:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:14px">📈 สรุปรวมทั้งหมด</div>
+      ${[
+        {label:'ยอดขาย POS รวม',val:'฿'+fmtK(sales.reduce((a,s)=>a+(s.subtotal||0),0)),color:'#10b981'},
+        {label:'ยอดขายออนไลน์รวม',val:'฿'+fmtK(online.reduce((a,o)=>a+(o.total||0),0)),color:'#0ea5e9'},
+        {label:'กำไรขั้นต้นรวม',val:'฿'+fmtK(sales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0)),color:'#8b5cf6'},
+        {label:'บิลทั้งหมด',val:(sales.length+online.length)+' รายการ',color:'#f59e0b'},
+        {label:'ลูกค้าทั้งหมด',val:(S.customers||[]).length+' ราย',color:'#ec4899'},
+        {label:'ซัพพลายเออร์',val:(S.suppliers||[]).length+' ราย',color:'#f97316'},
+      ].map(r=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd)"><span style="font-size:12px;color:#aaa">'+r.label+'</span><span style="font-size:13px;font-weight:700;color:'+r.color+'">'+r.val+'</span></div>').join('')}
+    </div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--bd);padding:16px;margin-bottom:20px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:14px">📅 ยอดขายรายวัน — เดือนนี้</div>
+    <div style="display:flex;align-items:flex-end;gap:3px;height:100px;overflow-x:auto">
+      ${(()=>{const daysInMonth=new Date(new Date(today).getFullYear(),new Date(today).getMonth()+1,0).getDate();const byDay={};[...mSales,...mOnline].forEach(s=>{const d=(s.date||'').slice(8,10);if(d)byDay[d]=(byDay[d]||0)+(s.subtotal||s.total||0);});const maxD=Math.max(...Object.values(byDay),1);return Array.from({length:daysInMonth},(_,i)=>{const d=String(i+1).padStart(2,'0');const v=byDay[d]||0;const h=Math.round((v/maxD)*80)||1;const isToday=d===today.slice(8,10);return'<div style="flex:1;min-width:12px;display:flex;flex-direction:column;align-items:center"><div title="'+d+': ฿'+fmt(v)+'" style="width:100%;max-width:20px;height:'+h+'px;background:'+(isToday?'#f59e0b':'#0ea5e9')+';border-radius:2px 2px 0 0;opacity:'+(v?1:0.2)+'"></div><div style="font-size:8px;color:'+(isToday?'#f59e0b':'#666')+';margin-top:2px">'+(i+1)+'</div></div>';}).join('');})()}
+    </div>
+  </div>
+</div>`;
 }
-
 
 function renderWebDesign(){
   return`
