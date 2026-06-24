@@ -1693,25 +1693,17 @@ function renderPayScreen(grand,steps){
     $('mb').innerHTML=`${steps}
       <div style="text-align:center;padding:1rem 0">
         <div style="background:var(--bg3);border:1px solid var(--bd);padding:1.5rem;margin-bottom:1rem">
-          <div style="font-size:11px;color:#888;letter-spacing:2px;font-family:var(--font)">TOTAL AMOUNT</div>
+          <div style="font-size:11px;color:#444;letter-spacing:2px;font-family:var(--font)">TOTAL AMOUNT</div>
           <div style="font-family:var(--font);font-size:32px;font-weight:900;color:#fff">${fmtD(grand)}</div>
-          <div style="font-size:12px;color:#888">${_docNo}</div>
-        </div>
-        <div class="qr-acct" style="text-align:left;margin-bottom:1rem">
-          <table style="width:100%;font-size:13px;line-height:2">
-            <tr><td style="color:#bbb;width:80px">${LANG==='th'?'ชื่อ':'Name'}</td><td><strong>${O.name}</strong></td></tr>
-            <tr><td style="color:#bbb">${LANG==='th'?'โทร':'Phone'}</td><td><strong>${O.phone}</strong></td></tr>
-            ${O.email?`<tr><td style="color:#bbb">Email</td><td><strong>${O.email}</strong></td></tr>`:''}
-            <tr><td style="color:#bbb">${LANG==='th'?'ที่อยู่':'Address'}</td><td><strong>${O.addr}</strong></td></tr>
-          </table>
+          <div style="font-size:12px;color:#444">${_docNo}</div>
         </div>
         <div style="background:var(--bg3);border:1px solid var(--bd);border-left:3px solid var(--red);padding:.8rem;font-size:12px;color:#bbb;text-align:left;margin-bottom:1rem">
-          💳 ${LANG==='th'?'กดปุ่มด้านล่างเพื่อไปยังหน้าชำระเงินบัตรเครดิต ข้อมูลของท่านจะถูกกรอกล่วงหน้าให้อัตโนมัติ':'Click below to proceed to the credit card payment page. Your details will be pre-filled automatically.'}
+          ⚡ Demo Mode — ${LANG==='th'?'สมัคร':'Register'} <a href="https://www.omise.co" target="_blank" style="color:var(--red)">Omise.co</a> ${LANG==='th'?'สำหรับใช้งานจริง':'for production'}
         </div>
       </div>
       <div style="display:flex;gap:8px">
         <button onclick="O.step=2;renderCO()" class="act-btn sec" style="flex:1">← ${LANG==='th'?'กลับ':'Back'}</button>
-        <button onclick="openCreditPayment()" class="act-btn" style="flex:2">💳 ${LANG==='th'?'ชำระด้วยบัตรเครดิต':'Pay by Credit Card'} →</button>
+        <button onclick="confirmPay()" class="act-btn" style="flex:2">✓ ${LANG==='th'?'ยืนยัน (Demo)':'Confirm (Demo)'}</button>
       </div>`;
   } else {
     $('mb').innerHTML=`${steps}
@@ -1744,32 +1736,6 @@ function genQR(amount){
 function startTimer(){_tSec=300;clearTimer();_tID=setInterval(()=>{_tSec--;const e=$('tmel');if(e){const m=Math.floor(_tSec/60),s=_tSec%60;e.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;if(_tSec<=60)e.style.color='#f87171';}if(_tSec<=0){clearTimer();toast(LANG==='th'?'หมดเวลาชำระ':'Payment timeout','err');closeM();}},1000);}
 function clearTimer(){if(_tID){clearInterval(_tID);_tID=null;}}
 function previewSlip(inp){if(!inp.files[0])return;const r=new FileReader();r.onload=e=>{const i=$('slipimg');if(i){i.src=e.target.result;i.style.display='block';}};r.readAsDataURL(inp.files[0]);}
-
-async function openCreditPayment(){
-  const{sub,vat,grand}=cartTotals();
-  const orderData={orderNo:_docNo,date:todayISO(),customerName:O.name,customerPhone:O.phone,customerEmail:O.email||shopUser?.email||'',customerUid:shopUser?.uid||'',customerAddress:O.addr,note:O.note,payMethod:'credit',slipBase64:'',lang:LANG,items:CART.map(x=>({id:x.id,code:x.code,name:x.name,unit:x.unit,price:x.price,qty:x.qty,subtotal:x.price*x.qty})),subtotal:sub,vat,total:grand,status:'รอชำระบัตร'};
-  try{
-    const batch=db.batch();
-    const oRef=db.collection('onlineOrders').doc();
-    batch.set(oRef,{...orderData,createdAt:fts()});
-    CART.forEach(item=>batch.update(db.collection('products').doc(item.id),{stock:inc(-item.qty)}));
-    await batch.commit();
-    CART.forEach(item=>{const p=PRODS.find(x=>x.id===item.id);if(p)p.stock-=item.qty;});
-    window._lastCart=[...CART];CART.length=0;updateCart();doFilter();
-  }catch(e){toast('Error saving order: '+e.message,'err');return;}
-  // Build pay.sn URL with pre-filled customer data
-  const params=new URLSearchParams({
-    name:O.name,
-    tel:O.phone,
-    email:O.email||'',
-    address:O.addr,
-    amount:grand,
-    ref:_docNo
-  });
-  window.open('https://pay.sn/racinggarage?'+params.toString(),'_blank');
-  // Show success screen
-  O.step=4;renderSuccess(grand);
-}
 
 async function confirmPay(){
   clearTimer();
