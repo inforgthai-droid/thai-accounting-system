@@ -1665,7 +1665,7 @@ function renderPayScreen(grand,steps){
         <div style="font-size:13px;color:#444;margin:.5rem 0">${LANG==='th'?'ชำระภายใน':'Pay within'} <span style="font-family:var(--font);font-size:22px;font-weight:900;color:var(--red)" id="tmel">05:00</span></div>
         <div class="qr-acct">
           <div style="font-family:var(--font);font-weight:800;color:var(--red);letter-spacing:.5px;margin-bottom:6px">PROMPTPAY</div>
-          <div>${LANG==='th'?'ชื่อบัญชี':'Account Name'}: <strong>${CO.bankAccountName||'PONGPOJ AUTHANA'}</strong></div>
+          <div>${LANG==='th'?'ชื่อบัญชี':'Account Name'}: <strong>${CO.name}</strong></div>
           <div>${LANG==='th'?'เบอร์พร้อมเพย์':'PromptPay'}: <strong>${CO.promptpay||CO.tel||'(กรุณาตั้งค่า)'}</strong></div>
         </div>
       </div>
