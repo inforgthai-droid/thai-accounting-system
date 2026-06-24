@@ -1690,7 +1690,40 @@ function renderPayScreen(grand,steps){
         <button onclick="confirmPay()" class="act-btn" style="flex:2">✓ ${LANG==='th'?'ยืนยันการโอน':'Confirm Transfer'}</button>
       </div>`;
   } else if(O.pay==='credit'){
-    openCreditPayment();
+    const itemDesc=CART.map(x=>x.name+(x.qty>1?' x'+x.qty:'')).join(', ');
+    const _cr=(lbl,val,id)=>`<div style="margin-bottom:8px">
+      <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">${lbl}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="flex:1;background:var(--bg3);border:1px solid var(--bd);padding:8px 10px;font-size:13px;font-weight:700;color:#fff;word-break:break-all">${val}</div>
+        <button id="cpb-${id}" onclick="(()=>{navigator.clipboard.writeText(this.dataset.v);const b=document.getElementById('cpb-${id}');b.textContent='✓';b.style.background='#16a34a';setTimeout(()=>{b.textContent='คัดลอก';b.style.background='';},1500)})()" data-v="${val.replace(/"/g,'&quot;')}" style="background:var(--bg2);border:1px solid var(--bd);color:#bbb;padding:6px 10px;font-size:11px;white-space:nowrap;cursor:pointer;font-family:var(--font)">คัดลอก</button>
+      </div></div>`;
+    window._cpVals={amt:String(grand),item:itemDesc,email:O.email||'',tel:O.phone};
+    $('mb').innerHTML=`${steps}
+      <div style="padding:.5rem 0">
+        <div style="background:var(--bg3);border:1px solid var(--bd);padding:1rem 1.2rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:10px;color:#888;letter-spacing:2px;font-family:var(--font)">TOTAL AMOUNT</div>
+            <div style="font-family:var(--font);font-size:28px;font-weight:900;color:#fff">${fmtD(grand)}</div>
+          </div>
+          <div style="font-size:11px;color:#555">${_docNo}</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--bd);border-left:3px solid var(--red);padding:.7rem .9rem;font-size:12px;color:#bbb;margin-bottom:1rem">
+          💳 ${LANG==='th'?'คัดลอกข้อมูลด้านล่าง แล้วกรอกในหน้าชำระเงิน':'Copy the info below and fill in the payment page'}
+        </div>
+        ${_cr('จำนวนเงิน (บาท)',String(grand),'amt')}
+        ${_cr('สินค้า',itemDesc,'item')}
+        ${_cr('อีเมล',O.email||'-','email')}
+        ${_cr('เบอร์โทรศัพท์',O.phone,'tel')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:.5rem">
+        <button onclick="O.step=2;renderCO()" class="act-btn sec" style="flex:1">← ${LANG==='th'?'กลับ':'Back'}</button>
+        <button onclick="openCreditPayment()" class="act-btn" style="flex:2">💳 ${LANG==='th'?'ไปหน้าชำระเงิน':'Go to Payment Page'} →</button>
+      </div>`;
+    // Wire copy buttons
+    ['amt','item','email','tel'].forEach(k=>{
+      const btn=document.getElementById('cpb-'+k);
+      if(btn){btn.onclick=()=>{navigator.clipboard.writeText(window._cpVals[k]);btn.textContent='✓';btn.style.background='#16a34a';setTimeout(()=>{btn.textContent='คัดลอก';btn.style.background='';},1500);};}
+    });
   } else {
     $('mb').innerHTML=`${steps}
       <div style="text-align:center;padding:1rem 0">
