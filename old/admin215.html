@@ -349,7 +349,7 @@ function isAdmin(email){
 }
 
 function adminLogin(){
-  auth.signInWithRedirect(googleProvider).catch(e=>toast('Login ล้มเหลว: '+e.message,'error'));
+  auth.signInWithPopup(googleProvider).catch(e=>toast('Login ล้มเหลว: '+e.message,'error'));
 }
 function adminLogout(){
   auth.signOut();
