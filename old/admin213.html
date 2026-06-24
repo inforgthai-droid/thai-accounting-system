@@ -634,8 +634,6 @@ function renderPage(key){
     } else {
       el.innerHTML=renderSales();
     }
-  } else if(key==='infographic'){
-    renderInfographic();
   } else {
     if(map[key])el.innerHTML=map[key]();
   }
