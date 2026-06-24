@@ -8024,7 +8024,23 @@ function bahtText(amount){
 // ===== WEB DESIGN PAGE =====
 // ===== WEB DESIGN VISUAL EDITOR =====
 
-
+  } else if(key==='infographic'){
+    renderInfographic();
+  } else {
+    if(map[key])el.innerHTML=map[key]();
+  }
+  if(key==='settings')setTimeout(renderAdminEmailList,50);
+  if(key==='categories')setTimeout(renderCatList,50);
+  if(key==='shipping')setTimeout(()=>{
+    document.getElementById('ship-search-input')?.focus();
+    loadShippingList();
+  },100);
+  // Auto-focus search input on POS page
+  if(key==='pos')setTimeout(()=>{
+    const inp=document.getElementById('pos-search-input');
+    if(inp){inp.focus();inp.select();}
+  },100);
+}
 
 function renderDashboard(){
   const todSales=S.sales.filter(s=>s.date===todayISO());
