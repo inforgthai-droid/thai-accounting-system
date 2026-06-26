@@ -2160,14 +2160,12 @@ function showReceiptModal(sale){
 
   document.getElementById('modal-title').innerHTML='ใบเสร็จ '+sale.docNo;
   document.getElementById('modal-body').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <button onclick="doPrint58()" class="btn" style="font-size:13px;padding:10px 8px;background:#0ea5e9;color:#fff">🖨️ พิมพ์ใบเสร็จ 58mm</button>
-      <button onclick="printSaleA4('${sale.id}')" class="btn" style="font-size:13px;padding:10px 8px;background:#475569;color:#fff">🖨️ พิมพ์ A4</button>
-      <button onclick="sendPrintJob('${sale.id}','58mm')" class="btn" style="font-size:13px;padding:10px 8px;background:#e85d04;color:#fff">🏠 สั่งพิมพ์ที่บ้าน 58mm</button>
-      <button onclick="sendPrintJob('${sale.id}','a4')" class="btn" style="font-size:13px;padding:10px 8px;background:#1a3a5c;color:#fff">🏠 สั่งพิมพ์ที่บ้าน A4</button>
-    </div>
-    <div style="text-align:center;margin-bottom:8px">
-      <button onclick="closeModal()" class="btn btn-gray" style="font-size:13px;padding:8px 32px">ปิด</button>
+    <div style="text-align:center;margin-bottom:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button onclick="doPrint58()" class="btn" style="font-size:14px;padding:10px 24px">พิมพ์ใบเสร็จ 58mm</button>
+      <button onclick="printSaleA4('${sale.id}')" class="btn btn-gray" style="font-size:14px;padding:10px 24px">พิมพ์ A4</button>
+      <button onclick="sendPrintJob('${sale.id}','58mm')" class="btn" style="font-size:14px;padding:10px 18px;background:#e85d04;color:#fff">🏠 สั่งพิมพ์ที่บ้าน 58mm</button>
+      <button onclick="sendPrintJob('${sale.id}','a4')" class="btn" style="font-size:14px;padding:10px 18px;background:#1a3a5c;color:#fff">🏠 สั่งพิมพ์ที่บ้าน A4</button>
+      <button onclick="closeModal()" class="btn btn-gray" style="font-size:14px;padding:10px 18px">ปิด</button>
     </div>
     ${receiptHtml}`;
   document.getElementById('modal-footer').innerHTML='';
