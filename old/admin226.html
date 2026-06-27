@@ -6811,13 +6811,7 @@ function exportExcel(){
     XLSX.utils.book_append_sheet(wb,wsSummary,'สรุป');
 
     const fname=title.replace(/[^a-zA-Zก-๙0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
-    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
-    const blob=new Blob([wbout],{type:'application/octet-stream'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=fname;
-    document.body.appendChild(a); a.click();
-    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+    XLSX.writeFile(wb,fname);
     toast('บันทึก Excel สำเร็จ ✓','success');
   }catch(e){toast('Excel error: '+e.message,'error');}
 }
@@ -6843,8 +6837,7 @@ function exportCSV(){
     const a=document.createElement('a');
     a.href=url;
     a.download=title.replace(/[^a-zA-Zก-๙0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
-    document.body.appendChild(a); a.click();
-    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+    a.click();URL.revokeObjectURL(url);
     toast('บันทึก CSV สำเร็จ ✓','success');
   }catch(e){toast('CSV error: '+e.message,'error');}
 }
