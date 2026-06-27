@@ -4888,7 +4888,6 @@ function renderStock(){
   <div style="display:flex;gap:8px">
   <button class="btn btn-gray btn-sm" onclick="openStockPrintDialog()">พิมพ์รายงานสต็อก</button>
   <button class="btn btn-sm" style="background:#e85d04;color:#fff" onclick="exportDemonTweeksWord()">📋 Export SKU หมด → Word</button>
-  <button class="btn btn-sm" style="background:#10b981;color:#fff" onclick="downloadStockExcel()">📥 Download Stock Excel</button>
   <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="orderDemonTweeks()">📧 สั่งสินค้า Demon Tweeks</button>
   </div>
   </div>
@@ -6822,106 +6821,6 @@ function exportExcel(){
     toast('บันทึก Excel สำเร็จ ✓','success');
   }catch(e){toast('Excel error: '+e.message,'error');}
 }
-
-// ===== EXPORT CSV =====
-function downloadStockExcel(){
-  toast('กำลังสร้าง Excel...','info');
-  try{
-    const now=new Date();
-    const dateStr=now.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-    const prods=S.products;
-
-    // === Sheet 1: สต็อกทั้งหมด ===
-    const headers=['รหัสสินค้า','ชื่อสินค้า','แบรนด์','หมวดหมู่','หน่วย','ราคาขาย','ราคาต้นทุน','กำไร/หน่วย','%กำไร','จำนวนสต็อก','สต็อกขั้นต่ำ','มูลค่าสต็อก','สถานะ','FIA','SKU Demon Tweeks'];
-    const rows=prods.map(p=>{
-      const profit=(p.price||0)-(p.cost||0);
-      const profitPct=p.cost>0?Math.round(profit/p.cost*100):0;
-      const stockVal=(p.cost||0)*(p.stock||0);
-      const status=p.stock<=0?'หมดสต็อก':p.stock<=(p.minStock||5)?'ใกล้หมด':'ปกติ';
-      return[
-        p.code||'',
-        p.name||'',
-        p.brand||'',
-        p.category||'',
-        p.unit||'',
-        p.price||0,
-        p.cost||0,
-        profit,
-        profitPct+'%',
-        p.stock||0,
-        p.minStock||5,
-        stockVal,
-        status,
-        p.fia||'',
-        p.skuDemonTweeks||''
-      ];
-    });
-
-    const wb=XLSX.utils.book_new();
-
-    // --- Sheet 1: ทั้งหมด ---
-    const wsData=[
-      ['Racing Garage — รายงานสต็อกสินค้า'],
-      ['พิมพ์วันที่: '+dateStr,'','สินค้าทั้งหมด: '+prods.length+' รายการ'],
-      [],
-      headers,
-      ...rows
-    ];
-    const ws=XLSX.utils.aoa_to_sheet(wsData);
-    ws['!cols']=headers.map((h,i)=>{
-      const maxLen=Math.max(h.length,...rows.map(r=>String(r[i]||'').length));
-      return{wch:Math.min(Math.max(maxLen+2,10),45)};
-    });
-    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:headers.length-1}}];
-    XLSX.utils.book_append_sheet(wb,ws,'สต็อกทั้งหมด');
-
-    // --- Sheet 2: หมดสต็อก ---
-    const outRows=rows.filter(r=>r[9]<=0);
-    const wsOut=XLSX.utils.aoa_to_sheet([['สินค้าหมดสต็อก — '+outRows.length+' รายการ'],[],headers,...outRows]);
-    wsOut['!cols']=ws['!cols'];
-    XLSX.utils.book_append_sheet(wb,wsOut,'หมดสต็อก');
-
-    // --- Sheet 3: ใกล้หมด ---
-    const lowRows=rows.filter(r=>r[9]>0&&r[9]<=r[10]);
-    const wsLow=XLSX.utils.aoa_to_sheet([['สินค้าใกล้หมด — '+lowRows.length+' รายการ'],[],headers,...lowRows]);
-    wsLow['!cols']=ws['!cols'];
-    XLSX.utils.book_append_sheet(wb,wsLow,'ใกล้หมด');
-
-    // --- Sheet 4: สรุปตามหมวด ---
-    const catMap={};
-    prods.forEach(p=>{
-      const cat=p.category||'ไม่ระบุ';
-      if(!catMap[cat]) catMap[cat]={count:0,stockQty:0,stockVal:0,outStock:0};
-      catMap[cat].count++;
-      catMap[cat].stockQty+=(p.stock||0);
-      catMap[cat].stockVal+=(p.cost||0)*(p.stock||0);
-      if((p.stock||0)<=0) catMap[cat].outStock++;
-    });
-    const sumRows=Object.entries(catMap).sort((a,b)=>b[1].stockVal-a[1].stockVal)
-      .map(([cat,d])=>[cat,d.count,d.stockQty,d.stockVal,d.outStock]);
-    const wsSum=XLSX.utils.aoa_to_sheet([
-      ['สรุปสต็อกตามหมวดหมู่'],['พิมพ์วันที่: '+dateStr],[],
-      ['หมวดหมู่','จำนวน SKU','จำนวนสต็อกรวม','มูลค่าสต็อกรวม','หมดสต็อก'],
-      ...sumRows,
-      [],
-      ['รวมทั้งหมด',prods.length,prods.reduce((a,p)=>a+(p.stock||0),0),prods.reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0),prods.filter(p=>(p.stock||0)<=0).length]
-    ]);
-    wsSum['!cols']=[{wch:35},{wch:12},{wch:18},{wch:20},{wch:12}];
-    XLSX.utils.book_append_sheet(wb,wsSum,'สรุปตามหมวด');
-
-    // Download
-    const fname='RacingGarage_Stock_'+now.toISOString().slice(0,10)+'.xlsx';
-    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
-    const blob=new Blob([wbout],{type:'application/octet-stream'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=fname;
-    document.body.appendChild(a); a.click();
-    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
-    toast('Download สำเร็จ ✓ ('+prods.length+' รายการ, 4 sheets)','success');
-  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
-}
-
 
 // ===== EXPORT CSV =====
 function exportCSV(){
