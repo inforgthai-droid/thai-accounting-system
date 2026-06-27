@@ -6551,13 +6551,10 @@ function toggleExportMenu(){
   const m=document.getElementById('export-menu');
   m.style.display=m.style.display==='none'?'block':'none';
 }
-// ปิด menu เมื่อคลิกที่อื่น (ไม่ปิดเมื่อคลิกใน menu)
+// ปิด menu เมื่อคลิกที่อื่น
 document.addEventListener('click',e=>{
   const wrap=document.getElementById('export-menu-wrap');
-  if(wrap&&!wrap.contains(e.target)){
-    const m=document.getElementById('export-menu');
-    if(m) m.style.display='none';
-  }
+  if(wrap&&!wrap.contains(e.target)) document.getElementById('export-menu').style.display='none';
 });
 
 // ===== GET PAGE DATA (headers + rows) =====
@@ -6698,7 +6695,10 @@ function exportPDF(){
     summary=`<div class="sum-row"><span>ยอดซื้อรวม</span><span>${fmtM(tv)}</span></div>`;
   }
 
-  const html=`<!DOCTYPE html><html lang="th"><head>
+  const pw=window.open('','_blank','width=1000,height=800,scrollbars=yes');
+  if(!pw){alert('กรุณาอนุญาต Popup เพื่อบันทึก PDF');return;}
+  pw.document.open();
+  pw.document.write(`<!DOCTYPE html><html lang="th"><head>
 <meta charset="UTF-8">
 <title>${title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
@@ -6721,14 +6721,18 @@ tr.alt td{background:#f9fafb}
 .sum-row:last-child{border:none;font-weight:700;font-size:14px;padding-top:8px}
 .footer{text-align:center;margin-top:20px;padding-top:10px;border-top:1px dashed #ccc;font-size:10px;color:#999}
 .save-tip{background:#fef9c3;border:1px solid #fde047;border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:14px;text-align:center}
-@media print{.save-tip{display:none}body{padding:1cm}@page{size:A4;margin:1cm}}
+@media print{
+  .save-tip{display:none}
+  body{padding:1cm}
+  @page{size:A4;margin:1cm}
+}
 </style></head><body>
 <div class="save-tip">
   💡 <strong>วิธีบันทึกเป็น PDF:</strong> กด <kbd>Ctrl+P</kbd> → เลือก Printer เป็น <strong>"Save as PDF"</strong> → กด Save
   <button onclick="window.print()" style="margin-left:12px;background:#1a3a5c;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif">🖨️ พิมพ์ / บันทึก PDF</button>
 </div>
 <div class="header">
-  <div class="h-logo">${company.logoUrl?`<img src="${company.logoUrl}" style="width:56px;height:56px;object-fit:cover;border-radius:8px">`:(company.logoEmoji||'🏪')}</div>
+  <div class="h-logo">${company.logoUrl?`<img src="${company.logoUrl}" style="width:56px;height:56px;object-fit:cover;border-radius:8px">` :(company.logoEmoji||'🏪')}</div>
   <div class="h-name">${company.name||'ร้านค้า'}</div>
   <div class="h-addr">${[company.address,company.tel?'โทร: '+company.tel:'',company.taxId?'เลขภาษี: '+company.taxId:''].filter(Boolean).join(' | ')}</div>
   <div class="h-title">📄 ${title}</div>
@@ -6737,14 +6741,8 @@ tr.alt td{background:#f9fafb}
 <table><thead><tr>${thHtml}</tr></thead><tbody>${trHtml}</tbody></table>
 ${summary?`<div class="summary">${summary}</div>`:''}
 <div class="footer">${company.name||''} | ${date} | ระบบบัญชี & POS Pro</div>
-</body></html>`;
-  // ใช้ Blob URL แทน window.open เพื่อหลีกเลี่ยง popup block
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.target='_blank'; a.rel='noopener';
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+</body></html>`);
+  pw.document.close();
   toast('เปิดหน้า PDF แล้ว — กด Ctrl+P เลือก "Save as PDF" ครับ','info',5000);
 }
 
@@ -9240,36 +9238,36 @@ function printPage(){
     body=`<div style="text-align:center;padding:2rem;color:#888">ไม่มีข้อมูลสำหรับพิมพ์</div>`;
   }
 
-  // ใช้ Blob URL แทน window.open เพื่อหลีกเลี่ยง popup block
-  const css='*{box-sizing:border-box;margin:0;padding:0}'+
-    'body{font-family:Sarabun,sans-serif;font-size:13px;color:#000;background:#fff;padding:1.5cm}'+
-    '.ph{text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:12px;margin-bottom:16px}'+
-    '.ph-logo{font-size:28px}.ph-name{font-size:19px;font-weight:700;color:#1a3a5c;margin:4px 0}'+
-    '.ph-info{font-size:11px;color:#555}.ph-title{font-size:15px;font-weight:700;color:#0ea5e9;margin-top:8px}'+
-    '.ph-date{font-size:11px;color:#888;margin-top:2px}'+
-    '.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}'+
-    '.stat{border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center}'+
-    '.stat-label{font-size:10px;color:#888;margin-bottom:3px}.stat-value{font-size:15px;font-weight:700}'+
-    'table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1rem}'+
-    'th{background:#1a3a5c;color:#fff;padding:7px 8px;text-align:left;font-size:11px}'+
-    'th.r,td.r{text-align:right}'+
-    'td{padding:6px 8px;border-bottom:1px solid #eee;font-size:12px}'+
-    'tr:nth-child(even) td{background:#f9f9f9}'+
-    '.footer{text-align:center;margin-top:1.5rem;padding-top:1rem;border-top:1px dashed #ccc;font-size:11px;color:#888}'+
-    '@page{size:A4;margin:0}@media print{body{padding:1cm}}';
-  const html='<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>'+title+'</title>'+
-    '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">'+
-    '<style>'+css+'</style></head><body>'+
-    hdr+body+
-    '<div class="footer">'+c.name+' | '+now+'</div>'+
-    '<script>window.onload=function(){window.print();}<\/script>'+
-    '</body></html>';
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.target='_blank'; a.rel='noopener';
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+  // เปิด popup window แล้วพิมพ์
+  const pw=window.open('','_blank','width=900,height=750,scrollbars=yes');
+  if(!pw){alert('กรุณาอนุญาต Popup ในเบราว์เซอร์เพื่อพิมพ์ครับ');return;}
+  pw.document.open();
+  pw.document.write('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">');
+  pw.document.write('<title>'+title+'</title>');
+  pw.document.write('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">');
+  pw.document.write('<style>');
+  pw.document.write('*{box-sizing:border-box;margin:0;padding:0}');
+  pw.document.write('body{font-family:Sarabun,sans-serif;font-size:13px;color:#000;background:#fff;padding:1.5cm}');
+  pw.document.write('.ph{text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:12px;margin-bottom:16px}');
+  pw.document.write('.ph-logo{font-size:28px}.ph-name{font-size:19px;font-weight:700;color:#1a3a5c;margin:4px 0}');
+  pw.document.write('.ph-info{font-size:11px;color:#555}.ph-title{font-size:15px;font-weight:700;color:#0ea5e9;margin-top:8px}');
+  pw.document.write('.ph-date{font-size:11px;color:#888;margin-top:2px}');
+  pw.document.write('.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}');
+  pw.document.write('.stat{border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center}');
+  pw.document.write('.stat-label{font-size:10px;color:#888;margin-bottom:3px}.stat-value{font-size:15px;font-weight:700}');
+  pw.document.write('table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1rem}');
+  pw.document.write('th{background:#1a3a5c;color:#fff;padding:7px 8px;text-align:left;font-size:11px}');
+  pw.document.write('th.r,td.r{text-align:right}');
+  pw.document.write('td{padding:6px 8px;border-bottom:1px solid #eee;font-size:12px}');
+  pw.document.write('tr:nth-child(even) td{background:#f9f9f9}');
+  pw.document.write('.footer{text-align:center;margin-top:1.5rem;padding-top:1rem;border-top:1px dashed #ccc;font-size:11px;color:#888}');
+  pw.document.write('@page{size:A4;margin:0}@media print{body{padding:1cm}}');
+  pw.document.write('</style></head><body>');
+  pw.document.write(hdr+body);
+  pw.document.write('<div class="footer">'+c.name+' | '+now+'</div>');
+  pw.document.write('<script>window.onload=function(){window.print();}<\/script>');
+  pw.document.write('</body></html>');
+  pw.document.close();
 }
 
 // ลบ button/select HTML ออกจาก cell
