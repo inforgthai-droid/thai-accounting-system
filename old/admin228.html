@@ -1184,7 +1184,7 @@ function _printRental58(id){
   if(!r) return;
   const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
   const fee=(r.items||[]).reduce((s,i)=>s+(i.rentalFee||0),0);
-  const shopUrl='https://shop.racinggarage.net';
+  const shopUrl='https://www.racinggarage.net/';
   const contractNo=r.contractNo||'';
 
   const bodyHtml=`
@@ -1246,7 +1246,7 @@ function _printRental58(id){
   <div style="text-align:center;margin-top:6px;border-top:1px dashed #ccc;padding-top:5px">
     <div style="font-size:8px;color:#888;margin-bottom:3px">SHOP ONLINE</div>
     <div id="r-qr-print" style="display:flex;justify-content:center"></div>
-    <div style="font-size:8px;color:#888;margin-top:2px">shop.racinggarage.net</div>
+    <div style="font-size:8px;color:#888;margin-top:2px">www.racinggarage.net</div>
   </div>`;
 
   const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบเช่า '+contractNo+'</title>'
@@ -2154,7 +2154,7 @@ function showReceiptModal(sale){
         <div style="font-size:9px;color:#888;margin-bottom:4px;letter-spacing:.05em">SHOP ONLINE</div>
         <div id="receipt-qr-wrap" style="display:flex;justify-content:center"></div>
         <style>#receipt-qr-wrap canvas{display:none!important}#receipt-qr-wrap img{display:block!important;margin:0 auto!important}</style>
-        <div style="font-size:8px;color:#888;margin-top:3px">shop.racinggarage.net</div>
+        <div style="font-size:8px;color:#888;margin-top:3px">www.racinggarage.net</div>
       </div>
     </div>`;
 
@@ -2189,7 +2189,7 @@ function showReceiptModal(sale){
     function makeQR(){
       if(qrWrap&&typeof QRCode!=='undefined'){
         while(qrWrap.firstChild) qrWrap.removeChild(qrWrap.firstChild);
-        try{new QRCode(qrWrap,{text:'https://shop.racinggarage.net',width:qrSize,height:qrSize,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(e){}
+        try{new QRCode(qrWrap,{text:'https://www.racinggarage.net/',width:qrSize,height:qrSize,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(e){}
       }
     }
     if(typeof QRCode!=='undefined'){makeQR();}
@@ -2206,7 +2206,7 @@ function doPrint58(){
   const el=document.getElementById('receipt-58');
   if(!el){toast('ไม่พบใบเสร็จ','error');return;}
   const sale=window._checkoutSale||{};
-  const shopUrl='https://shop.racinggarage.net';
+  const shopUrl='https://www.racinggarage.net/';
   const bcCode=sale.docNo||'';
 
   // Get barcode SVG actual width to match QR size
@@ -2395,7 +2395,7 @@ function printReceiptToWindow(sale, pw){
     <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #ccc">
       <div style="font-size:9px;color:#888;margin-bottom:4px;letter-spacing:.05em">SHOP ONLINE</div>
       <div id="qr-wrap" style="display:flex;justify-content:center"></div>
-      <div style="font-size:8px;color:#888;margin-top:2px">shop.racinggarage.net</div>
+      <div style="font-size:8px;color:#888;margin-top:2px">www.racinggarage.net</div>
     </div>
   </div>
 
@@ -2409,7 +2409,7 @@ function printReceiptToWindow(sale, pw){
 </html>`;
 
   const autoPrint=c.autoPrintReceipt!==false;
-  const shopUrl='https://shop.racinggarage.net';
+  const shopUrl='https://www.racinggarage.net/';
   const _isRental=sale.docNo&&sale.docNo.startsWith('RNT');const _bcW=_isRental?1.0:1.6;const _bcH=_isRental?32:44;const _bcM=_isRental?1:2;
   const bcScript='if(typeof JsBarcode!=="undefined"){JsBarcode("#bc58","'+sale.docNo+'",{format:"CODE128",width:'+_bcW+',height:'+_bcH+',fontSize:0,textMargin:0,margin:'+_bcM+',background:"#fff",lineColor:"#000",displayValue:false});}'
     +'var qw=document.getElementById("qr-wrap");'
