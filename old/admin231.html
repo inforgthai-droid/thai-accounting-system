@@ -527,16 +527,6 @@ async function initApp(){
     const cd=await db.collection('settings').doc('company').get();
     if(cd.exists)Object.assign(S.company,cd.data());
     Object.assign(S,{products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders});
-    // Load pageview stats
-    try{
-      const pvDoc=await db.collection('pageviews').doc('shop').get();
-      if(pvDoc.exists){
-        const pvData=pvDoc.data();
-        window._pvTotal=pvData.total||0;
-        const today=new Date().toISOString().slice(0,10);
-        window._pvToday=pvData[today]||0;
-      } else { window._pvTotal=0; window._pvToday=0; }
-    }catch(e){ window._pvTotal=0; window._pvToday=0; }
     document.getElementById('sb-name').textContent=S.company.name;
     document.getElementById('sb-title').textContent=S.company.name||'ระบบบัญชี & POS';
     updateSidebarLogo();
@@ -689,7 +679,6 @@ function renderDashboard(){
     ${sc('ออเดอร์ออนไลน์',''+fmt(onlineRev),'#0ea5e9',S.onlineOrders.length+' คำสั่งซื้อ')}
     ${sc('รอยืนยัน',pendingOrders.length+' รายการ','#f59e0b','ออเดอร์ใหม่')}
     ${sc('สินค้าใกล้หมด',lowStock.length+outStock.length+' รายการ','#ef4444',outStock.length+' หมดสต็อก')}
-    ${sc('ผู้เข้าชมร้านค้า',''+(_pvTotal||0),'#0ea5e9',(_pvToday||0)+' วันนี้')}
   </div>
   <div class="two-col">
     <div class="card">
