@@ -7811,15 +7811,6 @@ function openFullReceipt(){
   openModal('🧾 ใบเสร็จเต็มรูปแบบ / ใบกำกับภาษี',`
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px">กรอกข้อมูลลูกค้าสำหรับออกใบเสร็จเต็มรูปแบบ (ไม่บังคับ)</div>
     <div class="fg">
-      <div class="fm" style="grid-column:1/-1"><label class="fl">ร้านค้า / ชื่อบนใบเสร็จ</label>
-        <select class="fc" id="fr-shop-select" onchange="document.getElementById('fr-shop-custom').style.display=this.value==='__custom__'?'block':'none';if(this.value!=='__custom__')document.getElementById('fr-shop-custom').value=this.value;">
-          <option value="Racing Garage" selected>Racing Garage</option>
-          <option value="ร้านชุดเช่า">ร้านชุดเช่า</option>
-          <option value="ร้านพลาสติกคลุมรถ">ร้านพลาสติกคลุมรถ</option>
-          <option value="__custom__">+ กรอกชื่อเอง...</option>
-        </select>
-        <input class="fc" id="fr-shop-custom" value="Racing Garage" style="display:none;margin-top:6px" placeholder="กรอกชื่อร้านค้า">
-      </div>
       <div class="fm"><label class="fl">ชื่อ-นามสกุล / ชื่อบริษัท</label>
         <input class="fc" id="fr-name" value="${existCust?.name||S.posNote||''}" placeholder="ชื่อลูกค้า หรือ ชื่อบริษัท">
       </div>
@@ -7870,8 +7861,6 @@ function openFullReceipt(){
 
 async function printFullReceipt(){
   const name=document.getElementById('fr-name')?.value.trim()||'';
-  const shopSel=document.getElementById('fr-shop-select')?.value||'Racing Garage';
-  const shopName=(shopSel==='__custom__'?document.getElementById('fr-shop-custom')?.value.trim():shopSel)||'Racing Garage';
   const taxId=document.getElementById('fr-taxid')?.value.trim()||'';
   const addr=document.getElementById('fr-addr')?.value.trim()||'';
   const tel=document.getElementById('fr-tel')?.value.trim()||'';
@@ -7894,7 +7883,7 @@ async function printFullReceipt(){
     }catch(e){toast('บันทึกลูกค้าไม่สำเร็จ','error');}
   }
 
-  const c={...S.company,name:shopName};
+  const c=S.company;
   const docNo=await nextNo('POS','sales');
   const sub=S.cart.reduce((a,b)=>a+b.price*b.qty,0);
   const disc=parseFloat(S.posDiscount)||0;
@@ -8089,7 +8078,12 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
     <div class="stamp-box">
       <div class="stamp-line">ผู้จัดทำ / Prepared by</div>
     </div>
-    <div class="stamp-box"></div>
+    <div class="stamp-box">
+      <div style="border:1px dashed #ccc;border-radius:8px;height:60px;display:flex;align-items:center;justify-content:center;margin-bottom:4px">
+        <span style="font-size:10px;color:#ccc">ตราประทับบริษัท</span>
+      </div>
+      <div style="font-size:11px;color:#888;text-align:center">ตราประทับ / Company Seal</div>
+    </div>
     <div class="stamp-box">
       <div class="stamp-line">ผู้รับเงิน / Received by</div>
     </div>
