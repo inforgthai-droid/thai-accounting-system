@@ -8087,9 +8087,9 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
         <div>เลขที่: <b>${docNo}</b></div>
         <div>วันที่: <b>${todayISO()}</b></div>
         <div>พนักงาน: <b>${currentUser?.displayName||currentUser?.email||'-'}</b></div>
-        <div>ชำระด้วย: <b>${(()=>{const _s=window._checkoutSale||{};return _s.split1Method?
-          `หลายช่องทาง: ${fmt(_s.split1Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[_s.split1Method]||_s.split1Method }) + ${fmt(_s.split2Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[_s.split2Method]||_s.split2Method })`
-          :({'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[_s.payMethod||'cash']||'💵 เงินสด/โอน');})()}</b></div>
+        <div>ชำระด้วย: <b>${S.posPayMode==='split'?
+          `หลายช่องทาง: ${fmt(S.posSplit1Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[S.posSplit1Method]||S.posSplit1Method }) + ${fmt(S.cart.reduce((a,b)=>a+b.price*b.qty,0)-S.posSplit1Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[S.posSplit2Method]||S.posSplit2Method })`
+          :({'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[S.posPayMethod||'cash']||'💵 เงินสด/โอน')}</b></div>
         ${S.posNote&&S.posNote!==name?`<div>หมายเหตุ: ${S.posNote}</div>`:''}
       </div>
     </div>
