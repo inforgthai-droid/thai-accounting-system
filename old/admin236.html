@@ -1910,10 +1910,10 @@ function renderPOS(){
               style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_mobile_banking'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_mobile_banking'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_mobile_banking'?'#fff':'var(--text)'}">🟠 Shopee Mobile Banking<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
             <button onclick="S.posPayMethod='shopee_qr_promptpay';updatePOSCart()"
               style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_qr_promptpay'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_qr_promptpay'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_qr_promptpay'?'#fff':'var(--text)'}">🟠 Shopee QR Promptpay<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
-          </div>`}
+          </div>
         </div>
         <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
-          onclick="checkout()" ${S.cart.length&&(S.posPayMode==='full'||S.posSplit1Amt>0)?'':'disabled'}>💳 ชำระเงิน ${fmt(total)}</button>
+          onclick="checkout()" ${S.cart.length?'':'disabled'}>💳 ชำระเงิน ${fmt(total)}</button>
       </div>
     </div>
   </div>`;
