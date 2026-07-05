@@ -3399,7 +3399,7 @@ function renderProducts(){
       <input type="checkbox" ${p.visible===false?'':'checked'} onchange="toggleProductVisible('${p.id}',this.checked)" style="opacity:0;width:0;height:0">
       <span style="position:absolute;inset:0;border-radius:24px;background:${p.visible===false?'var(--border)':'var(--success)'};transition:.3s;pointer-events:none"></span>
      </label>`,
-    `<button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>`
+    \`<button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>`
   ]);
 
   return`
@@ -3609,7 +3609,7 @@ function _updateProdTable(){
       <input type="checkbox" ${p.visible===false?'':'checked'} onchange="toggleProductVisible('${p.id}',this.checked)" style="opacity:0;width:0;height:0">
       <span style="position:absolute;inset:0;border-radius:24px;background:${p.visible===false?'var(--border)':'var(--success)'};transition:.3s;pointer-events:none"></span>
      </label>`,
-    `<button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>`
+    \`<button class="btn btn-primary btn-xs" onclick="editProduct('${p.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteProduct('${p.id}')">ลบ</button>`
   ]);
   wrap.innerHTML=tbl(['<input type="checkbox" id="prod-chk-all" onchange="toggleAllProducts(this)" style="width:16px;height:16px;cursor:pointer">','รหัส','ชื่อสินค้า','หมวด','หน่วย','ต้นทุน','ราคาขาย','สต็อก','Min','กำไร/หน่วย',''],rows,'ยังไม่มีสินค้า');
 }
