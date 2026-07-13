@@ -3704,7 +3704,7 @@ function exportProductsExcel(){
   // Summary sheet
   const sumData=[['สรุป'],['รายการทั้งหมด',S.products.length],['ส่งออกวันที่',todayISO()],['มีรูปภาพ',S.products.filter(p=>p.imageUrl).length],['มีราคา',S.products.filter(p=>p.price>0).length]];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sumData),'สรุป');
-  XLSX.writeFile(wb,`Products_RacingGarage_${todayISO()}.xlsx`);
+  XLSX.writeFile(wb,`สินค้า_RacingGarage_${todayISO()}.xlsx`);
   toast('Export Excel สำเร็จ '+S.products.length+' รายการ ✓','success');
 }
 
@@ -3717,7 +3717,7 @@ function exportProductsCSV(){
   });
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`Products_RacingGarage_${todayISO()}.csv`;a.click();
+  a.download=`สินค้า_RacingGarage_${todayISO()}.csv`;a.click();
   URL.revokeObjectURL(a.href);
   toast('Export CSV สำเร็จ','success');
 }
@@ -6886,7 +6886,7 @@ function exportExcel(){
     wsSummary['!cols']=[{wch:30},{wch:25}];
     XLSX.utils.book_append_sheet(wb,wsSummary,'สรุป');
 
-    const fname=(FILE_TITLES[currentPage]||'Report')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    const fname=title.replace(/[^a-zA-Zก-๙0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
     const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
     const blob=new Blob([wbout],{type:'application/octet-stream'});
     const url=URL.createObjectURL(blob);
@@ -7018,7 +7018,7 @@ function exportCSV(){
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url;
-    a.download=(FILE_TITLES[currentPage]||'Report')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.download=title.replace(/[^a-zA-Zก-๙0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
     document.body.appendChild(a); a.click();
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
     toast('บันทึก CSV สำเร็จ ✓','success');
@@ -9178,7 +9178,6 @@ ${'<'+'/scr'+'ipt>'}
 }
 
 // ===== PRINT =====
-const FILE_TITLES={dashboard:'Dashboard',pos:'POS_Sales',sales:'Sales_History',products:'Products',stock:'Stock_Report',purchases:'Purchases',customers:'Customers',suppliers:'Suppliers',journal:'Journal',invoice:'Invoices',vat:'VAT_Report',payroll:'Payroll',financial:'Financial',taxforms:'Tax_Forms',orders:'Online_Orders'};
 const PRINT_TITLES={
   dashboard:'ภาพรวมกิจการ',pos:'รายการขายหน้าร้าน',sales:'ประวัติการขาย',
   products:'รายการสินค้า',stock:'รายงานสต็อกสินค้า',purchases:'ประวัติการซื้อสินค้า',
