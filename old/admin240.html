@@ -253,7 +253,7 @@ tbody tr:hover{background:#f0f9ff}
 <div id="main">
   <div id="topbar">
     <div id="topbar-title">📊 ภาพรวม</div>
-    <div class="tb-right"><span class="badge badge-green">🔥 Firebase</span><div id="topbar-user" style="display:flex;align-items:center;gap:6px;color:var(--primary);font-size:12px"></div><a href="https://shop.racinggarage.net/" target="_blank" class="btn btn-sm btn-purple" style="text-decoration:none">🛍️ ร้านค้า</a><button class="btn btn-gray btn-sm" onclick="navigate('settings')" style="background:var(--primary)">⚙️ ตั้งค่า</button><button class="btn btn-danger btn-sm" onclick="adminLogout()" title="ออกจากระบบ">🚪</button>
+    <div class="tb-right"><span class="badge badge-green">🔥 Firebase</span><div id="topbar-user" style="display:flex;align-items:center;gap:6px;color:var(--primary);font-size:12px"></div><a href="shop.html" target="_blank" class="btn btn-sm btn-purple" style="text-decoration:none">🛍️ ร้านค้า</a><button class="btn btn-gray btn-sm" onclick="navigate('settings')" style="background:var(--primary)">⚙️ ตั้งค่า</button><button class="btn btn-danger btn-sm" onclick="adminLogout()" title="ออกจากระบบ">🚪</button>
     <div style="position:relative;display:inline-block" id="export-menu-wrap">
       <button class="btn btn-gray btn-sm" onclick="toggleExportMenu()" style="background:#1a3a5c">📤 ส่งออก ▾</button>
       <div id="export-menu" style="display:none;position:absolute;right:0;top:110%;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:500;min-width:170px;overflow:hidden">
@@ -707,7 +707,7 @@ function renderDashboard(){
             <div style="font-weight:700;color:var(--success)">${fmt(o.total)}</div>
             <div>${badge(o.status||'รอยืนยัน',o.status==='เสร็จสิ้น'?'green':o.status==='ยกเลิก'?'red':'amber')}</div>
           </div>
-        </div>`).join(''):'<div style="color:var(--muted);padding:1rem 0;text-align:center">ยังไม่มีออเดอร์ออนไลน์<br><a href="https://shop.racinggarage.net/" target="_blank" style="color:var(--accent)">เปิดร้านค้า →</a></div>'}
+        </div>`).join(''):'<div style="color:var(--muted);padding:1rem 0;text-align:center">ยังไม่มีออเดอร์ออนไลน์<br><a href="shop.html" target="_blank" style="color:var(--accent)">เปิดร้านค้า →</a></div>'}
     </div>
     <div class="card">
       <div style="font-weight:700;color:var(--primary);margin-bottom:10px">⚠️ สินค้าต้องสั่งเพิ่ม</div>
@@ -6511,11 +6511,11 @@ function renderOrders(){
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
     <div style="font-size:13px;color:var(--muted)">ออเดอร์ทั้งหมด ${S.onlineOrders.length} รายการ</div>
     <div style="margin-left:auto;display:flex;gap:8px">
-      <a href="https://shop.racinggarage.net/" target="_blank" class="btn btn-purple btn-sm" style="text-decoration:none">🛍️ เปิดร้าน</a>
+      <a href="shop.html" target="_blank" class="btn btn-purple btn-sm" style="text-decoration:none">🛍️ เปิดร้าน</a>
       <button class="btn btn-gray btn-sm" onclick="reloadOrders()">🔄 รีเฟรช</button>
     </div>
   </div>
-  ${tbl(['เลขที่','วันที่','ลูกค้า','ที่อยู่','ชำระ','รายการ','ยอด','สถานะ',''],rows,'ยังไม่มีออเดอร์ออนไลน์ — <a href="https://shop.racinggarage.net/" target="_blank" style="color:var(--accent)">เปิดร้านเพื่อรับออเดอร์</a>')}`;
+  ${tbl(['เลขที่','วันที่','ลูกค้า','ที่อยู่','ชำระ','รายการ','ยอด','สถานะ',''],rows,'ยังไม่มีออเดอร์ออนไลน์ — <a href="shop.html" target="_blank" style="color:var(--accent)">เปิดร้านเพื่อรับออเดอร์</a>')}`;
 }
 
 async function reloadOrders(){
@@ -8314,7 +8314,7 @@ function renderWebDesign(){
     <div style="display:flex;gap:8px">
       <button class="btn btn-gray btn-sm" onclick="loadShopDesign()">โหลดค่าปัจจุบัน</button>
       <button class="btn btn-sm" onclick="saveShopDesign()">บันทึก & ใช้งาน</button>
-      <a href="https://shop.racinggarage.net/" target="_blank" class="btn btn-gray btn-sm">ดูร้านค้า ↗</a>
+      <a href="shop.html" target="_blank" class="btn btn-gray btn-sm">ดูร้านค้า ↗</a>
     </div>
   </div>
 
@@ -8564,7 +8564,7 @@ function renderWebDesign(){
   <!-- Save button bottom -->
   <div style="margin-top:1.2rem;text-align:center">
     <button class="btn" style="font-size:15px;padding:12px 40px" onclick="saveShopDesign()">บันทึก & ใช้งานทันที</button>
-    <a href="https://shop.racinggarage.net/" target="_blank" class="btn btn-gray" style="font-size:15px;padding:12px 24px;margin-left:8px;text-decoration:none;display:inline-block">ดูร้านค้า ↗</a>
+    <a href="shop.html" target="_blank" class="btn btn-gray" style="font-size:15px;padding:12px 24px;margin-left:8px;text-decoration:none;display:inline-block">ดูร้านค้า ↗</a>
   </div>`;
 }
 
