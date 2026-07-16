@@ -397,7 +397,7 @@ auth.onAuthStateChanged(async user=>{
 const BRAND_OPTIONS=['OMP','Sparco','Alpinestars','Arai','Stilo','Stand 21','Hans','Sabelt','RCX RACE WEAR','Bell Helmet','ChillOut Motorsports','Schroth','Schuberth','Simpson','Bengio','Tillett','Hydrorace','Recaro','TRS Epman Racing','AEM Electronics','ATL','Auto Meter','Haltech','Link Engine Management','Stack','AIM','Racelogic','Other'];
 // ── Custom category display order (default sort for category lists/filters everywhere) ──
 // หมวดหมู่ที่ไม่อยู่ใน list นี้ จะถูกเรียงต่อท้ายตามตัวอักษร
-const CATEGORY_PRIORITY_ORDER=['Race Suits','Race Gloves','Race Boots','Balaclavas','Fireproof Tops','Fireproof Bottoms','Race Socks','Helmets & Accessories','Race Hans','Seats & Harnesses','Steering Wheels & Accessories','A Rent Suit','Car Parts','Electrical','Racing Gear','Safety Equipment','Wheels & Nuts','อุปกรณ์'];
+const CATEGORY_PRIORITY_ORDER=['Race Suits','Race Gloves','Race Boots','Balaclavas','Fireproof Tops','Fireproof Bottoms','Race Socks','Helmets & Accessories','Race Hans','Seats & Harnesses','Steering Wheels & Accessories','A Rent Suit','Car Parts','Electrical','Racing Gear','Safety Equipment','Wheels & Nuts','อุปกรณ์','เครื่องเขียน'];
 function sortCatsByPriority(names){
   return [...names].sort((a,b)=>{
     const ai=CATEGORY_PRIORITY_ORDER.indexOf(a),bi=CATEGORY_PRIORITY_ORDER.indexOf(b);
@@ -491,7 +491,12 @@ var _shopDesign={
 };
 
 let PI=[];
-const SEED={};
+const SEED={
+  products:[{code:'P001',name:'กระดาษ A4',unit:'รีม',cost:95,price:120,stock:50,minStock:10,category:'เครื่องเขียน'},{code:'P002',name:'ปากกาลูกลื่น',unit:'ด้าม',cost:8,price:15,stock:100,minStock:20,category:'เครื่องเขียน'},{code:'P003',name:'แฟ้มเอกสาร',unit:'อัน',cost:35,price:55,stock:30,minStock:5,category:'อุปกรณ์'},{code:'P004',name:'หมึกพิมพ์',unit:'กล่อง',cost:450,price:650,stock:8,minStock:3,category:'คอมพิวเตอร์'}],
+  suppliers:[{code:'S001',name:'บริษัท ออฟฟิศเมท จำกัด',taxId:'0105555001234',tel:'02-111-2222',address:'10 ถ.พระราม 9 กรุงเทพฯ',contact:'คุณสมชาย',credit:30},{code:'S002',name:'ร้านวัสดุ ABC',taxId:'',tel:'02-333-4444',address:'20 ถ.ลาดพร้าว',contact:'คุณสมหญิง',credit:15}],
+  customers:[{code:'C001',name:'บริษัท ABC จำกัด',taxId:'0105555001234',tel:'02-456-7890',address:'10 ถ.พระราม 9',credit:30,balance:0},{code:'C002',name:'ห้างหุ้นส่วน XYZ',taxId:'0103556002345',tel:'02-789-0123',address:'20 ถ.รัชดา',credit:45,balance:0}],
+  employees:[{code:'E001',name:'นางสาว สมหญิง ดีใจ',position:'ผู้จัดการ',salary:45000,tax:2500,sso:750},{code:'E002',name:'นาย สมชาย รักงาน',position:'พนักงานขาย',salary:25000,tax:500,sso:750}],
+};
 const ts=()=>firebase.firestore.FieldValue.serverTimestamp();
 const inc=n=>firebase.firestore.FieldValue.increment(n);
 async function addFB(col,data){return (await db.collection(col).add({...data,createdAt:ts()})).id;}
