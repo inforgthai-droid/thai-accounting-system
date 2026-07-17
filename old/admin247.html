@@ -2091,16 +2091,6 @@ function updatePOSCart(){
           style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_mobile_banking'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_mobile_banking'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_mobile_banking'?'#fff':'var(--text)'}">🟠 Shopee Mobile Banking<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
         <button onclick="S.posPayMethod='shopee_qr_promptpay';updatePOSCart()"
           style="padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='shopee_qr_promptpay'?'#c73d1c':'#334155'};background:${S.posPayMethod==='shopee_qr_promptpay'?'#EE4D2D':'transparent'};color:${S.posPayMethod==='shopee_qr_promptpay'?'#fff':'var(--text)'}">🟠 Shopee QR Promptpay<br><span style="font-size:9px;opacity:.85">(รับ 70%)</span></button>
-        <div style="grid-column:1/-1;display:flex;gap:5px;align-items:center">
-          <button onclick="S.posPayMethod='credit_installment';updatePOSCart()"
-            style="flex:1;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='credit_installment'?'#2563eb':'#334155'};background:${S.posPayMethod==='credit_installment'?'#dbeafe':'transparent'};color:${S.posPayMethod==='credit_installment'?'#1d4ed8':'var(--text)'}">💳 ผ่อนบัตรเครดิต 0%<br><span style="font-size:9px;opacity:.85">ร้านรับภาระดอกเบี้ย</span></button>
-          <select onchange="S.posInstallMonth=parseInt(this.value);updatePOSCart()" style="height:52px;border-radius:8px;border:2px solid ${S.posPayMethod==='credit_installment'?'#2563eb':'#334155'};background:var(--card);color:var(--text);font-size:12px;font-weight:700;padding:0 6px;cursor:pointer;font-family:'Sarabun',sans-serif;min-width:60px">
-            <option value="3" ${(S.posInstallMonth||3)===3?'selected':''}>3 ด.</option>
-            <option value="6" ${(S.posInstallMonth||3)===6?'selected':''}>6 ด.</option>
-            <option value="10" ${(S.posInstallMonth||3)===10?'selected':''}>10 ด.</option>
-          </select>
-        </div>
-        ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.036*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
       </div>`}
     </div>
     <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
