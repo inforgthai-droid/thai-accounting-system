@@ -2231,7 +2231,8 @@ function showReceiptModal(sale){
           ?`💳 ผ่อนบัตรเครดิต 0% (${sale.installMonth||3} เดือน) | ${fmtM(Math.round(sale.total/(sale.installMonth||3)))}/เดือน`
           :({'cash':'💵 เงินสด / โอนเงิน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[sale.payMethod]||'💵 เงินสด / โอนเงิน'))
       }</div>
-
+      ${sale.payMethod==='credit_installment'?`
+      <div style="text-align:center;font-size:10px;color:#555;margin-bottom:3px">ร้านได้รับสุทธิ ${fmtM(sale.netRevenue||0)} บาท (หักค่าธรรมเนียม+ดอกเบี้ย+VAT)</div>`:''} 
       ${sale.split1Method?`
       <table style="width:100%;border-collapse:collapse;margin-bottom:4px">
         <tr><td style="font-size:11px">ส่วนที่ 1 ${ {'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay'}[sale.split1Method]||sale.split1Method }</td><td align="right" style="font-size:11px;font-weight:700">${fmtM(sale.split1Amt)}</td></tr>
