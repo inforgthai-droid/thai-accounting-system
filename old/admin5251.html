@@ -1914,7 +1914,7 @@ function renderPOS(){
                 <option value="10" ${(S.posInstallMonth||3)===10?'selected':''}>10 ด.</option>
               </select>
             </div>
-            ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.040*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
+            ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.036*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
           </div>`}
         </div>
         <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
@@ -2100,7 +2100,7 @@ function updatePOSCart(){
             <option value="10" ${(S.posInstallMonth||3)===10?'selected':''}>10 ด.</option>
           </select>
         </div>
-        ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.040*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
+        ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.036*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
       </div>`}
     </div>
     <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
@@ -2113,11 +2113,11 @@ function calcNetProfit(total, totalCost, payMethod, shopeeRate, installMonth){
   if(payMethod==='credit_installment'){
     const m=installMonth||S.posInstallMonth||3;
     const interest=total*0.008*m;
-    const fee=total*0.040;
+    const fee=total*0.036;
     const vat=(interest+fee)*0.07;
     return Math.round(total-interest-fee-vat)-totalCost;
   }
-  const rate = shopeeRate || {'shopee_pay':0.70,'shopee_spaylater':0.70,'shopee_cc':0.70,'shopee_cc_install':0.70,'shopee_mobile_banking':0.70,'shopee_qr_promptpay':0.70,'credit':0.97325}[payMethod] || null;
+  const rate = shopeeRate || {'shopee_pay':0.70,'shopee_spaylater':0.70,'shopee_cc':0.70,'shopee_cc_install':0.70,'shopee_mobile_banking':0.70,'shopee_qr_promptpay':0.70,'credit':0.9735}[payMethod] || null;
   if(rate) return Math.round(total * rate) - totalCost;
   return total - totalCost;
 }
@@ -2143,7 +2143,7 @@ async function checkout(){
   const SHOPEE_RATE={'shopee_pay':0.70,'shopee_spaylater':0.70,'shopee_cc':0.70,'shopee_cc_install':0.70,'shopee_mobile_banking':0.70,'shopee_qr_promptpay':0.70};
   const shopeeRate=isSplit?null:(SHOPEE_RATE[payMethod]||null);
   const installMonth=(payMethod==='credit_installment')?(S.posInstallMonth||3):null;
-  const netRevenue=payMethod==='credit_installment'?(()=>{const m=installMonth;return Math.round(total-total*0.008*m-total*0.040-(total*0.008*m+total*0.040)*0.07);})():shopeeRate?Math.round(total*shopeeRate):total;
+  const netRevenue=payMethod==='credit_installment'?(()=>{const m=installMonth;return Math.round(total-total*0.008*m-total*0.036-(total*0.008*m+total*0.036)*0.07);})():shopeeRate?Math.round(total*shopeeRate):total;
   const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',payMethod,shopeeRate,installMonth,netRevenue,
     split1Method:isSplit?S.posSplit1Method:null,split1Amt:isSplit?S.posSplit1Amt:null,
     split2Method:isSplit?S.posSplit2Method:null,split2Amt:isSplit?(total-S.posSplit1Amt):null,
