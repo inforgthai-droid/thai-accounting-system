@@ -581,12 +581,12 @@ function tbl(headers,rows,empty='ไม่มีข้อมูล'){
 function sc(label,value,color,sub=''){return`<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value" style="color:${color}">${value}</div>${sub?`<div class="stat-sub">${sub}</div>`:''}</div>`;}
 function openModal(title,body,footer='',opts={}){
   document.getElementById('modal-title').innerHTML=title;
-  const mb=document.getElementById('modal-body');mb.innerHTML=body;mb.style.overflowY='auto';mb.style.maxHeight='calc(92vh - 120px)';
+  document.getElementById('modal-body').innerHTML=body;
   document.getElementById('modal-footer').innerHTML=footer||`<button class="btn btn-gray" onclick="closeModal()">ปิด</button>`;
   // Support wide modal
   const box=document.getElementById('modal-box');
-  if(opts.wide){box.style.maxWidth='1100px';box.style.width='98%';box.style.maxHeight='92vh';}
-  else{box.style.maxWidth='600px';box.style.width='90%';box.style.maxHeight='90vh';}
+  if(opts.wide){box.style.maxWidth='960px';box.style.width='95%';}
+  else{box.style.maxWidth='600px';box.style.width='90%';}
   document.getElementById('modal-overlay').classList.add('open');
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
@@ -5922,7 +5922,7 @@ function qtForm(q={}){
       <td style="padding:4px;text-align:right;font-weight:700;color:#10b981" id="qt-subtotal-${i}">${fmt((it.qty||1)*(it.price||0))}</td>
       <td style="padding:4px"><button onclick="qtRemoveRow(${i})" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:2px 6px;cursor:pointer">✕</button></td>
     </tr>`).join('');
-  return`<div style="padding:4px">
+  return`<div style="max-height:75vh;overflow-y:auto;padding:4px">
   <div class="fg" style="grid-template-columns:1fr 1fr 1fr">
     <div class="fm"><label class="fl">เลขที่ / No.</label><input class="fc" id="qt-no" value="${q.no||qtNextNo()}"></div>
     <div class="fm"><label class="fl">วันที่ / Date</label><input type="date" class="fc" id="qt-date" value="${q.date||todayISO()}"></div>
@@ -6062,7 +6062,7 @@ function editQuotation(id){
   const q=id?S.quotations.find(x=>x.id===id):{};
   openModal(id?'✏️ แก้ไขใบเสนอราคา':'📋 ใบเสนอราคาใหม่',qtForm(q||{}),
     `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
-     <button class="btn" onclick="saveQuotation('${id||''}')">💾 บันทึก</button>`,{wide:true});
+     <button class="btn" onclick="saveQuotation('${id||''}')">💾 บันทึก</button>`);
   setTimeout(qtCalc,100);
 }
 async function saveQuotation(id){
