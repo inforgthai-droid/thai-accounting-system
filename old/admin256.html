@@ -5907,80 +5907,56 @@ function qtNextNo(){
 function qtForm(q={}){
   const items=(q.items&&q.items.length)?q.items:[{code:'',nameTh:'',nameEn:'',qty:1,unit:'ชิ้น/pcs',price:0}];
   const rows=items.map((it,i)=>`
-    <tr id="qt-row-${i}" style="border-bottom:1px solid var(--border)">
-      <td style="padding:5px;position:relative;min-width:160px">
+    <tr id="qt-row-${i}">
+      <td style="padding:4px;position:relative">
         <input id="qt-search-${i}" placeholder="🔍 ค้นหาชื่อ/SKU..." oninput="qtSearch(this,${i})"
-          style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px 7px;font-size:12px;font-family:'Sarabun',sans-serif">
+          style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:'Sarabun',sans-serif">
         <div id="qt-drop-${i}" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:4px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
       </td>
-      <td style="padding:5px;min-width:150px"><input class="fc" id="qt-nameTh-${i}" value="${it.nameTh||''}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:150px"><input class="fc" id="qt-nameEn-${i}" value="${it.nameEn||''}" placeholder="Product name (EN)" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:80px"><input class="fc" id="qt-code-${i}" value="${it.code||''}" placeholder="รหัส" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:60px"><input type="number" class="fc" id="qt-qty-${i}" value="${it.qty||1}" oninput="qtCalc()" style="font-size:12px;width:100%;text-align:right"></td>
-      <td style="padding:5px;min-width:75px"><input class="fc" id="qt-unit-${i}" value="${it.unit||'ชิ้น/pcs'}" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:90px"><input type="number" class="fc" id="qt-price-${i}" value="${it.price||0}" oninput="qtCalc()" style="font-size:12px;width:100%;text-align:right"></td>
-      <td style="padding:5px;min-width:90px;text-align:right;font-weight:700;color:#10b981;white-space:nowrap" id="qt-subtotal-${i}">${fmt((it.qty||1)*(it.price||0))}</td>
-      <td style="padding:5px"><button onclick="qtRemoveRow(${i})" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px">✕</button></td>
+      <td style="padding:4px"><input class="fc" id="qt-nameTh-${i}" value="${it.nameTh||''}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px"></td>
+      <td style="padding:4px"><input class="fc" id="qt-nameEn-${i}" value="${it.nameEn||''}" placeholder="Product name (EN)" style="font-size:12px"></td>
+      <td style="padding:4px"><input class="fc" id="qt-code-${i}" value="${it.code||''}" placeholder="รหัส" style="width:80px;font-size:12px"></td>
+      <td style="padding:4px"><input type="number" class="fc" id="qt-qty-${i}" value="${it.qty||1}" oninput="qtCalc()" style="width:60px;font-size:12px"></td>
+      <td style="padding:4px"><input class="fc" id="qt-unit-${i}" value="${it.unit||'ชิ้น/pcs'}" style="width:70px;font-size:12px"></td>
+      <td style="padding:4px"><input type="number" class="fc" id="qt-price-${i}" value="${it.price||0}" oninput="qtCalc()" style="width:90px;font-size:12px"></td>
+      <td style="padding:4px;text-align:right;font-weight:700;color:#10b981" id="qt-subtotal-${i}">${fmt((it.qty||1)*(it.price||0))}</td>
+      <td style="padding:4px"><button onclick="qtRemoveRow(${i})" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:2px 6px;cursor:pointer">✕</button></td>
     </tr>`).join('');
-
-  return`<div style="padding:8px 4px;display:flex;flex-direction:column;gap:10px">
-
-  <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
-    <div style="font-weight:700;font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">ข้อมูลใบเสนอราคา</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-      <div><label class="fl">เลขที่ / No.</label><input class="fc" id="qt-no" value="${q.no||qtNextNo()}"></div>
-      <div><label class="fl">วันที่ / Date</label><input type="date" class="fc" id="qt-date" value="${q.date||todayISO()}"></div>
-      <div><label class="fl">วันหมดอายุ / Valid Until</label><input type="date" class="fc" id="qt-validUntil" value="${q.validUntil||''}"></div>
-    </div>
+  return`<div style="padding:4px">
+  <div class="fg" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="fm"><label class="fl">เลขที่ / No.</label><input class="fc" id="qt-no" value="${q.no||qtNextNo()}"></div>
+    <div class="fm"><label class="fl">วันที่ / Date</label><input type="date" class="fc" id="qt-date" value="${q.date||todayISO()}"></div>
+    <div class="fm"><label class="fl">วันหมดอายุ / Valid Until</label><input type="date" class="fc" id="qt-validUntil" value="${q.validUntil||''}"></div>
+    <div class="fm"><label class="fl">ชื่อลูกค้า (ไทย)</label><input class="fc" id="qt-custTh" value="${q.customerName||''}" placeholder="เช่น บริษัท ABC จำกัด"></div>
+    <div class="fm"><label class="fl">Customer Name (EN)</label><input class="fc" id="qt-custEn" value="${q.customerNameEn||''}" placeholder="e.g. ABC Co., Ltd."></div>
+    <div class="fm"><label class="fl">เบอร์โทร / Tel.</label><input class="fc" id="qt-tel" value="${q.customerTel||''}">
+    <div class="fm"><label class="fl">เลขประจำตัวผู้เสียภาษี / Tax ID</label><input class="fc" id="qt-taxid" value="${q.customerTaxId||''}" placeholder="0000000000000"></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">ที่อยู่ (ไทย) / Address (TH)</label><input class="fc" id="qt-addrTh" value="${q.addressTh||''}"></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">Address (EN)</label><input class="fc" id="qt-addrEn" value="${q.addressEn||''}"></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">หมายเหตุ / Remark</label><input class="fc" id="qt-remark" value="${q.remark||''}" placeholder="เช่น ราคานี้ไม่รวม VAT / Price excludes VAT"></div>
   </div>
-
-  <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
-    <div style="font-weight:700;font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">ข้อมูลลูกค้า / Customer</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div><label class="fl">ชื่อลูกค้า (ไทย)</label><input class="fc" id="qt-custTh" value="${q.customerName||''}" placeholder="เช่น บริษัท ABC จำกัด"></div>
-      <div><label class="fl">Customer Name (EN)</label><input class="fc" id="qt-custEn" value="${q.customerNameEn||''}" placeholder="e.g. ABC Co., Ltd."></div>
-      <div><label class="fl">เบอร์โทร / Tel.</label><input class="fc" id="qt-tel" value="${q.customerTel||''}" placeholder="02-xxx-xxxx"></div>
-      <div><label class="fl">เลขประจำตัวผู้เสียภาษี / Tax ID</label><input class="fc" id="qt-taxid" value="${q.customerTaxId||''}" placeholder="0000000000000"></div>
-      <div style="grid-column:1/-1"><label class="fl">ที่อยู่ (ไทย) / Address (TH)</label><input class="fc" id="qt-addrTh" value="${q.addressTh||''}" placeholder="เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์"></div>
-      <div style="grid-column:1/-1"><label class="fl">Address (EN)</label><input class="fc" id="qt-addrEn" value="${q.addressEn||''}" placeholder="No., Street, District, Province, Postcode"></div>
-    </div>
+  <div style="margin:12px 0 6px;font-weight:700;font-size:13px">รายการสินค้า / Items</div>
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:12px" id="qt-items-table">
+    <thead><tr style="background:var(--bg);color:var(--muted)">
+      <th style="padding:4px;min-width:140px">เลือกจากระบบ</th>
+      <th style="padding:4px;min-width:140px">ชื่อสินค้า (TH)</th>
+      <th style="padding:4px;min-width:140px">Product Name (EN)</th>
+      <th style="padding:4px;min-width:70px">รหัส/Code</th>
+      <th style="padding:4px;min-width:55px">จำนวน/Qty</th>
+      <th style="padding:4px;min-width:65px">หน่วย/Unit</th>
+      <th style="padding:4px;min-width:85px">ราคา/Price</th>
+      <th style="padding:4px;min-width:80px">รวม/Total</th>
+      <th></th>
+    </tr></thead>
+    <tbody id="qt-tbody">${rows}</tbody>
+  </table>
   </div>
-
-  <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
-    <div style="font-weight:700;font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">รายการสินค้า / Items</div>
-    <div style="overflow-x:auto;border-radius:6px;border:1px solid var(--border)">
-      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:820px" id="qt-items-table">
-        <thead>
-          <tr style="background:var(--card);border-bottom:2px solid var(--border)">
-            <th style="padding:8px 6px;text-align:left;font-weight:700;color:var(--muted)">ค้นหาจากระบบ</th>
-            <th style="padding:8px 6px;text-align:left;font-weight:700;color:var(--muted)">ชื่อสินค้า (TH)</th>
-            <th style="padding:8px 6px;text-align:left;font-weight:700;color:var(--muted)">Product Name (EN)</th>
-            <th style="padding:8px 6px;text-align:left;font-weight:700;color:var(--muted)">รหัส</th>
-            <th style="padding:8px 6px;text-align:right;font-weight:700;color:var(--muted)">จำนวน</th>
-            <th style="padding:8px 6px;text-align:left;font-weight:700;color:var(--muted)">หน่วย</th>
-            <th style="padding:8px 6px;text-align:right;font-weight:700;color:var(--muted)">ราคา/หน่วย</th>
-            <th style="padding:8px 6px;text-align:right;font-weight:700;color:var(--muted)">รวม</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="qt-tbody">${rows}</tbody>
-      </table>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-      <button onclick="qtAddRow()" style="background:var(--primary);color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:12px;font-family:'Sarabun',sans-serif">+ เพิ่มรายการ / Add Item</button>
-      <div style="padding:8px 14px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
-        <span style="color:var(--muted);font-size:13px">รวมทั้งสิ้น / Grand Total: </span>
-        <span id="qt-total" style="font-size:20px;font-weight:900;color:#10b981;margin-left:6px">0</span>
-        <span style="font-size:13px;color:var(--muted)"> บาท / THB</span>
-      </div>
-    </div>
+  <button onclick="qtAddRow()" style="margin-top:8px;background:var(--primary);color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px">+ เพิ่มรายการ</button>
+  <div style="margin-top:12px;text-align:right;font-size:13px">
+    <span>รวมทั้งสิ้น / Grand Total: </span>
+    <span id="qt-total" style="font-size:18px;font-weight:900;color:#10b981">0</span> บาท / THB
   </div>
-
-  <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
-    <div style="font-weight:700;font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">หมายเหตุ / Remark</div>
-    <input class="fc" id="qt-remark" value="${q.remark||''}" placeholder="เช่น ราคานี้ไม่รวม VAT / Price excludes VAT" style="width:100%">
-  </div>
-
 </div>`;
 }
 
@@ -6046,20 +6022,20 @@ function qtAddRow(){
   if(!tbody) return;
   const i=tbody.querySelectorAll('tr').length;
   tbody.insertAdjacentHTML('beforeend',`
-    <tr id="qt-row-${i}" style="border-bottom:1px solid var(--border)">
-      <td style="padding:5px;position:relative;min-width:160px">
+    <tr id="qt-row-${i}">
+      <td style="padding:4px;position:relative">
         <input id="qt-search-${i}" placeholder="🔍 ค้นหาชื่อ/SKU..." oninput="qtSearch(this,${i})"
-          style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px 7px;font-size:12px;font-family:\'Sarabun\',sans-serif">
+          style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:\'Sarabun\',sans-serif">
         <div id="qt-drop-${i}" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:4px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
       </td>
-      <td style="padding:5px;min-width:150px"><input class="fc" id="qt-nameTh-${i}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:150px"><input class="fc" id="qt-nameEn-${i}" placeholder="Product name (EN)" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:80px"><input class="fc" id="qt-code-${i}" placeholder="รหัส" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:60px"><input type="number" class="fc" id="qt-qty-${i}" value="1" oninput="qtCalc()" style="font-size:12px;width:100%;text-align:right"></td>
-      <td style="padding:5px;min-width:75px"><input class="fc" id="qt-unit-${i}" value="ชิ้น/pcs" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:90px"><input type="number" class="fc" id="qt-price-${i}" value="0" oninput="qtCalc()" style="font-size:12px;width:100%;text-align:right"></td>
-      <td style="padding:5px;min-width:90px;text-align:right;font-weight:700;color:#10b981;white-space:nowrap" id="qt-subtotal-${i}">0</td>
-      <td style="padding:5px"><button onclick="qtRemoveRow(${i})" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px">✕</button></td>
+      <td style="padding:4px"><input class="fc" id="qt-nameTh-${i}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px"></td>
+      <td style="padding:4px"><input class="fc" id="qt-nameEn-${i}" placeholder="Product name (EN)" style="font-size:12px"></td>
+      <td style="padding:4px"><input class="fc" id="qt-code-${i}" placeholder="รหัส" style="width:80px;font-size:12px"></td>
+      <td style="padding:4px"><input type="number" class="fc" id="qt-qty-${i}" value="1" oninput="qtCalc()" style="width:60px;font-size:12px"></td>
+      <td style="padding:4px"><input class="fc" id="qt-unit-${i}" value="ชิ้น/pcs" style="width:70px;font-size:12px"></td>
+      <td style="padding:4px"><input type="number" class="fc" id="qt-price-${i}" value="0" oninput="qtCalc()" style="width:90px;font-size:12px"></td>
+      <td style="padding:4px;text-align:right;font-weight:700;color:#10b981" id="qt-subtotal-${i}">0</td>
+      <td style="padding:4px"><button onclick="qtRemoveRow(${i})" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:2px 6px;cursor:pointer">✕</button></td>
     </tr>`);
 }
 function qtRemoveRow(i){
