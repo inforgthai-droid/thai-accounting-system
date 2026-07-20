@@ -5906,12 +5906,13 @@ function qtNextNo(){
 
 function qtForm(q={}){
   const items=(q.items&&q.items.length)?q.items:[{code:'',nameTh:'',nameEn:'',qty:1,unit:'ชิ้น/pcs',price:0}];
+  const prodOpts=S.products.map(p=>`<option value="${p.id}" data-name="${(p.name||'').replace(/"/g,'&quot;')}" data-code="${p.code||''}" data-price="${p.price||0}">${p.name||''} (${p.code||''})</option>`).join('');
   const rows=items.map((it,i)=>`
     <tr id="qt-row-${i}">
-      <td style="padding:4px;position:relative">
-        <input id="qt-search-${i}" placeholder="🔍 ค้นหาชื่อ/SKU..." oninput="qtSearch(this,${i})"
-          style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:'Sarabun',sans-serif">
-        <div id="qt-drop-${i}" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:4px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
+      <td style="padding:4px">
+        <select onchange="qtFillRow(this,${i})" style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px;font-size:11px">
+          <option value="">-- เลือกจากระบบ --</option>${prodOpts}
+        </select>
       </td>
       <td style="padding:4px"><input class="fc" id="qt-nameTh-${i}" value="${it.nameTh||''}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px"></td>
       <td style="padding:4px"><input class="fc" id="qt-nameEn-${i}" value="${it.nameEn||''}" placeholder="Product name (EN)" style="font-size:12px"></td>
@@ -5960,49 +5961,15 @@ function qtForm(q={}){
 }
 
 let _qtItemCount=0;
-function qtSearch(inp,i){
-  const q=(inp.value||'').toLowerCase().trim();
-  const drop=document.getElementById('qt-drop-'+i);
-  if(!q){drop.style.display='none';return;}
-  const matches=S.products.filter(p=>
-    (p.name||'').toLowerCase().includes(q)||
-    (p.code||'').toLowerCase().includes(q)||
-    (p.skuDemonTweeks||'').toLowerCase().includes(q)
-  ).slice(0,30);
-  if(!matches.length){drop.style.display='none';return;}
-  drop.innerHTML=matches.map(p=>
-    `<div onclick="qtPickProduct(${i},'${p.id}')" style="padding:6px 8px;cursor:pointer;border-bottom:1px solid var(--border);font-size:11px;font-family:'Sarabun',sans-serif"
-      onmouseover="this.style.background='var(--primary)';this.style.color='#fff'"
-      onmouseout="this.style.background='';this.style.color=''">
-      <b>${p.name||''}</b><br>
-      <span style="opacity:.7">${p.code||''} ${p.skuDemonTweeks?'| SKU: '+p.skuDemonTweeks:''} | ราคา: ${fmt(p.price||0)}</span>
-    </div>`
-  ).join('');
-  drop.style.display='block';
-}
-function qtPickProduct(i,pid){
-  const p=S.products.find(x=>x.id===pid);
-  if(!p) return;
-  const inp=document.getElementById('qt-search-'+i);
-  const drop=document.getElementById('qt-drop-'+i);
-  if(inp) inp.value=p.name||'';
-  if(drop) drop.style.display='none';
-  const thEl=document.getElementById('qt-nameTh-'+i);
-  const enEl=document.getElementById('qt-nameEn-'+i);
-  const codeEl=document.getElementById('qt-code-'+i);
-  const priceEl=document.getElementById('qt-price-'+i);
-  if(thEl) thEl.value=p.name||'';
-  if(enEl) enEl.value=p.name||'';
-  if(codeEl) codeEl.value=p.code||'';
-  if(priceEl) priceEl.value=p.price||0;
+function qtFillRow(sel,i){
+  const opt=sel.options[sel.selectedIndex];
+  if(!opt.value) return;
+  document.getElementById('qt-nameTh-'+i).value=opt.dataset.name||'';
+  document.getElementById('qt-nameEn-'+i).value=opt.dataset.name||'';
+  document.getElementById('qt-code-'+i).value=opt.dataset.code||'';
+  document.getElementById('qt-price-'+i).value=opt.dataset.price||0;
   qtCalc();
 }
-// ปิด dropdown เมื่อคลิกที่อื่น
-document.addEventListener('click',function(e){
-  if(!e.target.id||!e.target.id.startsWith('qt-search-')){
-    document.querySelectorAll('[id^="qt-drop-"]').forEach(d=>d.style.display='none');
-  }
-});
 function qtCalc(){
   const rows=document.querySelectorAll('#qt-tbody tr');
   let total=0;
@@ -6020,13 +5987,10 @@ function qtAddRow(){
   const tbody=document.getElementById('qt-tbody');
   if(!tbody) return;
   const i=tbody.querySelectorAll('tr').length;
+  const prodOpts=S.products.map(p=>`<option value="${p.id}" data-name="${(p.name||'').replace(/"/g,'&quot;')}" data-code="${p.code||''}" data-price="${p.price||0}">${p.name||''} (${p.code||''})</option>`).join('');
   tbody.insertAdjacentHTML('beforeend',`
     <tr id="qt-row-${i}">
-      <td style="padding:4px;position:relative">
-        <input id="qt-search-${i}" placeholder="🔍 ค้นหาชื่อ/SKU..." oninput="qtSearch(this,${i})"
-          style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:\'Sarabun\',sans-serif">
-        <div id="qt-drop-${i}" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:4px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
-      </td>
+      <td style="padding:4px"><select onchange="qtFillRow(this,${i})" style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px;font-size:11px"><option value="">-- เลือกจากระบบ --</option>${prodOpts}</select></td>
       <td style="padding:4px"><input class="fc" id="qt-nameTh-${i}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px"></td>
       <td style="padding:4px"><input class="fc" id="qt-nameEn-${i}" placeholder="Product name (EN)" style="font-size:12px"></td>
       <td style="padding:4px"><input class="fc" id="qt-code-${i}" placeholder="รหัส" style="width:80px;font-size:12px"></td>
