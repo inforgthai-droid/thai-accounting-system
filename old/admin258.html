@@ -6148,7 +6148,7 @@ function printQuotation(id){
     <tr style="border-bottom:1px solid #e5e7eb">
       <td style="padding:7px 6px;text-align:center;color:#6b7280">${i+1}</td>
       <td style="padding:7px 6px;color:#6b7280;font-size:11px">${it.code||'-'}</td>
-      <td style="padding:7px 6px">${it.nameTh||''}${it.nameEn&&it.nameEn!==it.nameTh?`<br><span style='color:#6b7280;font-size:11px'>${it.nameEn}</span>`:''}</td>
+      <td style="padding:7px 6px">${it.nameTh||''}<br><span style="color:#6b7280;font-size:11px">${it.nameEn||''}</span></td>
       <td style="padding:7px 6px;text-align:center">${it.qty}</td>
       <td style="padding:7px 6px;text-align:center;color:#6b7280">${it.unit||'ชิ้น/pcs'}</td>
       <td style="padding:7px 6px;text-align:right">${fmt(it.price)}</td>
@@ -6163,7 +6163,6 @@ function printQuotation(id){
 
   const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
 <title>ใบเสนอราคา ${q.no}</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700;900&family=Noto+Sans:wght@400;700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -6221,8 +6220,8 @@ table.items td{font-size:12px}
 
 <!-- รายการสินค้า -->
 <table class="items">
-  <thead><tr style="background:#e5e7eb;color:#374151">
-    <th style="width:40px">รายการที่</th>
+  <thead><tr>
+    <th style="width:28px">#</th>
     <th style="width:90px">รหัส / Code</th>
     <th>รายการ / Description</th>
     <th style="width:55px">จำนวน<br>Qty</th>
@@ -6269,7 +6268,9 @@ ${remarkStr}
 <div style="margin-top:36px;padding-top:16px;border-top:1px dashed #ccc;display:flex;justify-content:space-between;align-items:center">
   <div style="text-align:center">
     <div style="font-size:10px;color:#6b7280;margin-bottom:4px">เลขที่ใบเสนอราคา / Quotation No.</div>
-    <svg id="qt-bc-print" style="display:block;margin:0 auto"></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="44">
+      ${Array.from(q.no).map((ch,i)=>`<rect x="${i*5}" y="0" width="${ch.charCodeAt(0)%3+2}" height="36" fill="#111"/>`).join('')}
+    </svg>
     <div style="font-size:10px;font-family:monospace;letter-spacing:3px;margin-top:2px">${q.no}</div>
   </div>
   <div style="text-align:center">
@@ -6279,7 +6280,6 @@ ${remarkStr}
   </div>
 </div>
 
-<script>window.onload=function(){var bc=document.getElementById("qt-bc-print");if(bc&&typeof JsBarcode!=="undefined"){try{JsBarcode(bc,"${q.no}",{format:"CODE128",width:1.8,height:48,fontSize:0,textMargin:0,margin:4,background:"#fff",lineColor:"#000",displayValue:false});}catch(e){}}};</script>
 </body></html>`;
   const win=window.open('','_blank','width=900,height=750');
   win.document.write(html);win.document.close();
