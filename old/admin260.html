@@ -6163,7 +6163,7 @@ function printQuotation(id){
 
   const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
 <title>ใบเสนอราคา ${q.no}</title>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700;900&family=Noto+Sans:wght@400;700;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -6279,20 +6279,10 @@ ${remarkStr}
   </div>
 </div>
 
-
+<script>window.onload=function(){var bc=document.getElementById("qt-bc-print");if(bc&&typeof JsBarcode!=="undefined"){try{JsBarcode(bc,"${q.no}",{format:"CODE128",width:1.8,height:48,fontSize:0,textMargin:0,margin:4,background:"#fff",lineColor:"#000",displayValue:false});}catch(e){}}};</script>
 </body></html>`;
-  const qtNo=q.no;
   const win=window.open('','_blank','width=900,height=750');
   win.document.write(html);win.document.close();
-  setTimeout(function(){
-    var s=win.document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js';
-    s.onload=function(){
-      var bc=win.document.getElementById('qt-bc-print');
-      if(bc&&win.JsBarcode){try{win.JsBarcode(bc,qtNo,{format:'CODE128',width:1.8,height:48,fontSize:0,textMargin:0,margin:4,background:'#fff',lineColor:'#000',displayValue:false});}catch(e){}}
-    };
-    win.document.head.appendChild(s);
-  },200);
 }
 function shareQuotationLine(id){
   const q=S.quotations.find(x=>x.id===id);
