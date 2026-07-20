@@ -274,7 +274,6 @@ tbody tr:hover{background:#f0f9ff}
     <div id="p-sales" class="page"></div>
     <div id="p-stock" class="page"></div>
     <div id="p-journal" class="page"></div>
-    <div id="p-quotation" class="page"></div>
     <div id="p-invoice" class="page"></div>
     <div id="p-vat" class="page"></div>
     <div id="p-payroll" class="page"></div>
@@ -477,7 +476,7 @@ function toggleListSort(page,field){
   }
   if(page==='prod') _updateProdTable(); else _updateStockTable();
 }
-const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],quotations:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:false,posVatMode:'inclusive',_posCat:'all',posPayMethod:'cash',posPayMode:'full',posInstallMonth:3,posSplit1Amt:0,posSplit1Method:'cash',posSplit2Method:'credit',
+const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:false,posVatMode:'inclusive',_posCat:'all',posPayMethod:'cash',posPayMode:'full',posInstallMonth:3,posSplit1Amt:0,posSplit1Method:'cash',posSplit2Method:'credit',
  _prodSortKey:'price',_prodSortDir:'desc',_stockSortKey:'price',_stockSortDir:'desc'};
 var _shopDesign={
   colorRed:'#e8172c', colorBg:'#0a0a0a', colorText:'#e8e8e8',
@@ -519,10 +518,10 @@ async function seedAll(){
 async function initApp(){
   try{
     await seedAll();
-    const[products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations]=await Promise.all([loadCol('products'),db.collection('categories').orderBy('order','asc').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('suppliers'),loadCol('customers'),loadCol('purchases'),loadCol('sales'),loadCol('journals'),loadCol('invoices'),loadCol('quotations'),loadCol('vatPurchase'),loadCol('employees'),loadCol('onlineOrders')]);
+    const[products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders]=await Promise.all([loadCol('products'),db.collection('categories').orderBy('order','asc').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('suppliers'),loadCol('customers'),loadCol('purchases'),loadCol('sales'),loadCol('journals'),loadCol('invoices'),loadCol('vatPurchase'),loadCol('employees'),loadCol('onlineOrders')]);
     const cd=await db.collection('settings').doc('company').get();
     if(cd.exists)Object.assign(S.company,cd.data());
-    Object.assign(S,{products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations});
+    Object.assign(S,{products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders});
     // Load pageview stats
     try{
       const pvDoc=await db.collection('pageviews').doc('shop').get();
@@ -595,7 +594,7 @@ const MENU=[
   {g:'ร้านค้า'},{key:'dashboard',label:'ภาพรวม',icon:'📊',short:'ภาพรวม'},{key:'pos',label:'ขายหน้าร้าน (POS)',icon:'🛒',short:'ขายหน้าร้าน'},{key:'rental',label:'เช่าอุปกรณ์',icon:'🏎️',short:'เช่า'},{key:'sales',label:'ประวัติการขาย',icon:'📑',short:'ประวัติ'},
   {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦',short:'สินค้า'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️',short:'หมวดหมู่'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭',short:'สต็อก'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚',short:'ซื้อเข้า'},
   {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢',short:'ลูกค้า'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️',short:'ซัพพลาย'},
-  {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'quotation',label:'ใบเสนอราคา',icon:'📋',short:'ใบเสนอราคา'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
+  {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
   {g:'ร้านค้าออนไลน์'},{key:'orders',label:'ออเดอร์ออนไลน์',icon:'🛍️',short:'ออเดอร์'},{key:'shipping',label:'จัดส่งสินค้า',icon:'📦',short:'จัดส่ง'},{key:'webdesign',label:'ตกแต่งร้านค้า',icon:'🎨',short:'ตกแต่ง'},
   {g:'วิเคราะห์'},{key:'infographic',label:'อินโฟกราฟิก',icon:'📊',short:'อินโฟ'},
   {g:'ระบบ'},{key:'import',label:'Import Excel',icon:'📂'},{key:'settings',label:'ตั้งค่าระบบ',icon:'⚙️'},
@@ -632,7 +631,7 @@ function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').
 function renderPage(key){
   const el=document.getElementById('p-'+key);
   if(!el)return;
-  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign};
+  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign};
   if(key==='sales'){
     // โหลด rentals ก่อนถ้ายังไม่มี แล้วค่อย render
     if(_rentals.length===0){
@@ -5881,303 +5880,6 @@ async function saveJournal(id){
 async function deleteJournal(id){if(!confirm('ลบ?'))return;await deleteFB('journals',id);S.journals=S.journals.filter(x=>x.id!==id);renderPage('journal');toast('ลบแล้ว','info');}
 
 // ===== INVOICE =====
-// ─── Quotation ───────────────────────────────────────────────────────────────
-function renderQuotation(){
-  const rows=[...S.quotations].reverse().map(q=>[
-    q.no||'',q.date||'',q.customerName||'-',q.customerNameEn||'-',
-    ''+fmt(q.total||0),
-    badge(q.status,q.status==='อนุมัติแล้ว'?'green':q.status==='ยกเลิก'?'red':'amber'),
-    `<button class="btn btn-primary btn-xs" onclick="editQuotation('${q.id}')">แก้ไข</button>
-     <button class="btn btn-xs" style="background:#0e7490;color:#fff" onclick="printQuotation('${q.id}')">พิมพ์</button>
-     <button class="btn btn-xs" style="background:#16a34a;color:#fff" onclick="shareQuotationLine('${q.id}')">LINE</button>
-     <button class="btn btn-danger btn-xs" onclick="deleteQuotation('${q.id}')">ลบ</button>`
-  ]);
-  return`<div class="sec-title">📋 ใบเสนอราคา / Quotation</div>
-  <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:1rem">
-    <button class="btn" onclick="editQuotation()">+ สร้างใบเสนอราคา</button>
-  </div>
-  ${tbl(['เลขที่','วันที่','ลูกค้า (TH)','Customer (EN)','รวม','สถานะ',''],rows)}`;
-}
-
-function qtNextNo(){
-  const nums=S.quotations.map(q=>parseInt((q.no||'').replace(/[^0-9]/g,''))||0);
-  return'QT-'+String((Math.max(0,...nums)+1)).padStart(4,'0');
-}
-
-function qtForm(q={}){
-  const items=(q.items&&q.items.length)?q.items:[{code:'',nameTh:'',nameEn:'',qty:1,unit:'ชิ้น/pcs',price:0}];
-  const prodOpts=S.products.map(p=>`<option value="${p.id}" data-name="${(p.name||'').replace(/"/g,'&quot;')}" data-code="${p.code||''}" data-price="${p.price||0}">${p.name||''} (${p.code||''})</option>`).join('');
-  const rows=items.map((it,i)=>`
-    <tr id="qt-row-${i}">
-      <td style="padding:4px">
-        <select onchange="qtFillRow(this,${i})" style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px;font-size:11px">
-          <option value="">-- เลือกจากระบบ --</option>${prodOpts}
-        </select>
-      </td>
-      <td style="padding:4px"><input class="fc" id="qt-nameTh-${i}" value="${it.nameTh||''}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px"></td>
-      <td style="padding:4px"><input class="fc" id="qt-nameEn-${i}" value="${it.nameEn||''}" placeholder="Product name (EN)" style="font-size:12px"></td>
-      <td style="padding:4px"><input class="fc" id="qt-code-${i}" value="${it.code||''}" placeholder="รหัส" style="width:80px;font-size:12px"></td>
-      <td style="padding:4px"><input type="number" class="fc" id="qt-qty-${i}" value="${it.qty||1}" oninput="qtCalc()" style="width:60px;font-size:12px"></td>
-      <td style="padding:4px"><input class="fc" id="qt-unit-${i}" value="${it.unit||'ชิ้น/pcs'}" style="width:70px;font-size:12px"></td>
-      <td style="padding:4px"><input type="number" class="fc" id="qt-price-${i}" value="${it.price||0}" oninput="qtCalc()" style="width:90px;font-size:12px"></td>
-      <td style="padding:4px;text-align:right;font-weight:700;color:#10b981" id="qt-subtotal-${i}">${fmt((it.qty||1)*(it.price||0))}</td>
-      <td style="padding:4px"><button onclick="qtRemoveRow(${i})" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:2px 6px;cursor:pointer">✕</button></td>
-    </tr>`).join('');
-  return`<div style="max-height:75vh;overflow-y:auto;padding:4px">
-  <div class="fg" style="grid-template-columns:1fr 1fr 1fr">
-    <div class="fm"><label class="fl">เลขที่ / No.</label><input class="fc" id="qt-no" value="${q.no||qtNextNo()}"></div>
-    <div class="fm"><label class="fl">วันที่ / Date</label><input type="date" class="fc" id="qt-date" value="${q.date||todayISO()}"></div>
-    <div class="fm"><label class="fl">วันหมดอายุ / Valid Until</label><input type="date" class="fc" id="qt-validUntil" value="${q.validUntil||''}"></div>
-    <div class="fm"><label class="fl">ชื่อลูกค้า (ไทย)</label><input class="fc" id="qt-custTh" value="${q.customerName||''}" placeholder="เช่น บริษัท ABC จำกัด"></div>
-    <div class="fm"><label class="fl">Customer Name (EN)</label><input class="fc" id="qt-custEn" value="${q.customerNameEn||''}" placeholder="e.g. ABC Co., Ltd."></div>
-    <div class="fm"><label class="fl">เบอร์โทร / Tel.</label><input class="fc" id="qt-tel" value="${q.customerTel||''}"></div>
-    <div class="fm" style="grid-column:1/-1"><label class="fl">ที่อยู่ (ไทย) / Address (TH)</label><input class="fc" id="qt-addrTh" value="${q.addressTh||''}"></div>
-    <div class="fm" style="grid-column:1/-1"><label class="fl">Address (EN)</label><input class="fc" id="qt-addrEn" value="${q.addressEn||''}"></div>
-    <div class="fm" style="grid-column:1/-1"><label class="fl">หมายเหตุ / Remark</label><input class="fc" id="qt-remark" value="${q.remark||''}" placeholder="เช่น ราคานี้ไม่รวม VAT / Price excludes VAT"></div>
-  </div>
-  <div style="margin:12px 0 6px;font-weight:700;font-size:13px">รายการสินค้า / Items</div>
-  <div style="overflow-x:auto">
-  <table style="width:100%;border-collapse:collapse;font-size:12px" id="qt-items-table">
-    <thead><tr style="background:var(--bg);color:var(--muted)">
-      <th style="padding:4px;min-width:140px">เลือกจากระบบ</th>
-      <th style="padding:4px;min-width:140px">ชื่อสินค้า (TH)</th>
-      <th style="padding:4px;min-width:140px">Product Name (EN)</th>
-      <th style="padding:4px;min-width:70px">รหัส/Code</th>
-      <th style="padding:4px;min-width:55px">จำนวน/Qty</th>
-      <th style="padding:4px;min-width:65px">หน่วย/Unit</th>
-      <th style="padding:4px;min-width:85px">ราคา/Price</th>
-      <th style="padding:4px;min-width:80px">รวม/Total</th>
-      <th></th>
-    </tr></thead>
-    <tbody id="qt-tbody">${rows}</tbody>
-  </table>
-  </div>
-  <button onclick="qtAddRow()" style="margin-top:8px;background:var(--primary);color:#fff;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px">+ เพิ่มรายการ</button>
-  <div style="margin-top:12px;text-align:right;font-size:13px">
-    <span>รวมทั้งสิ้น / Grand Total: </span>
-    <span id="qt-total" style="font-size:18px;font-weight:900;color:#10b981">0</span> บาท / THB
-  </div>
-</div>`;
-}
-
-let _qtItemCount=0;
-function qtFillRow(sel,i){
-  const opt=sel.options[sel.selectedIndex];
-  if(!opt.value) return;
-  document.getElementById('qt-nameTh-'+i).value=opt.dataset.name||'';
-  document.getElementById('qt-nameEn-'+i).value=opt.dataset.name||'';
-  document.getElementById('qt-code-'+i).value=opt.dataset.code||'';
-  document.getElementById('qt-price-'+i).value=opt.dataset.price||0;
-  qtCalc();
-}
-function qtCalc(){
-  const rows=document.querySelectorAll('#qt-tbody tr');
-  let total=0;
-  rows.forEach((tr,i)=>{
-    const qty=parseFloat(document.getElementById('qt-qty-'+i)?.value)||0;
-    const price=parseFloat(document.getElementById('qt-price-'+i)?.value)||0;
-    const sub=qty*price; total+=sub;
-    const el=document.getElementById('qt-subtotal-'+i);
-    if(el) el.textContent=fmt(sub);
-  });
-  const el=document.getElementById('qt-total');
-  if(el) el.textContent=fmt(total);
-}
-function qtAddRow(){
-  const tbody=document.getElementById('qt-tbody');
-  if(!tbody) return;
-  const i=tbody.querySelectorAll('tr').length;
-  const prodOpts=S.products.map(p=>`<option value="${p.id}" data-name="${(p.name||'').replace(/"/g,'&quot;')}" data-code="${p.code||''}" data-price="${p.price||0}">${p.name||''} (${p.code||''})</option>`).join('');
-  tbody.insertAdjacentHTML('beforeend',`
-    <tr id="qt-row-${i}">
-      <td style="padding:4px"><select onchange="qtFillRow(this,${i})" style="width:100%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px;font-size:11px"><option value="">-- เลือกจากระบบ --</option>${prodOpts}</select></td>
-      <td style="padding:4px"><input class="fc" id="qt-nameTh-${i}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px"></td>
-      <td style="padding:4px"><input class="fc" id="qt-nameEn-${i}" placeholder="Product name (EN)" style="font-size:12px"></td>
-      <td style="padding:4px"><input class="fc" id="qt-code-${i}" placeholder="รหัส" style="width:80px;font-size:12px"></td>
-      <td style="padding:4px"><input type="number" class="fc" id="qt-qty-${i}" value="1" oninput="qtCalc()" style="width:60px;font-size:12px"></td>
-      <td style="padding:4px"><input class="fc" id="qt-unit-${i}" value="ชิ้น/pcs" style="width:70px;font-size:12px"></td>
-      <td style="padding:4px"><input type="number" class="fc" id="qt-price-${i}" value="0" oninput="qtCalc()" style="width:90px;font-size:12px"></td>
-      <td style="padding:4px;text-align:right;font-weight:700;color:#10b981" id="qt-subtotal-${i}">0</td>
-      <td style="padding:4px"><button onclick="qtRemoveRow(${i})" style="background:#dc2626;color:#fff;border:none;border-radius:4px;padding:2px 6px;cursor:pointer">✕</button></td>
-    </tr>`);
-}
-function qtRemoveRow(i){
-  const row=document.getElementById('qt-row-'+i);
-  if(row) row.remove(); qtCalc();
-}
-function qtReadItems(){
-  const rows=document.querySelectorAll('#qt-tbody tr');
-  const items=[];
-  rows.forEach((tr,i)=>{
-    const nameTh=document.getElementById('qt-nameTh-'+i)?.value?.trim()||'';
-    const nameEn=document.getElementById('qt-nameEn-'+i)?.value?.trim()||'';
-    if(!nameTh&&!nameEn) return;
-    items.push({
-      code:document.getElementById('qt-code-'+i)?.value?.trim()||'',
-      nameTh,nameEn,
-      qty:parseFloat(document.getElementById('qt-qty-'+i)?.value)||1,
-      unit:document.getElementById('qt-unit-'+i)?.value?.trim()||'ชิ้น/pcs',
-      price:parseFloat(document.getElementById('qt-price-'+i)?.value)||0
-    });
-  });
-  return items;
-}
-function editQuotation(id){
-  const q=id?S.quotations.find(x=>x.id===id):{};
-  openModal(id?'✏️ แก้ไขใบเสนอราคา':'📋 ใบเสนอราคาใหม่',qtForm(q||{}),
-    `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
-     <button class="btn" onclick="saveQuotation('${id||''}')">💾 บันทึก</button>`);
-  setTimeout(qtCalc,100);
-}
-async function saveQuotation(id){
-  const items=qtReadItems();
-  const total=items.reduce((a,b)=>a+b.qty*b.price,0);
-  const data={
-    no:document.getElementById('qt-no')?.value?.trim()||qtNextNo(),
-    date:document.getElementById('qt-date')?.value||todayISO(),
-    validUntil:document.getElementById('qt-validUntil')?.value||'',
-    customerName:document.getElementById('qt-custTh')?.value?.trim()||'',
-    customerNameEn:document.getElementById('qt-custEn')?.value?.trim()||'',
-    customerTel:document.getElementById('qt-tel')?.value?.trim()||'',
-    addressTh:document.getElementById('qt-addrTh')?.value?.trim()||'',
-    addressEn:document.getElementById('qt-addrEn')?.value?.trim()||'',
-    remark:document.getElementById('qt-remark')?.value?.trim()||'',
-    items,total,
-    status:id?(S.quotations.find(x=>x.id===id)?.status||'รอการอนุมัติ'):'รอการอนุมัติ',
-    updatedAt:ts()
-  };
-  if(!data.no){toast('กรุณากรอกเลขที่','error');return;}
-  if(id){
-    await updateFB('quotations',id,data);
-    const i=S.quotations.findIndex(x=>x.id===id);
-    S.quotations[i]={...S.quotations[i],...data};
-  } else {
-    const nid=await addFB('quotations',data);
-    S.quotations.push({id:nid,...data});
-  }
-  closeModal();renderPage('quotation');toast('บันทึกใบเสนอราคาสำเร็จ ✓','success');
-}
-async function deleteQuotation(id){
-  if(!confirm('ลบใบเสนอราคานี้?')) return;
-  await deleteFB('quotations',id);
-  S.quotations=S.quotations.filter(x=>x.id!==id);
-  renderPage('quotation');toast('ลบแล้ว','info');
-}
-function printQuotation(id){
-  const q=S.quotations.find(x=>x.id===id);
-  if(!q) return;
-  const c=S.company;
-  const logoHtml=c.logoUrl?`<img src="${c.logoUrl}" style="width:70px;height:70px;object-fit:contain">`:`<div style="font-size:48px">${c.logoEmoji||'🏪'}</div>`;
-  const itemRows=q.items.map((it,i)=>`
-    <tr style="border-bottom:1px solid #e5e7eb">
-      <td style="padding:6px 4px;text-align:center">${i+1}</td>
-      <td style="padding:6px 4px">${it.code||'-'}</td>
-      <td style="padding:6px 4px">${it.nameTh||''}<br><span style="color:#6b7280;font-size:11px">${it.nameEn||''}</span></td>
-      <td style="padding:6px 4px;text-align:center">${it.qty}</td>
-      <td style="padding:6px 4px;text-align:center">${it.unit||'ชิ้น/pcs'}</td>
-      <td style="padding:6px 4px;text-align:right">${fmt(it.price)}</td>
-      <td style="padding:6px 4px;text-align:right;font-weight:700">${fmt(it.qty*it.price)}</td>
-    </tr>`).join('');
-  const validStr=q.validUntil?`<tr><td style="color:#6b7280">วันหมดอายุ / Valid Until:</td><td><b>${q.validUntil}</b></td></tr>`:'';
-  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
-<title>ใบเสนอราคา ${q.no}</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sarabun','Prompt',Arial,sans-serif;font-size:13px;color:#111;background:#fff;padding:20px}
-@media print{body{padding:0}button{display:none!important}.no-print{display:none!important}}
-.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #e8172c;padding-bottom:12px;margin-bottom:14px}
-.logo-area{text-align:center;min-width:90px}
-.company-name{font-size:16px;font-weight:900;color:#e8172c}
-.doc-title{text-align:right}
-.doc-title h2{font-size:20px;font-weight:900;color:#111}
-.doc-title h3{font-size:14px;color:#6b7280}
-table.main{width:100%;border-collapse:collapse}
-table.main th{background:#1c1c2e;color:#fff;padding:7px 4px;font-size:12px}
-table.main td{font-size:12px}
-.total-box{text-align:right;margin-top:10px;font-size:13px}
-.total-box .grand{font-size:18px;font-weight:900;color:#e8172c}
-.footer{margin-top:24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:12px}
-.sig-box{border-top:1px solid #111;padding-top:6px;text-align:center}
-</style>
-</head><body>
-<div class="no-print" style="margin-bottom:12px;display:flex;gap:8px">
-  <button onclick="window.print()" style="background:#e8172c;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif">🖨️ พิมพ์ / Print</button>
-  <button onclick="window.close()" style="background:#6b7280;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;font-family:'Sarabun',sans-serif">✕ ปิด</button>
-</div>
-<div class="header">
-  <div class="logo-area">
-    ${logoHtml}
-    <div class="company-name">${c.name||'Racing Garage'}</div>
-    <div style="font-size:11px;color:#6b7280;margin-top:2px">${c.address||''}</div>
-    <div style="font-size:11px;color:#6b7280">โทร / Tel: ${c.tel||'089-140-0606'}</div>
-  </div>
-  <div class="doc-title">
-    <h2>ใบเสนอราคา</h2>
-    <h3>QUOTATION</h3>
-    <table style="margin-top:8px;font-size:12px;border-collapse:collapse">
-      <tr><td style="color:#6b7280;padding-right:12px">เลขที่ / No.:</td><td><b>${q.no}</b></td></tr>
-      <tr><td style="color:#6b7280">วันที่ / Date:</td><td><b>${q.date}</b></td></tr>
-      ${validStr}
-    </table>
-  </div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;background:#f9fafb;border-radius:8px;padding:10px">
-  <div>
-    <div style="font-weight:700;color:#e8172c;margin-bottom:4px">ลูกค้า / Customer</div>
-    <div style="font-weight:700">${q.customerName||'-'}</div>
-    <div style="color:#6b7280">${q.customerNameEn||''}</div>
-    <div style="color:#6b7280;font-size:11px">${q.addressTh||''}</div>
-    <div style="color:#6b7280;font-size:11px">${q.addressEn||''}</div>
-    <div style="font-size:11px">โทร: ${q.customerTel||'-'}</div>
-  </div>
-  <div style="text-align:right">
-    ${q.remark?`<div style="color:#6b7280;font-size:12px;margin-top:4px"><b>หมายเหตุ / Remark:</b><br>${q.remark}</div>`:''}
-  </div>
-</div>
-<table class="main">
-  <thead><tr>
-    <th style="width:30px">#</th>
-    <th style="width:70px">รหัส<br>Code</th>
-    <th>รายการ / Description</th>
-    <th style="width:50px">จำนวน<br>Qty</th>
-    <th style="width:65px">หน่วย<br>Unit</th>
-    <th style="width:80px">ราคา/หน่วย<br>Unit Price</th>
-    <th style="width:85px">รวม<br>Amount</th>
-  </tr></thead>
-  <tbody>${itemRows}</tbody>
-</table>
-<div class="total-box">
-  <div>รวมทั้งสิ้น / Grand Total: <span class="grand">${fmt(q.total||0)} บาท / THB</span></div>
-  <div style="color:#6b7280;font-size:11px;margin-top:2px">ราคานี้ไม่รวม VAT / Price excludes VAT unless stated</div>
-</div>
-<div class="footer">
-  <div class="sig-box">ผู้เสนอราคา / Prepared by<br><br><br><span style="color:#6b7280">(${c.name||'Racing Garage'})</span></div>
-  <div class="sig-box">ผู้อนุมัติ / Approved by<br><br><br><span style="color:#6b7280">(_________________)</span></div>
-  <div class="sig-box">ผู้สั่งซื้อ / Authorized by<br><br><br><span style="color:#6b7280">(_________________)</span></div>
-</div>
-</body></html>`;
-  const win=window.open('','_blank','width=900,height=700');
-  win.document.write(html);win.document.close();
-}
-function shareQuotationLine(id){
-  const q=S.quotations.find(x=>x.id===id);
-  if(!q) return;
-  const lines=[
-    `📋 ใบเสนอราคา / QUOTATION`,
-    `เลขที่: ${q.no}  วันที่: ${q.date}`,
-    `ลูกค้า: ${q.customerName||q.customerNameEn||'-'}`,
-    `─────────────────────`,
-    ...q.items.map(it=>`• ${it.nameTh||it.nameEn} (${it.code||'-'}) x${it.qty} ${it.unit} = ${fmt(it.qty*it.price)} บาท`),
-    `─────────────────────`,
-    `💰 รวมทั้งสิ้น: ${fmt(q.total||0)} บาท`,
-    q.remark?`📝 ${q.remark}`:'',
-    ``,
-    `📞 ${S.company.tel||'089-140-0606'}  🏪 ${S.company.name||'Racing Garage'}`
-  ].filter(Boolean).join('\n');
-  const url='https://line.me/R/msg/text/?'+encodeURIComponent(lines);
-  window.open(url,'_blank');
-}
-
 function renderInvoice(){
   const rows=[...S.invoices].reverse().map(inv=>[inv.no||'',inv.date||'',inv.customer||'',''+fmt(inv.amount),''+fmt(inv.vat),''+fmt(inv.total),badge(inv.status,inv.status==='ชำระแล้ว'?'green':'amber'),
     `<button class="btn btn-primary btn-xs" onclick="editInvoice('${inv.id}')">แก้ไข</button> ${inv.status!=='ชำระแล้ว'?`<button class="btn btn-success btn-xs" onclick="payInvoice('${inv.id}')">รับชำระ</button> `:''}<button class="btn btn-danger btn-xs" onclick="deleteInvoice('${inv.id}')">ลบ</button>`]);
