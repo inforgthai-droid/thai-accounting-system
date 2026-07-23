@@ -519,7 +519,7 @@ async function seedAll(){
 async function initApp(){
   try{
     await seedAll();
-    const[products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations]=await Promise.all([loadCol('products'),db.collection('categories').orderBy('order','asc').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('suppliers'),loadCol('customers'),loadCol('purchases'),loadCol('sales'),loadCol('journals'),loadCol('invoices'),loadCol('vatPurchase'),loadCol('employees'),loadCol('onlineOrders'),db.collection('quotations').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[])]);
+    const[products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations]=await Promise.all([loadCol('products'),db.collection('categories').orderBy('order','asc').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('suppliers'),loadCol('customers'),loadCol('purchases'),loadCol('sales'),loadCol('journals'),loadCol('invoices'),db.collection('quotations').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('vatPurchase'),loadCol('employees'),loadCol('onlineOrders')]);
     const cd=await db.collection('settings').doc('company').get();
     if(cd.exists)Object.assign(S.company,cd.data());
     Object.assign(S,{products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations});
