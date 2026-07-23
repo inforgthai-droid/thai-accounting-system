@@ -274,8 +274,6 @@ tbody tr:hover{background:#f0f9ff}
     <div id="p-sales" class="page"></div>
     <div id="p-stock" class="page"></div>
     <div id="p-journal" class="page"></div>
-    <div id="p-expenses" class="page"></div>
-    <div id="p-monthlyreport" class="page"></div>
     <div id="p-quotation" class="page"></div>
     <div id="p-invoice" class="page"></div>
     <div id="p-vat" class="page"></div>
@@ -479,7 +477,7 @@ function toggleListSort(page,field){
   }
   if(page==='prod') _updateProdTable(); else _updateStockTable();
 }
-const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],quotations:[],expenses:[],stockSnapshots:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:false,posVatMode:'inclusive',_posCat:'all',posPayMethod:'cash',posPayMode:'full',posInstallMonth:3,posSplit1Amt:0,posSplit1Method:'cash',posSplit2Method:'credit',
+const S={company:{name:"บริษัท ตัวอย่าง จำกัด",taxId:"0105566012345",address:"123 ถนนสุขุมวิท กรุงเทพฯ 10110",tel:"02-123-4567",email:"info@example.com",website:"www.example.com",accountingYear:"2567",vatRate:7,vatEnabled:true,currency:"THB",receiptTitle:"ใบเสร็จรับเงิน",receiptSubtitle:"RECEIPT",billTitle:"ใบกำกับภาษี",billSubtitle:"TAX INVOICE",invoiceTitle:"ใบแจ้งหนี้",invoiceSubtitle:"INVOICE",receiptFooter:"ขอบคุณที่ใช้บริการ / Thank you for your purchase",receiptNote:"",poPrefix:"POS",poNumberDigits:4,purchasePrefix:"PO",invoicePrefix:"INV",themeColor:"#1a3a5c",logoEmoji:"🏪"},products:[],categories:[],suppliers:[],customers:[],purchases:[],sales:[],journals:[],invoices:[],vatPurchase:[],quotations:[],employees:[],onlineOrders:[],cart:[],posDiscount:0,posNote:'',posApplyVat:false,posVatMode:'inclusive',_posCat:'all',posPayMethod:'cash',posPayMode:'full',posInstallMonth:3,posSplit1Amt:0,posSplit1Method:'cash',posSplit2Method:'credit',
  _prodSortKey:'price',_prodSortDir:'desc',_stockSortKey:'price',_stockSortDir:'desc'};
 var _shopDesign={
   colorRed:'#e8172c', colorBg:'#0a0a0a', colorText:'#e8e8e8',
@@ -521,10 +519,10 @@ async function seedAll(){
 async function initApp(){
   try{
     await seedAll();
-    const[products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations,expenses,stockSnapshots]=await Promise.all([loadCol('products'),db.collection('categories').orderBy('order','asc').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('suppliers'),loadCol('customers'),loadCol('purchases'),loadCol('sales'),loadCol('journals'),loadCol('invoices'),loadCol('vatPurchase'),loadCol('employees'),loadCol('onlineOrders'),db.collection('quotations').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),db.collection('expenses').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),db.collection('stockSnapshots').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[])]);
+    const[products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations]=await Promise.all([loadCol('products'),db.collection('categories').orderBy('order','asc').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('suppliers'),loadCol('customers'),loadCol('purchases'),loadCol('sales'),loadCol('journals'),loadCol('invoices'),loadCol('vatPurchase'),loadCol('employees'),loadCol('onlineOrders'),db.collection('quotations').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[])]);
     const cd=await db.collection('settings').doc('company').get();
     if(cd.exists)Object.assign(S.company,cd.data());
-    Object.assign(S,{products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations,expenses,stockSnapshots});
+    Object.assign(S,{products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations});
     // Load pageview stats
     try{
       const pvDoc=await db.collection('pageviews').doc('shop').get();
@@ -597,7 +595,7 @@ const MENU=[
   {g:'ร้านค้า'},{key:'dashboard',label:'ภาพรวม',icon:'📊',short:'ภาพรวม'},{key:'pos',label:'ขายหน้าร้าน (POS)',icon:'🛒',short:'ขายหน้าร้าน'},{key:'rental',label:'เช่าอุปกรณ์',icon:'🏎️',short:'เช่า'},{key:'sales',label:'ประวัติการขาย',icon:'📑',short:'ประวัติ'},
   {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦',short:'สินค้า'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️',short:'หมวดหมู่'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭',short:'สต็อก'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚',short:'ซื้อเข้า'},
   {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢',short:'ลูกค้า'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️',short:'ซัพพลาย'},
-  {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'expenses',label:'ค่าใช้จ่าย',icon:'💸',short:'ค่าใช้จ่าย'},{key:'monthlyreport',label:'รายงานส่งบัญชี',icon:'📊',short:'ส่งบัญชี'},{key:'quotation',label:'ใบเสนอราคา',icon:'📋',short:'ใบเสนอราคา'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
+  {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'quotation',label:'ใบเสนอราคา',icon:'📋',short:'ใบเสนอราคา'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
   {g:'ร้านค้าออนไลน์'},{key:'orders',label:'ออเดอร์ออนไลน์',icon:'🛍️',short:'ออเดอร์'},{key:'shipping',label:'จัดส่งสินค้า',icon:'📦',short:'จัดส่ง'},{key:'webdesign',label:'ตกแต่งร้านค้า',icon:'🎨',short:'ตกแต่ง'},
   {g:'วิเคราะห์'},{key:'infographic',label:'อินโฟกราฟิก',icon:'📊',short:'อินโฟ'},
   {g:'ระบบ'},{key:'import',label:'Import Excel',icon:'📂'},{key:'settings',label:'ตั้งค่าระบบ',icon:'⚙️'},
@@ -634,7 +632,7 @@ function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').
 function renderPage(key){
   const el=document.getElementById('p-'+key);
   if(!el)return;
-  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,expenses:renderExpenses,monthlyreport:renderMonthlyReport,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign};
+  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign};
   if(key==='sales'){
     // โหลด rentals ก่อนถ้ายังไม่มี แล้วค่อย render
     if(_rentals.length===0){
@@ -5891,298 +5889,6 @@ async function saveJournal(id){
 async function deleteJournal(id){if(!confirm('ลบ?'))return;await deleteFB('journals',id);S.journals=S.journals.filter(x=>x.id!==id);renderPage('journal');toast('ลบแล้ว','info');}
 
 // ===== INVOICE =====
-
-// ═══════════════════════════════════════════════
-// 💸 EXPENSES — บันทึกค่าใช้จ่าย
-// ═══════════════════════════════════════════════
-const EXPENSE_CATS=['ค่าเช่า','ค่าน้ำ-ไฟ','ค่าอินเทอร์เน็ต-โทรศัพท์','ค่าธรรมเนียม PaySo/บัตร','ค่าขนส่ง','ค่าโฆษณา-การตลาด','เงินเดือน-ค่าแรง','ค่าอุปกรณ์สำนักงาน','ภาษี-ค่าธรรมเนียมราชการ','อื่นๆ'];
-
-function renderExpenses(){
-  const now=new Date();
-  const curMonth=now.toISOString().slice(0,7);
-  const fMonth=S._expMonth||curMonth;
-  const fCat=S._expCat||'';
-  let list=S.expenses.filter(e=>(e.date||'').slice(0,7)===fMonth);
-  if(fCat) list=list.filter(e=>e.category===fCat);
-  list=list.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-
-  const total=list.reduce((s,e)=>s+(e.amount||0),0);
-  const totalVat=list.reduce((s,e)=>s+(e.vatAmount||0),0);
-
-  const monthOpts=[];
-  for(let i=0;i<24;i++){
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const v=d.toISOString().slice(0,7);
-    monthOpts.push(`<option value="${v}" ${v===fMonth?'selected':''}>${d.toLocaleDateString('th-TH',{year:'numeric',month:'long'})}</option>`);
-  }
-  const catOpts=['<option value="">ทุกหมวด</option>',...EXPENSE_CATS.map(cat=>`<option value="${cat}" ${cat===fCat?'selected':''}>${cat}</option>`)].join('');
-
-  const rows=list.map(e=>[
-    e.date||'',
-    e.category||'-',
-    e.note||'-',
-    ''+fmt(e.amount||0),
-    e.hasVat?fmt(e.vatAmount||0):'-',
-    e.slipUrl?`<a href="${e.slipUrl}" target="_blank"><img src="${e.slipUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer"></a>`:'<span style="color:var(--muted)">ไม่มี</span>',
-    `<button class="btn btn-primary btn-xs" onclick="editExpense('${e.id}')">แก้ไข</button>
-     <button class="btn btn-danger btn-xs" onclick="deleteExpense('${e.id}')">ลบ</button>`
-  ]);
-
-  return`<div class="sec-title">💸 บันทึกค่าใช้จ่าย / Expenses</div>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
-    <select class="fc" style="width:auto" onchange="S._expMonth=this.value;renderPage('expenses')">${monthOpts.join('')}</select>
-    <select class="fc" style="width:auto" onchange="S._expCat=this.value;renderPage('expenses')">${catOpts}</select>
-    <div style="flex:1"></div>
-    <button class="btn" onclick="editExpense()">+ เพิ่มค่าใช้จ่าย</button>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
-    ${sc('รวมค่าใช้จ่ายเดือนนี้',''+fmt(total),'#dc2626','บาท')}
-    ${sc('ภาษีซื้อ (VAT)',''+fmt(totalVat),'#0ea5e9','บาท')}
-  </div>
-  ${tbl(['วันที่','หมวด','รายละเอียด','จำนวนเงิน','VAT ซื้อ','ใบเสร็จ',''],rows)}`;
-}
-
-function editExpense(id){
-  const e=id?S.expenses.find(x=>x.id===id):{};
-  const catOpts=EXPENSE_CATS.map(cat=>`<option value="${cat}" ${e.category===cat?'selected':''}>${cat}</option>`).join('');
-  const body=`<div style="padding:4px;display:flex;flex-direction:column;gap:12px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div><label class="fl">วันที่</label><input type="date" class="fc" id="exp-date" value="${e.date||todayISO()}"></div>
-      <div><label class="fl">หมวดหมู่</label><select class="fc" id="exp-cat">${catOpts}</select></div>
-    </div>
-    <div><label class="fl">รายละเอียด / หมายเหตุ</label><input class="fc" id="exp-note" value="${e.note||''}" placeholder="เช่น ค่าเช่าร้าน เดือน ก.ค."></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div><label class="fl">จำนวนเงิน (บาท)</label><input type="number" class="fc" id="exp-amount" value="${e.amount||''}" oninput="expCalcVat()" placeholder="0.00"></div>
-      <div><label class="fl">VAT</label>
-        <select class="fc" id="exp-hasvat" onchange="expCalcVat()">
-          <option value="0" ${!e.hasVat?'selected':''}>ไม่มี VAT</option>
-          <option value="1" ${e.hasVat?'selected':''}>มี VAT 7% (แยกภาษีซื้อ)</option>
-        </select>
-      </div>
-    </div>
-    <div id="exp-vat-info" style="display:${e.hasVat?'block':'none'};background:var(--bg);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--muted)">
-      ภาษีซื้อ (VAT 7%): <b id="exp-vat-amt" style="color:#0ea5e9">${e.vatAmount?fmt(e.vatAmount):'0'}</b> บาท
-    </div>
-    <div>
-      <label class="fl">รูปใบเสร็จ / ใบกำกับภาษี</label>
-      <input type="file" accept="image/*" id="exp-slip-file" onchange="expUploadSlip(this)" style="font-size:12px">
-      <div id="exp-slip-preview" style="margin-top:6px">${e.slipUrl?`<img src="${e.slipUrl}" style="max-width:200px;border-radius:6px"><input type="hidden" id="exp-slip-url" value="${e.slipUrl}">`:'<input type="hidden" id="exp-slip-url" value="">'}</div>
-    </div>
-  </div>`;
-  openModal(id?'✏️ แก้ไขค่าใช้จ่าย':'💸 เพิ่มค่าใช้จ่าย',body,
-    `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
-     <button class="btn" onclick="saveExpense('${id||''}')">💾 บันทึก</button>`);
-}
-
-function expCalcVat(){
-  const amt=parseFloat(document.getElementById('exp-amount')?.value)||0;
-  const hasVat=document.getElementById('exp-hasvat')?.value==='1';
-  const info=document.getElementById('exp-vat-info');
-  if(info) info.style.display=hasVat?'block':'none';
-  if(hasVat){
-    const vat=Math.round(amt*7/107*100)/100;
-    const el=document.getElementById('exp-vat-amt');
-    if(el) el.textContent=fmt(vat);
-  }
-}
-
-function expUploadSlip(input){
-  const file=input.files[0];
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=function(ev){
-    const url=ev.target.result;
-    document.getElementById('exp-slip-preview').innerHTML=`<img src="${url}" style="max-width:200px;border-radius:6px"><input type="hidden" id="exp-slip-url" value="${url}">`;
-  };
-  reader.readAsDataURL(file);
-}
-
-async function saveExpense(id){
-  const amt=parseFloat(document.getElementById('exp-amount')?.value)||0;
-  if(amt<=0){toast('กรุณากรอกจำนวนเงิน','error');return;}
-  const hasVat=document.getElementById('exp-hasvat')?.value==='1';
-  const vatAmount=hasVat?Math.round(amt*7/107*100)/100:0;
-  const data={
-    date:document.getElementById('exp-date')?.value||todayISO(),
-    category:document.getElementById('exp-cat')?.value||'อื่นๆ',
-    note:document.getElementById('exp-note')?.value?.trim()||'',
-    amount:amt,
-    hasVat,vatAmount,
-    slipUrl:document.getElementById('exp-slip-url')?.value||'',
-    updatedAt:ts(),
-    ...(id?{}:{createdAt:ts()})
-  };
-  if(id){
-    await updateFB('expenses',id,data);
-    const i=S.expenses.findIndex(x=>x.id===id);
-    S.expenses[i]={...S.expenses[i],...data};
-  } else {
-    const nid=await addFB('expenses',data);
-    S.expenses.push({id:nid,...data});
-  }
-  closeModal();renderPage('expenses');toast('บันทึกค่าใช้จ่ายสำเร็จ ✓','success');
-}
-
-async function deleteExpense(id){
-  if(!confirm('ลบค่าใช้จ่ายนี้?'))return;
-  await deleteFB('expenses',id);
-  S.expenses=S.expenses.filter(x=>x.id!==id);
-  renderPage('expenses');toast('ลบแล้ว','info');
-}
-
-
-// ═══════════════════════════════════════════════
-// 📊 MONTHLY REPORT — รายงานส่งบัญชี
-// ═══════════════════════════════════════════════
-function renderMonthlyReport(){
-  const now=new Date();
-  const fMonth=S._reportMonth||now.toISOString().slice(0,7);
-  const monthOpts=[];
-  for(let i=0;i<24;i++){
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const v=d.toISOString().slice(0,7);
-    monthOpts.push(`<option value="${v}" ${v===fMonth?'selected':''}>${d.toLocaleDateString('th-TH',{year:'numeric',month:'long'})}</option>`);
-  }
-
-  // คำนวณสรุป
-  const posSales=S.sales.filter(s=>(s.date||'').slice(0,7)===fMonth);
-  const onlineSales=S.onlineOrders.filter(o=>(o.date||o.createdAt&&new Date(o.createdAt.seconds*1000).toISOString().slice(0,7))===fMonth&&o.status!=='ยกเลิก'&&o.status!=='รอชำระบัตร');
-  const salesFull=posSales.reduce((s,x)=>s+(x.total||0),0);
-  const salesNet=posSales.reduce((s,x)=>s+(x.netRevenue!=null?x.netRevenue:x.total||0),0);
-  const onlineFull=onlineSales.reduce((s,x)=>s+(x.total||0),0);
-  const expenses=S.expenses.filter(e=>(e.date||'').slice(0,7)===fMonth);
-  const expTotal=expenses.reduce((s,e)=>s+(e.amount||0),0);
-  const cogsTotal=posSales.reduce((s,x)=>s+(x.totalCost||0),0);
-  const grossProfit=salesNet+onlineFull-cogsTotal;
-  const netProfit=grossProfit-expTotal;
-
-  return`<div class="sec-title">📊 รายงานส่งบัญชี / Monthly Report</div>
-  <div style="display:flex;gap:10px;align-items:center;margin-bottom:1.2rem">
-    <label style="font-weight:600">เลือกเดือน:</label>
-    <select class="fc" style="width:auto" onchange="S._reportMonth=this.value;renderPage('monthlyreport')">${monthOpts.join('')}</select>
-    <div style="flex:1"></div>
-    <button class="btn" style="background:#16a34a" onclick="exportMonthlyReport('${fMonth}')">📥 ส่งออก Excel (ชุดเต็ม)</button>
-  </div>
-
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:1.2rem">
-    ${sc('ยอดขาย POS (เต็ม)',''+fmt(salesFull),'#10b981',fmt(posSales.length)+' บิล')}
-    ${sc('เงินเข้าจริง (หักค่าธรรมเนียม)',''+fmt(salesNet),'#0ea5e9','บาท')}
-    ${sc('ยอดขายออนไลน์',''+fmt(onlineFull),'#8b5cf6',fmt(onlineSales.length)+' ออเดอร์')}
-    ${sc('ต้นทุนขาย (COGS)',''+fmt(cogsTotal),'#f59e0b','บาท')}
-    ${sc('ค่าใช้จ่ายรวม',''+fmt(expTotal),'#dc2626',fmt(expenses.length)+' รายการ')}
-    ${sc('กำไรสุทธิ (ประมาณ)',''+fmt(netProfit),netProfit>=0?'#10b981':'#dc2626','บาท')}
-  </div>
-
-  <div style="background:var(--bg);border-radius:10px;padding:16px;font-size:13px;line-height:2">
-    <div style="font-weight:700;margin-bottom:8px;font-size:14px">สรุปกำไร-ขาดทุน (${fMonth})</div>
-    <div style="display:flex;justify-content:space-between"><span>รายได้ขาย POS (เงินเข้าจริง)</span><span>${fmt(salesNet)}</span></div>
-    <div style="display:flex;justify-content:space-between"><span>รายได้ขายออนไลน์</span><span>${fmt(onlineFull)}</span></div>
-    <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:4px"><span>หัก: ต้นทุนขาย</span><span style="color:#f59e0b">-${fmt(cogsTotal)}</span></div>
-    <div style="display:flex;justify-content:space-between;font-weight:700"><span>กำไรขั้นต้น</span><span style="color:#10b981">${fmt(grossProfit)}</span></div>
-    <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:4px"><span>หัก: ค่าใช้จ่ายดำเนินงาน</span><span style="color:#dc2626">-${fmt(expTotal)}</span></div>
-    <div style="display:flex;justify-content:space-between;font-weight:900;font-size:15px;border-top:2px solid var(--text);padding-top:6px;margin-top:4px"><span>กำไรสุทธิ</span><span style="color:${netProfit>=0?'#10b981':'#dc2626'}">${fmt(netProfit)}</span></div>
-  </div>
-
-  <div style="margin-top:1.5rem;padding:16px;background:var(--bg);border-radius:10px">
-    <div style="font-weight:700;margin-bottom:10px">📸 บันทึกมูลค่าสต็อกสิ้นเดือน</div>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">กดปุ่มนี้ทุกสิ้นเดือนเพื่อบันทึกมูลค่าสต็อกไว้ดูย้อนหลัง (สำนักบัญชีต้องใช้)</p>
-    <button class="btn" onclick="saveStockSnapshot()">📸 บันทึกมูลค่าสต็อกวันนี้</button>
-    ${S.stockSnapshots.length?`<div style="margin-top:12px;font-size:12px">
-      <div style="font-weight:600;margin-bottom:4px">Snapshot ที่บันทึกไว้:</div>
-      ${[...S.stockSnapshots].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6).map(s=>`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)"><span>${s.date}</span><span>${fmt(s.totalValue||0)} บาท (${fmt(s.itemCount||0)} รายการ)</span></div>`).join('')}
-    </div>`:''}
-  </div>`;
-}
-
-async function saveStockSnapshot(){
-  const today=todayISO();
-  let totalValue=0, itemCount=0;
-  S.products.forEach(p=>{
-    const stock=parseFloat(p.stock)||0;
-    const cost=parseFloat(p.cost)||0;
-    if(stock>0){totalValue+=stock*cost;itemCount++;}
-  });
-  totalValue=Math.round(totalValue*100)/100;
-  const existing=S.stockSnapshots.find(s=>s.date===today);
-  if(existing){
-    if(!confirm('มี snapshot ของวันนี้แล้ว ต้องการบันทึกทับไหม?'))return;
-    await updateFB('stockSnapshots',existing.id,{totalValue,itemCount,updatedAt:ts()});
-    existing.totalValue=totalValue;existing.itemCount=itemCount;
-  } else {
-    const data={date:today,totalValue,itemCount,createdAt:ts()};
-    const nid=await addFB('stockSnapshots',data);
-    S.stockSnapshots.push({id:nid,...data});
-  }
-  renderPage('monthlyreport');
-  toast(`บันทึกมูลค่าสต็อก ${fmt(totalValue)} บาท ✓`,'success');
-}
-
-function exportMonthlyReport(month){
-  toast('กำลังสร้างรายงาน...','info');
-  const posSales=S.sales.filter(s=>(s.date||'').slice(0,7)===month);
-  const onlineSales=S.onlineOrders.filter(o=>{
-    const d=o.date||(o.createdAt?new Date(o.createdAt.seconds*1000).toISOString().slice(0,10):'');
-    return (d||'').slice(0,7)===month && o.status!=='ยกเลิก' && o.status!=='รอชำระบัตร';
-  });
-  const expenses=S.expenses.filter(e=>(e.date||'').slice(0,7)===month);
-
-  const PAY={cash:'เงินสด/โอน',credit:'บัตรเครดิต',credit_installment:'ผ่อนบัตร 0%',shopee_pay:'Shopee Pay',shopee_spaylater:'SPayLater',shopee_cc:'บัตรเครดิต Shopee',shopee_cc_install:'ผ่อน Shopee',shopee_mobile_banking:'Shopee Banking',shopee_qr_promptpay:'Shopee QR',qr:'QR พร้อมเพย์',transfer:'โอนเงิน',cod:'COD'};
-
-  const wb=XLSX.utils.book_new();
-
-  // Sheet 1: ยอดขาย POS
-  const s1=[['วันที่','เลขที่','ลูกค้า','วิธีชำระ','ยอดเต็ม','เงินเข้าจริง','ต้นทุน','กำไร']];
-  posSales.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(s=>{
-    s1.push([s.date||'',s.docNo||'',s.customerName||'',PAY[s.payMethod]||s.payMethod||'',s.total||0,s.netRevenue!=null?s.netRevenue:s.total||0,s.totalCost||0,s.profit||0]);
-  });
-  s1.push(['','','','รวม',
-    posSales.reduce((a,b)=>a+(b.total||0),0),
-    posSales.reduce((a,b)=>a+(b.netRevenue!=null?b.netRevenue:b.total||0),0),
-    posSales.reduce((a,b)=>a+(b.totalCost||0),0),
-    posSales.reduce((a,b)=>a+(b.profit||0),0)]);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s1),'ยอดขาย POS');
-
-  // Sheet 2: ยอดขายออนไลน์
-  const s2=[['วันที่','เลขที่','ลูกค้า','เบอร์','วิธีชำระ','ยอดรวม','สถานะ']];
-  onlineSales.forEach(o=>{
-    const d=o.date||(o.createdAt?new Date(o.createdAt.seconds*1000).toISOString().slice(0,10):'');
-    s2.push([d,o.orderNo||o.docNo||'',o.customerName||'',o.customerPhone||'',PAY[o.payMethod]||o.payMethod||'',o.total||0,o.status||'']);
-  });
-  s2.push(['','','','','รวม',onlineSales.reduce((a,b)=>a+(b.total||0),0),'']);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s2),'ยอดขายออนไลน์');
-
-  // Sheet 3: ค่าใช้จ่าย
-  const s3=[['วันที่','หมวด','รายละเอียด','จำนวนเงิน','VAT ซื้อ','มีใบเสร็จ']];
-  expenses.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(e=>{
-    s3.push([e.date||'',e.category||'',e.note||'',e.amount||0,e.vatAmount||0,e.slipUrl?'มี':'ไม่มี']);
-  });
-  s3.push(['','','รวม',expenses.reduce((a,b)=>a+(b.amount||0),0),expenses.reduce((a,b)=>a+(b.vatAmount||0),0),'']);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s3),'ค่าใช้จ่าย');
-
-  // Sheet 4: สรุปกำไร-ขาดทุน
-  const salesNet=posSales.reduce((a,b)=>a+(b.netRevenue!=null?b.netRevenue:b.total||0),0);
-  const onlineFull=onlineSales.reduce((a,b)=>a+(b.total||0),0);
-  const cogs=posSales.reduce((a,b)=>a+(b.totalCost||0),0);
-  const expTotal=expenses.reduce((a,b)=>a+(b.amount||0),0);
-  const vatBuy=expenses.reduce((a,b)=>a+(b.vatAmount||0),0);
-  const gross=salesNet+onlineFull-cogs;
-  const net=gross-expTotal;
-  const s4=[
-    ['สรุปกำไร-ขาดทุน',month],[''],
-    ['รายได้ขาย POS (เงินเข้าจริง)',salesNet],
-    ['รายได้ขายออนไลน์',onlineFull],
-    ['หัก: ต้นทุนขาย',-cogs],
-    ['กำไรขั้นต้น',gross],
-    ['หัก: ค่าใช้จ่ายดำเนินงาน',-expTotal],
-    ['กำไรสุทธิ',net],[''],
-    ['ภาษีซื้อ (VAT) ที่ขอคืนได้',vatBuy]
-  ];
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s4),'สรุป P&L');
-
-  XLSX.writeFile(wb,`MonthlyReport_${month}.xlsx`);
-  toast('ส่งออกรายงานสำเร็จ ✓','success');
-}
-
 // ─── Quotation ───────────────────────────────────────────────────────────────
 function renderQuotation(){
   const rows=[...S.quotations].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(q=>[
