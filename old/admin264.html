@@ -519,7 +519,7 @@ async function seedAll(){
 async function initApp(){
   try{
     await seedAll();
-    const[products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations]=await Promise.all([loadCol('products'),db.collection('categories').orderBy('order','asc').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('suppliers'),loadCol('customers'),loadCol('purchases'),loadCol('sales'),loadCol('journals'),loadCol('invoices'),db.collection('quotations').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('vatPurchase'),loadCol('employees'),loadCol('onlineOrders')]);
+    const[products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations]=await Promise.all([loadCol('products'),db.collection('categories').orderBy('order','asc').get().then(s=>s.docs.map(d=>({id:d.id,...d.data()}))).catch(()=>[]),loadCol('suppliers'),loadCol('customers'),loadCol('purchases'),loadCol('sales'),loadCol('journals'),loadCol('invoices'),loadCol('quotations'),loadCol('vatPurchase'),loadCol('employees'),loadCol('onlineOrders')]);
     const cd=await db.collection('settings').doc('company').get();
     if(cd.exists)Object.assign(S.company,cd.data());
     Object.assign(S,{products,categories,suppliers,customers,purchases,sales,journals,invoices,vatPurchase,employees,onlineOrders,quotations});
@@ -5892,7 +5892,7 @@ async function deleteJournal(id){if(!confirm('ลบ?'))return;await deleteFB('j
 // ===== INVOICE =====
 // ─── Quotation ───────────────────────────────────────────────────────────────
 function renderQuotation(){
-  const rows=[...S.quotations].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(q=>[
+  const rows=[...S.quotations].reverse().map(q=>[
     q.no||'',q.date||'',q.customerName||'-',q.customerNameEn||'-',
     ''+fmt(q.total||0),
     badge(q.status,q.status==='อนุมัติแล้ว'?'green':q.status==='ยกเลิก'?'red':'amber'),
@@ -6115,8 +6115,7 @@ async function saveQuotation(id){
     remark:document.getElementById('qt-remark')?.value?.trim()||'',
     items,total,
     status:id?(S.quotations.find(x=>x.id===id)?.status||'รอการอนุมัติ'):'รอการอนุมัติ',
-    updatedAt:ts(),
-    ...(id?{}:{createdAt:ts()})
+    updatedAt:ts()
   };
   if(!data.no){toast('กรุณากรอกเลขที่','error');return;}
   if(id){
