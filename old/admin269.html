@@ -3239,7 +3239,7 @@ function printMonthlySales(){
 
   // สรุปรายวัน
   const byDay={};
-  all.filter(s=>s.status!=='ยกเลิก').forEach(s=>{
+  all.forEach(s=>{
     const d=s.date||'-';
     if(!byDay[d]) byDay[d]={count:0,rev:0,profit:0};
     byDay[d].count++;
@@ -6179,6 +6179,50 @@ function exportMonthlyReport(month){
   ];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s4),'สรุป P&L');
 
+  // Sheet 5: ซื้อสินค้าเข้า (Purchase Orders)
+  const purchases=S.purchases.filter(p=>(p.date||'').slice(0,7)===month);
+  const s5=[['วันที่','เลขที่PO','ซัพพลายเออร์','รายการสินค้า','จำนวน','ราคาต้นทุน/หน่วย','รวม']];
+  purchases.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(p=>{
+    if(p.items&&p.items.length){
+      p.items.forEach((it,i)=>{
+        s5.push([i===0?p.date:'',i===0?p.docNo||'':'',i===0?p.supplierName||'':'',it.name||it.nameTh||'',it.qty||0,it.cost||0,(it.qty||0)*(it.cost||0)]);
+      });
+    } else {
+      s5.push([p.date||'',p.docNo||'',p.supplierName||'','-',0,0,p.total||0]);
+    }
+  });
+  s5.push(['','','','','','รวมซื้อเข้า',purchases.reduce((a,b)=>a+(b.total||0),0)]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s5),'ซื้อสินค้าเข้า');
+
+  // Sheet 6: สรุปยอด VAT
+  const salesTotalVat=posSales.filter(s=>s.vatAmount>0).reduce((a,b)=>a+(b.vatAmount||0),0);
+  const expVat=expenses.reduce((a,b)=>a+(b.vatAmount||0),0);
+  const s6=[
+    ['รายการ','ยอด (บาท)'],
+    ['VAT ขาย (Output Tax)',salesTotalVat],
+    ['VAT ซื้อจากค่าใช้จ่าย (Input Tax)',expVat],
+    ['VAT สุทธิที่ต้องชำระ / ขอคืน',salesTotalVat-expVat],
+    [''],
+    ['จำนวนบิล POS',posSales.length],
+    ['จำนวนออเดอร์ออนไลน์',onlineSales.length],
+    ['จำนวนรายการซื้อเข้า',purchases.length],
+    ['จำนวนรายการค่าใช้จ่าย',expenses.length],
+  ];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s6),'VAT & สรุป');
+
+  // อัปเดต Sheet 4 สรุป P&L ให้รวมซื้อเข้าด้วย
+  const purchaseTotal=purchases.reduce((a,b)=>a+(b.total||0),0);
+  const wb_sheets=wb.SheetNames;
+  // แทรกข้อมูลซื้อเข้าใน P&L
+  const plSheet=wb.Sheets['สรุป P&L'];
+  if(plSheet){
+    const existing=XLSX.utils.sheet_to_aoa(plSheet);
+    existing.push(['']);
+    existing.push(['รวมซื้อสินค้าเข้า (ต้นทุนใหม่)',purchaseTotal]);
+    const ns=XLSX.utils.aoa_to_sheet(existing);
+    wb.Sheets['สรุป P&L']=ns;
+  }
+
   XLSX.writeFile(wb,`MonthlyReport_${month}.xlsx`);
   toast('ส่งออกรายงานสำเร็จ ✓','success');
 }
@@ -7420,14 +7464,8 @@ function getPageData(){
 
   if(currentPage==='sales'){
     headers=['เลขที่','วันที่','ลูกค้า','ยอดสินค้า','ส่วนลด','VAT','ยอดสุทธิ','ต้นทุนรวม','กำไร'];
-    // กรองบิลที่ยกเลิกออก + ใช้ filter เดียวกับที่แสดงบนหน้าจอ
-    let filteredSales=[...S.sales].filter(s=>s.status!=='ยกเลิก');
-    // ถ้ามี date filter จาก UI ก็ใส่ตาม _salesFrom/_salesTo
-    if(S._salesFrom) filteredSales=filteredSales.filter(s=>(s.date||'')>=S._salesFrom);
-    if(S._salesTo) filteredSales=filteredSales.filter(s=>(s.date||'')<=S._salesTo);
-    filteredSales.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    rows=filteredSales.map(s=>[s.docNo||'',s.date||'',s.customerName||'ลูกค้าทั่วไป',
-      s.subtotal||0,s.discount||0,s.vat||0,s.total||0,s.totalCost||0,s.profit||calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null)]);
+    rows=[...S.sales].reverse().map(s=>[s.docNo||'',s.date||'',s.customerName||'ลูกค้าทั่วไป',
+      s.subtotal||0,s.discount||0,s.vat||0,s.total||0,s.totalCost||0,(s.subtotal||0)-(s.totalCost||0)]);
   }
   else if(currentPage==='products'){
     headers=['รหัส','ชื่อสินค้า','หมวด','หน่วย','ราคาต้นทุน','ราคาขาย','สต็อก','สต็อกขั้นต่ำ','กำไร/หน่วย','มูลค่าสต็อก'];
