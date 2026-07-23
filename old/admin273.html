@@ -3242,7 +3242,7 @@ function printMonthlySales(){
 
   // สรุปรายวัน
   const byDay={};
-  all.filter(s=>s.status!=='ยกเลิก').forEach(s=>{
+  all.forEach(s=>{
     const d=s.date||'-';
     if(!byDay[d]) byDay[d]={count:0,rev:0,profit:0};
     byDay[d].count++;
@@ -7440,12 +7440,8 @@ function getPageData(){
 
   if(currentPage==='sales'){
     headers=['เลขที่','วันที่','ลูกค้า','ยอดสินค้า','ส่วนลด','VAT','ยอดสุทธิ','ต้นทุนรวม','กำไร'];
-    let filteredSales=[...S.sales].filter(s=>s.status!=='ยกเลิก');
-    if(S._salesFrom) filteredSales=filteredSales.filter(s=>(s.date||'')>=S._salesFrom);
-    if(S._salesTo) filteredSales=filteredSales.filter(s=>(s.date||'')<=S._salesTo);
-    filteredSales.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    rows=filteredSales.map(s=>[s.docNo||'',s.date||'',s.customerName||'ลูกค้าทั่วไป',
-      s.subtotal||0,s.discount||0,s.vat||0,s.total||0,s.totalCost||0,s.profit||calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null)]);
+    rows=[...S.sales].reverse().map(s=>[s.docNo||'',s.date||'',s.customerName||'ลูกค้าทั่วไป',
+      s.subtotal||0,s.discount||0,s.vat||0,s.total||0,s.totalCost||0,(s.subtotal||0)-(s.totalCost||0)]);
   }
   else if(currentPage==='products'){
     headers=['รหัส','ชื่อสินค้า','หมวด','หน่วย','ราคาต้นทุน','ราคาขาย','สต็อก','สต็อกขั้นต่ำ','กำไร/หน่วย','มูลค่าสต็อก'];
