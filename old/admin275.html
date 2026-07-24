@@ -3176,7 +3176,7 @@ function showPrintMonthlyModal(){
   const now = new Date();
   for(let i=0; i<60; i++){
     const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-    const val = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const val = d.toISOString().slice(0,7);
     const label = d.toLocaleDateString('th-TH',{year:'numeric',month:'long'});
     months.push({val,label});
   }
@@ -5904,7 +5904,7 @@ const EXPENSE_CATS=['ค่าเช่า','ค่าน้ำ-ไฟ','ค่�
 
 function renderExpenses(){
   const now=new Date();
-  const curMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const curMonth=now.toISOString().slice(0,7);
   const fMonth=S._expMonth||curMonth;
   const fCat=S._expCat||'';
   let list=S.expenses.filter(e=>(e.date||'').slice(0,7)===fMonth);
@@ -5917,7 +5917,7 @@ function renderExpenses(){
   const monthOpts=[];
   for(let i=0;i<24;i++){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const v=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const v=d.toISOString().slice(0,7);
     monthOpts.push(`<option value="${v}" ${v===fMonth?'selected':''}>${d.toLocaleDateString('th-TH',{year:'numeric',month:'long'})}</option>`);
   }
   const catOpts=['<option value="">ทุกหมวด</option>',...EXPENSE_CATS.map(cat=>`<option value="${cat}" ${cat===fCat?'selected':''}>${cat}</option>`)].join('');
@@ -6041,11 +6041,11 @@ async function deleteExpense(id){
 // ═══════════════════════════════════════════════
 function renderMonthlyReport(){
   const now=new Date();
-  const fMonth=S._reportMonth||now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const fMonth=S._reportMonth||now.toISOString().slice(0,7);
   const monthOpts=[];
   for(let i=0;i<24;i++){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    const v=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const v=d.toISOString().slice(0,7);
     monthOpts.push(`<option value="${v}" ${v===fMonth?'selected':''}>${d.toLocaleDateString('th-TH',{year:'numeric',month:'long'})}</option>`);
   }
 
