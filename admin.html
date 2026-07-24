@@ -3235,7 +3235,7 @@ function printMonthlySales(){
   const totalRev=all.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+(s.total||0),0);
   const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
   const totalDisc=all.reduce((a,s)=>a+(s.discount||0),0);
-  const rentalMonthList=_rentals.filter(r=>r.status==='returned'&&(r.returnDate||r.endDate||'').slice(0,7)===mon);
+  const rentalMonthList=_rentals.filter(r=>r.status!=='cancelled'&&(r.rentalDate||'').slice(0,7)===mon);
   const rentalMonthRev=rentalMonthList.reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);
   const grandTotalRev=totalRev+rentalMonthRev;
   const grandTotalProfit=totalProfit+rentalMonthRev; // กำไรขั้นต้นรวมเช่า (ต้นทุนเช่า=0)
