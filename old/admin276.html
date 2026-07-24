@@ -3238,7 +3238,6 @@ function printMonthlySales(){
   const rentalMonthList=_rentals.filter(r=>r.status==='returned'&&(r.returnDate||r.endDate||'').slice(0,7)===mon);
   const rentalMonthRev=rentalMonthList.reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);
   const grandTotalRev=totalRev+rentalMonthRev;
-  const grandTotalProfit=totalProfit+rentalMonthRev; // กำไรขั้นต้นรวมเช่า (ต้นทุนเช่า=0)
   const c=S.company;
 
   // สรุปรายวัน
@@ -3290,7 +3289,7 @@ tr:nth-child(even) td{background:#f8fafc}
 <div class="stat-row">
   <div class="stat" style="--c:#0ea5e9"><div class="stat-lbl">บิลทั้งหมด</div><div class="stat-val">${all.length} บิล</div></div>
   <div class="stat" style="--c:#10b981"><div class="stat-lbl">รายได้รวม</div><div class="stat-val">${fmt(totalRev)}</div></div>
-  <div class="stat" style="--c:#10b981"><div class="stat-lbl">กำไรขั้นต้น</div><div class="stat-val">${fmt(typeof grandTotalProfit!=='undefined'?grandTotalProfit:totalProfit)}</div></div>
+  <div class="stat" style="--c:#10b981"><div class="stat-lbl">กำไรขั้นต้น</div><div class="stat-val">${fmt(totalProfit)}</div></div>
   <div class="stat" style="--c:#f59e0b"><div class="stat-lbl">เฉลี่ย/วัน</div><div class="stat-val">${fmt(Object.keys(byDay).length?Math.round(totalRev/Object.keys(byDay).length):0)}</div></div>
   <div class="stat" style="--c:#ef4444"><div class="stat-lbl">ส่วนลดรวม</div><div class="stat-val">${fmt(totalDisc)}</div></div>
   ${rentalMonthRev>0?`<div class="stat" style="--c:#e85d04"><div class="stat-lbl">รายได้จากเช่า</div><div class="stat-val">${fmt(rentalMonthRev)}</div><div style="font-size:10px;color:#888;margin-top:2px">${rentalMonthList.length} สัญญา</div></div>`:''}
@@ -3424,7 +3423,7 @@ tr:nth-child(even){background:#f8fafc}
 <div class="stat-row">
   <div class="stat" style="--c:#0ea5e9"><div class="stat-lbl">บิลทั้งหมด</div><div class="stat-val">${all.length} บิล</div></div>
   <div class="stat" style="--c:#10b981"><div class="stat-lbl">รายได้รวม</div><div class="stat-val">${fmt(totalRev)}</div></div>
-  <div class="stat" style="--c:#10b981"><div class="stat-lbl">กำไรขั้นต้น</div><div class="stat-val">${fmt(typeof grandTotalProfit!=='undefined'?grandTotalProfit:totalProfit)}</div></div>
+  <div class="stat" style="--c:#10b981"><div class="stat-lbl">กำไรขั้นต้น</div><div class="stat-val">${fmt(totalProfit)}</div></div>
   <div class="stat" style="--c:#f59e0b"><div class="stat-lbl">เฉลี่ย/บิล</div><div class="stat-val">${fmt(all.length?Math.round(totalRev/all.length):0)}</div></div>
 </div>
 <!-- Table -->
