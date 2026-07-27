@@ -6470,6 +6470,9 @@ function payQuotation(id){
     <div class="fm" style="margin-top:8px"><label class="fl">วันที่ชำระ</label>
       <input type="date" class="fc" id="pay-qt-date" value="${todayISO()}">
     </div>
+    <div class="fm" style="margin-top:8px"><label class="fl">ค่าส่ง / ค่าใช้จ่ายอื่น (บาท)</label>
+      <input type="number" class="fc" id="pay-qt-shipping" value="0" min="0" placeholder="0">
+    </div>
   </div>`;
   const footer=`<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
     <button class="btn btn-primary" onclick="confirmPayQuotation('${id}')">✅ ยืนยันชำระ</button>`;
@@ -6480,22 +6483,29 @@ async function confirmPayQuotation(id){
   if(!q) return;
   const payMethod=document.getElementById('pay-qt-method')?.value||'cash';
   const saleDate=document.getElementById('pay-qt-date')?.value||todayISO();
+  const shippingCost=parseFloat(document.getElementById('pay-qt-shipping')?.value)||0;
   closeModal();
   try{
     const docNo=await nextNo('POS','sales');
     const total=q.total||0;
+    // ดึงต้นทุนจาก S.products ตาม code
+    const itemsWithCost=(q.items||[]).map(i=>{
+      const p=S.products.find(x=>x.code&&x.code===i.code);
+      const cost=p?(p.cost||0):0;
+      return{pid:p?.id||'',code:i.code||'',name:i.nameTh||i.nameEn||i.name||'',
+        unit:i.unit||'ชิ้น',price:i.price||0,cost,
+        qty:i.qty||1,subtotal:(i.qty||1)*(i.price||0)};
+    });
+    const totalCost=itemsWithCost.reduce((a,i)=>a+i.qty*i.cost,0)+shippingCost;
     const saleData={
       docNo,date:saleDate,
       customerName:q.customerName||'ลูกค้าทั่วไป',
       payMethod,shopeeRate:null,installMonth:null,netRevenue:total,
-      items:(q.items||[]).map(i=>({
-        pid:i.pid||'',code:i.code||'',name:i.nameTh||i.nameEn||i.name||'',
-        unit:i.unit||'ชิ้น',price:i.price||0,cost:0,
-        qty:i.qty||1,subtotal:(i.qty||1)*(i.price||0)
-      })),
+      items:itemsWithCost,
       subtotal:total,discount:0,vat:0,vatMode:'exclusive',applyVat:false,
-      total,totalCost:0,
-      profit:total,
+      total,totalCost,
+      shippingCost,
+      profit:calcNetProfit(total,totalCost,payMethod,null),
       customerAddress:q.addressTh||'',
       customerTaxId:q.customerTaxId||'',
       customerTel:q.customerTel||'',
