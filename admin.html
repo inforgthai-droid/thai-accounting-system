@@ -6209,10 +6209,11 @@ function renderQuotation(){
   const rows=[...S.quotations].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(q=>[
     q.no||'',q.date||'',q.customerName||'-',q.customerNameEn||'-',
     ''+fmt(q.total||0),
-    badge(q.status,q.status==='อนุมัติแล้ว'?'green':q.status==='ยกเลิก'?'red':'amber'),
+    badge(q.status,q.status==='ชำระแล้ว'?'green':q.status==='อนุมัติแล้ว'?'green':q.status==='ยกเลิก'?'red':'amber'),
     `<button class="btn btn-primary btn-xs" onclick="editQuotation('${q.id}')">แก้ไข</button>
      <button class="btn btn-xs" style="background:#0e7490;color:#fff" onclick="printQuotation('${q.id}')">พิมพ์</button>
      <button class="btn btn-xs" style="background:#16a34a;color:#fff" onclick="shareQuotationLine('${q.id}')">LINE</button>
+     ${q.status!=='ชำระแล้ว'&&q.status!=='ยกเลิก'?`<button class="btn btn-xs" style="background:#7c3aed;color:#fff" onclick="payQuotation('${q.id}')">💳 ชำระแล้ว</button>`:''}
      <button class="btn btn-danger btn-xs" onclick="deleteQuotation('${q.id}')">ลบ</button>`
   ]);
   return`<div class="sec-title">📋 ใบเสนอราคา / Quotation</div>
@@ -6448,6 +6449,64 @@ async function deleteQuotation(id){
   await deleteFB('quotations',id);
   S.quotations=S.quotations.filter(x=>x.id!==id);
   renderPage('quotation');toast('ลบแล้ว','info');
+}
+function payQuotation(id){
+  const q=S.quotations.find(x=>x.id===id);
+  if(!q) return;
+  showModal(`<div style="padding:8px 4px">
+    <div style="font-weight:700;font-size:16px;margin-bottom:10px">💳 ชำระเงิน — ${q.no||''}</div>
+    <div style="margin-bottom:4px;color:var(--muted);font-size:13px">ลูกค้า: ${q.customerName||'-'}</div>
+    <div style="margin-bottom:16px;font-size:22px;font-weight:700;color:#10b981">${fmt(q.total||0)} บาท</div>
+    <div class="fm"><label class="fl">วิธีชำระเงิน</label>
+      <select class="fc" id="pay-qt-method">
+        <option value="cash">เงินสด</option>
+        <option value="transfer">โอนเงิน</option>
+        <option value="credit_card">บัตรเครดิต</option>
+        <option value="qr">QR / พร้อมเพย์</option>
+      </select>
+    </div>
+    <div class="fm" style="margin-top:8px"><label class="fl">วันที่ชำระ</label>
+      <input type="date" class="fc" id="pay-qt-date" value="${todayISO()}">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="confirmPayQuotation('${id}')">✅ ยืนยันชำระ</button>
+      <button class="btn" onclick="closeModal()">ยกเลิก</button>
+    </div>
+  </div>`);
+}
+async function confirmPayQuotation(id){
+  const q=S.quotations.find(x=>x.id===id);
+  if(!q) return;
+  const payMethod=document.getElementById('pay-qt-method')?.value||'cash';
+  const saleDate=document.getElementById('pay-qt-date')?.value||todayISO();
+  closeModal();
+  try{
+    const docNo=await nextNo('POS','sales');
+    const total=q.total||0;
+    const saleData={
+      docNo,date:saleDate,
+      customerName:q.customerName||'ลูกค้าทั่วไป',
+      payMethod,shopeeRate:null,installMonth:null,netRevenue:total,
+      items:(q.items||[]).map(i=>({
+        pid:i.pid||'',code:i.code||'',name:i.nameTh||i.nameEn||i.name||'',
+        unit:i.unit||'ชิ้น',price:i.price||0,cost:0,
+        qty:i.qty||1,subtotal:(i.qty||1)*(i.price||0)
+      })),
+      subtotal:total,discount:0,vat:0,vatMode:'exclusive',applyVat:false,
+      total,totalCost:0,
+      profit:total,
+      quotationRef:q.no||id,
+    };
+    const sRef=db.collection('sales').doc();
+    await sRef.set({...saleData,createdAt:ts()});
+    S.sales.push({id:sRef.id,...saleData});
+    await updateFB('quotations',id,{status:'ชำระแล้ว'});
+    const qi=S.quotations.findIndex(x=>x.id===id);
+    if(qi>=0) S.quotations[qi].status='ชำระแล้ว';
+    toast('บันทึกการชำระ '+docNo+' สำเร็จ ✓','success');
+    renderPage('quotation');
+    showReceiptModal({id:sRef.id,...saleData});
+  }catch(e){toast('Error: '+e.message,'error');}
 }
 function printQuotation(id){
   const q=S.quotations.find(x=>x.id===id);
