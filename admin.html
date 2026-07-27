@@ -6242,7 +6242,7 @@ function qtForm(q={}){
       </td>
       <td style="padding:5px;min-width:150px"><input class="fc" id="qt-nameTh-${i}" value="${it.nameTh||''}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px;width:100%"></td>
       <td style="padding:5px;min-width:150px"><input class="fc" id="qt-nameEn-${i}" value="${it.nameEn||''}" placeholder="Product name (EN)" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:80px"><input class="fc" id="qt-code-${i}" value="${it.code||''}" placeholder="รหัส" style="font-size:12px;width:100%"></td>
+      <td style="padding:5px;min-width:80px"><input class="fc" id="qt-code-${i}" value="${it.code||''}" placeholder="รหัส" style="font-size:12px;width:100%"><input type="hidden" id="qt-pid-${i}" value="${it.pid||''}"></td>
       <td style="padding:5px;min-width:60px"><input type="number" class="fc" id="qt-qty-${i}" value="${it.qty||1}" oninput="qtCalc()" style="font-size:12px;width:100%;text-align:right"></td>
       <td style="padding:5px;min-width:75px"><input class="fc" id="qt-unit-${i}" value="${it.unit||'ชิ้น/pcs'}" style="font-size:12px;width:100%"></td>
       <td style="padding:5px;min-width:90px"><input type="number" class="fc" id="qt-price-${i}" value="${it.price||0}" oninput="qtCalc()" style="font-size:12px;width:100%;text-align:right"></td>
@@ -6347,6 +6347,8 @@ function qtPickProduct(i,pid){
   if(enEl) enEl.value=p.name||'';
   if(codeEl) codeEl.value=p.code||'';
   if(priceEl) priceEl.value=p.price||0;
+  const pidEl=document.getElementById('qt-pid-'+i);
+  if(pidEl) pidEl.value=p.id||'';
   qtCalc();
 }
 // ปิด dropdown เมื่อคลิกที่อื่น
@@ -6381,7 +6383,7 @@ function qtAddRow(){
       </td>
       <td style="padding:5px;min-width:150px"><input class="fc" id="qt-nameTh-${i}" placeholder="ชื่อสินค้า (TH)" style="font-size:12px;width:100%"></td>
       <td style="padding:5px;min-width:150px"><input class="fc" id="qt-nameEn-${i}" placeholder="Product name (EN)" style="font-size:12px;width:100%"></td>
-      <td style="padding:5px;min-width:80px"><input class="fc" id="qt-code-${i}" placeholder="รหัส" style="font-size:12px;width:100%"></td>
+      <td style="padding:5px;min-width:80px"><input class="fc" id="qt-code-${i}" placeholder="รหัส" style="font-size:12px;width:100%"><input type="hidden" id="qt-pid-${i}" value=""></td>
       <td style="padding:5px;min-width:60px"><input type="number" class="fc" id="qt-qty-${i}" value="1" oninput="qtCalc()" style="font-size:12px;width:100%;text-align:right"></td>
       <td style="padding:5px;min-width:75px"><input class="fc" id="qt-unit-${i}" value="ชิ้น/pcs" style="font-size:12px;width:100%"></td>
       <td style="padding:5px;min-width:90px"><input type="number" class="fc" id="qt-price-${i}" value="0" oninput="qtCalc()" style="font-size:12px;width:100%;text-align:right"></td>
@@ -6401,6 +6403,7 @@ function qtReadItems(){
     const nameEn=document.getElementById('qt-nameEn-'+i)?.value?.trim()||'';
     if(!nameTh&&!nameEn) return;
     items.push({
+      pid:document.getElementById('qt-pid-'+i)?.value?.trim()||'',
       code:document.getElementById('qt-code-'+i)?.value?.trim()||'',
       nameTh,nameEn,
       qty:parseFloat(document.getElementById('qt-qty-'+i)?.value)||1,
@@ -6488,9 +6491,9 @@ async function confirmPayQuotation(id){
   try{
     const docNo=await nextNo('POS','sales');
     const total=q.total||0;
-    // ดึงต้นทุนจาก S.products ตาม code
+    // ดึงต้นทุนจาก S.products ตาม pid → code → nameTh
     const itemsWithCost=(q.items||[]).map(i=>{
-      const p=S.products.find(x=>x.code&&x.code===i.code);
+      const p=S.products.find(x=>x.id===i.pid)||S.products.find(x=>x.code&&x.code===i.code&&i.code)||S.products.find(x=>x.name===i.nameTh&&i.nameTh);
       const cost=p?(p.cost||0):0;
       return{pid:p?.id||'',code:i.code||'',name:i.nameTh||i.nameEn||i.name||'',
         unit:i.unit||'ชิ้น',price:i.price||0,cost,
