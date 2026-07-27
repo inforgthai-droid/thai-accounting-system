@@ -2448,6 +2448,9 @@ function printReceiptToWindow(sale, pw){
     <tr><td class="bold" style="width:28mm">เลขที่</td><td>${sale.docNo}</td></tr>
     <tr><td class="bold">วันที่</td><td>${sale.date}</td></tr>
     <tr><td class="bold">ลูกค้า</td><td>${sale.customerName||'ลูกค้าทั่วไป'}</td></tr>
+    ${sale.customerAddress?`<tr><td class="bold">ที่อยู่</td><td style="font-size:10px">${sale.customerAddress}</td></tr>`:''}
+    ${sale.customerTaxId?`<tr><td class="bold">เลขภาษี</td><td style="font-size:10px">${sale.customerTaxId}</td></tr>`:''}
+    ${sale.customerTel?`<tr><td class="bold">โทร</td><td style="font-size:10px">${sale.customerTel}</td></tr>`:''}
   </table>
   <hr class="dash">
 
@@ -6493,6 +6496,9 @@ async function confirmPayQuotation(id){
       subtotal:total,discount:0,vat:0,vatMode:'exclusive',applyVat:false,
       total,totalCost:0,
       profit:total,
+      customerAddress:q.addressTh||'',
+      customerTaxId:q.customerTaxId||'',
+      customerTel:q.customerTel||'',
       quotationRef:q.no||id,
     };
     const sRef=db.collection('sales').doc();
