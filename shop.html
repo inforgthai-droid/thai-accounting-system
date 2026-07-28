@@ -1736,6 +1736,7 @@ async function openCreditPayment(){
     CART.forEach(item=>{const p=PRODS.find(x=>x.id===item.id);if(p)p.stock-=item.qty;});
     window._lastCart=[...CART];CART.length=0;updateCart();doFilter();
     sendOrderNotification(orderData);
+    sendCustomerConfirmation(orderData);
   }catch(e){toast('Error saving order: '+e.message,'err');return;}
   // Build pay.sn URL with pre-filled customer data
   const params=new URLSearchParams({
@@ -1781,28 +1782,60 @@ function creditPayDone(){
 
 // ===== EMAIL NOTIFICATION =====
 // ตั้งค่า EmailJS: https://www.emailjs.com → My Account → Public Key
-const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // ← ใส่ Public Key จาก EmailJS
-const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // ← ใส่ Service ID
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // ← ใส่ Template ID
-const NOTIFY_EMAIL        = 'info.rg.th@gmail.com'; // email ร้าน
+const EMAILJS_PUBLIC_KEY       = 'YOUR_PUBLIC_KEY';          // ← ใส่ Public Key จาก EmailJS
+const EMAILJS_SERVICE_ID       = 'YOUR_SERVICE_ID';          // ← ใส่ Service ID
+const EMAILJS_TEMPLATE_SHOP    = 'YOUR_TEMPLATE_ID_SHOP';    // ← Template แจ้งเตือนร้าน
+const EMAILJS_TEMPLATE_CONFIRM = 'YOUR_TEMPLATE_ID_CONFIRM'; // ← Template ยืนยันลูกค้า
+const NOTIFY_EMAIL             = 'info.rg.th@gmail.com';     // email ร้าน
 
-function sendOrderNotification(orderData){
-  if(!EMAILJS_PUBLIC_KEY||EMAILJS_PUBLIC_KEY==='YOUR_PUBLIC_KEY') return; // ยังไม่ได้ตั้งค่า
+function _ejsSend(templateId, params){
+  if(!EMAILJS_PUBLIC_KEY||EMAILJS_PUBLIC_KEY==='YOUR_PUBLIC_KEY') return;
   try{
     emailjs.init({publicKey:EMAILJS_PUBLIC_KEY});
-    const itemList=(orderData.items||[]).map(i=>`${i.name} x${i.qty} (${new Intl.NumberFormat('th-TH').format(i.subtotal||i.price*i.qty)} ฿)`).join('\n');
-    emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,{
-      to_email   : NOTIFY_EMAIL,
-      order_no   : orderData.orderNo||'-',
-      order_date : orderData.date||'-',
-      customer   : orderData.customerName||'-',
-      phone      : orderData.customerPhone||'-',
-      address    : orderData.customerAddress||'-',
-      pay_method : {qr:'QR พร้อมเพย์',transfer:'โอนเงิน',credit:'บัตรเครดิต',cod:'COD'}[orderData.payMethod]||orderData.payMethod||'-',
-      items      : itemList,
-      total      : new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(orderData.total||0)+' ฿',
-    }).then(()=>console.log('📧 แจ้งเตือนส่งแล้ว'),e=>console.warn('EmailJS error:',e));
-  }catch(e){console.warn('sendOrderNotification error:',e);}
+    emailjs.send(EMAILJS_SERVICE_ID,templateId,params)
+      .then(()=>console.log('📧 email sent:',templateId),e=>console.warn('EmailJS error:',e));
+  }catch(e){console.warn('_ejsSend error:',e);}
+}
+
+function _itemTable(items){
+  return (items||[]).map(i=>`${i.name} x${i.qty}  =  ${new Intl.NumberFormat('th-TH').format(i.subtotal||i.price*i.qty)} ฿`).join('\n');
+}
+
+// แจ้งเตือนร้าน
+function sendOrderNotification(orderData){
+  _ejsSend(EMAILJS_TEMPLATE_SHOP,{
+    to_email   : NOTIFY_EMAIL,
+    order_no   : orderData.orderNo||'-',
+    order_date : orderData.date||'-',
+    customer   : orderData.customerName||'-',
+    phone      : orderData.customerPhone||'-',
+    address    : orderData.customerAddress||'-',
+    pay_method : {qr:'QR พร้อมเพย์',transfer:'โอนเงิน',credit:'บัตรเครดิต',cod:'COD'}[orderData.payMethod]||orderData.payMethod||'-',
+    items      : _itemTable(orderData.items),
+    total      : new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(orderData.total||0)+' ฿',
+  });
+}
+
+// ยืนยันคำสั่งซื้อไปหาลูกค้า
+function sendCustomerConfirmation(orderData){
+  const custEmail=orderData.customerEmail||'';
+  if(!custEmail) return; // ลูกค้าไม่ได้กรอก email
+  _ejsSend(EMAILJS_TEMPLATE_CONFIRM,{
+    to_email   : custEmail,
+    order_no   : orderData.orderNo||'-',
+    order_date : orderData.date||'-',
+    customer   : orderData.customerName||'-',
+    phone      : orderData.customerPhone||'-',
+    address    : orderData.customerAddress||'-',
+    pay_method : {qr:'QR พร้อมเพย์',transfer:'โอนเงิน',credit:'บัตรเครดิต',cod:'COD'}[orderData.payMethod]||orderData.payMethod||'-',
+    items      : _itemTable(orderData.items),
+    subtotal   : new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(orderData.subtotal||0)+' ฿',
+    vat        : new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(orderData.vat||0)+' ฿',
+    total      : new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(orderData.total||0)+' ฿',
+    shop_name  : CO.name||'Racing Garage',
+    shop_tel   : CO.tel||'-',
+    note       : orderData.note||'-',
+  });
 }
 
 async function confirmPay(){
@@ -1820,6 +1853,7 @@ async function confirmPay(){
     CART.forEach(item=>{const p=PRODS.find(x=>x.id===item.id);if(p)p.stock-=item.qty;});
     window._lastCart=[...CART];CART.length=0;updateCart();doFilter();O.step=4;renderSuccess(grand);
     sendOrderNotification(orderData);
+    sendCustomerConfirmation(orderData);
   }catch(e){toast('Error: '+e.message,'err');}
 }
 
