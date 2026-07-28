@@ -7475,8 +7475,21 @@ async function viewOrder(id){
       <div style="font-size:16px;font-weight:700;color:var(--primary)">ยอดสุทธิ: ${fmt(o.total)}</div>
     </div>`,
   `<button class="btn btn-gray" onclick="printOnlineOrder('${id}')">🖨️ พิมพ์ใบสั่งซื้อ</button>
+   <button class="btn" style="background:#1a3a5c;color:#fff" onclick="closeModal();orderToShipping('${id}')">🚚 พิมพ์ใบจัดส่ง</button>
    <button class="btn btn-success" onclick="updateOrderStatus('${id}','เสร็จสิ้น');closeModal()">✅ เสร็จสิ้น</button>
    <button class="btn btn-primary" onclick="closeModal()">ปิด</button>`);
+}
+
+function orderToShipping(id){
+  const o=S.onlineOrders.find(x=>x.id===id);
+  if(!o){toast('ไม่พบออเดอร์','error');return;}
+  openShippingLabel({
+    orderNo:o.orderNo||'',
+    customerName:o.customerName||'',
+    address:o.customerAddress||'',
+    tel:o.customerPhone||'',
+    itemsText:(o.items||[]).map(i=>i.name+' x'+i.qty).join(', '),
+  });
 }
 
 function printOnlineOrder(id){
