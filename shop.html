@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;600;700&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 @font-face{font-family:'Barlow Condensed';font-display:swap}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1734,6 +1735,7 @@ async function openCreditPayment(){
     await batch.commit();
     CART.forEach(item=>{const p=PRODS.find(x=>x.id===item.id);if(p)p.stock-=item.qty;});
     window._lastCart=[...CART];CART.length=0;updateCart();doFilter();
+    sendOrderNotification(orderData);
   }catch(e){toast('Error saving order: '+e.message,'err');return;}
   // Build pay.sn URL with pre-filled customer data
   const params=new URLSearchParams({
@@ -1777,6 +1779,32 @@ function creditPayDone(){
   O.step=4;renderSuccess(grand);
 }
 
+// ===== EMAIL NOTIFICATION =====
+// ตั้งค่า EmailJS: https://www.emailjs.com → My Account → Public Key
+const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // ← ใส่ Public Key จาก EmailJS
+const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // ← ใส่ Service ID
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // ← ใส่ Template ID
+const NOTIFY_EMAIL        = 'info.rg.th@gmail.com'; // email ร้าน
+
+function sendOrderNotification(orderData){
+  if(!EMAILJS_PUBLIC_KEY||EMAILJS_PUBLIC_KEY==='YOUR_PUBLIC_KEY') return; // ยังไม่ได้ตั้งค่า
+  try{
+    emailjs.init({publicKey:EMAILJS_PUBLIC_KEY});
+    const itemList=(orderData.items||[]).map(i=>`${i.name} x${i.qty} (${new Intl.NumberFormat('th-TH').format(i.subtotal||i.price*i.qty)} ฿)`).join('\n');
+    emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,{
+      to_email   : NOTIFY_EMAIL,
+      order_no   : orderData.orderNo||'-',
+      order_date : orderData.date||'-',
+      customer   : orderData.customerName||'-',
+      phone      : orderData.customerPhone||'-',
+      address    : orderData.customerAddress||'-',
+      pay_method : {qr:'QR พร้อมเพย์',transfer:'โอนเงิน',credit:'บัตรเครดิต',cod:'COD'}[orderData.payMethod]||orderData.payMethod||'-',
+      items      : itemList,
+      total      : new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(orderData.total||0)+' ฿',
+    }).then(()=>console.log('📧 แจ้งเตือนส่งแล้ว'),e=>console.warn('EmailJS error:',e));
+  }catch(e){console.warn('sendOrderNotification error:',e);}
+}
+
 async function confirmPay(){
   clearTimer();
   const{sub,vat,grand}=cartTotals();
@@ -1791,6 +1819,7 @@ async function confirmPay(){
     await batch.commit();
     CART.forEach(item=>{const p=PRODS.find(x=>x.id===item.id);if(p)p.stock-=item.qty;});
     window._lastCart=[...CART];CART.length=0;updateCart();doFilter();O.step=4;renderSuccess(grand);
+    sendOrderNotification(orderData);
   }catch(e){toast('Error: '+e.message,'err');}
 }
 

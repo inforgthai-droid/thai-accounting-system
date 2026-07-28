@@ -564,8 +564,45 @@ async function initApp(){
     const lastPage=sessionStorage.getItem('rg_page')||'dashboard';
     navigate(lastPage);
     toast('เชื่อมต่อ Firebase สำเร็จ ✓','success');
+    startOrderListener();
   }catch(e){document.getElementById('loading-overlay').classList.add('hidden');toast('Error: '+e.message,'error');buildNav();navigate('dashboard');}
 }
+
+// ===== REAL-TIME ORDER NOTIFICATION =====
+let _orderListenerInit=false;
+function startOrderListener(){
+  if(_orderListenerInit)return;_orderListenerInit=true;
+  const since=firebase.firestore.Timestamp.now();
+  db.collection('onlineOrders')
+    .orderBy('createdAt','desc').limit(20)
+    .onSnapshot(snap=>{
+      snap.docChanges().forEach(change=>{
+        if(change.type!=='added')return;
+        const d=change.doc.data();
+        // เฉพาะ order ที่สร้างหลังจากเปิดหน้า admin
+        if(!d.createdAt||d.createdAt.seconds<since.seconds)return;
+        const o={id:change.doc.id,...d};
+        // เพิ่มใน S.onlineOrders ถ้ายังไม่มี
+        if(!S.onlineOrders.find(x=>x.id===o.id)){
+          S.onlineOrders.push(o);
+          if(document.getElementById('page-saleshistory')?.style.display!=='none')renderPage('saleshistory');
+        }
+        // Toast แจ้งเตือน
+        toast(`🛍️ ออเดอร์ใหม่! ${o.orderNo||''} — ${o.customerName||'ลูกค้า'} (${new Intl.NumberFormat('th-TH').format(o.total||0)} ฿)`,'success');
+        // Browser notification
+        if(Notification.permission==='granted'){
+          new Notification('🛍️ ออเดอร์ใหม่ — Racing Garage',{body:`${o.orderNo} / ${o.customerName} / ฿${new Intl.NumberFormat('th-TH').format(o.total||0)}`,icon:'/thai-accounting-system/icons/icon-192x192.png'});
+        } else if(Notification.permission!=='denied'){
+          Notification.requestPermission().then(p=>{
+            if(p==='granted') new Notification('🛍️ ออเดอร์ใหม่ — Racing Garage',{body:`${o.orderNo} / ${o.customerName}`,icon:'/thai-accounting-system/icons/icon-192x192.png'});
+          });
+        }
+        // เสียงแจ้งเตือน
+        try{const a=new AudioContext();const osc=a.createOscillator();const g=a.createGain();osc.connect(g);g.connect(a.destination);osc.frequency.setValueAtTime(880,a.currentTime);osc.frequency.setValueAtTime(1100,a.currentTime+0.15);g.gain.setValueAtTime(0.3,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+0.5);osc.start();osc.stop(a.currentTime+0.5);}catch{}
+      });
+    },e=>console.warn('orderListener error:',e));
+}
+
 const fmt=n=>new Intl.NumberFormat('th-TH').format(Math.round(n||0));
 const fmtM=n=>new Intl.NumberFormat('th-TH',{minimumFractionDigits:2}).format(n||0);
 const badge=(t,c)=>`<span class="badge badge-${c}">${t}</span>`;
@@ -2643,7 +2680,7 @@ function renderSales(){
       ?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-weight:700">เช่า</span>`
       :`<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:4px;padding:1px 6px;font-weight:700">Online</span>`;
     const cancelBadge=isCancelled?`<span style="font-size:10px;background:#fef2f2;color:var(--danger);border-radius:4px;padding:1px 6px;font-weight:700;margin-left:3px">ยกเลิก</span>`:'';
-    const profit=isCancelled?0:(s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):s._ch==='rental'?s.rentalFee||0:0);
+    const profit=isCancelled?0:(s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):s._ch==='rental'?s.rentalFee||0:(s.profit!=null?s.profit:(s.total||0)-(s.totalCost||0)));
     const displaySub=s._ch==='rental'?(isCancelled?`<s style="color:#aaa">${fmt(s.rentalFee||0)}</s>`:fmt(s.rentalFee||0)):(isCancelled?`<s style="color:#aaa">${fmt(s.subtotal||s.total)}</s>`:''+fmt(s.subtotal||s.total));
     const displayTotal=s._ch==='rental'
       ?(isCancelled?`<s style="color:#aaa">${fmt(s.rentalFee||0)}</s>`:`${fmt(s.rentalFee||0)}<span style="font-size:10px;color:#92400e;margin-left:4px">+มัดจำ ${fmt(s.rentalDeposit||0)}</span>`)
@@ -2673,7 +2710,7 @@ function renderSales(){
       displaySub,
       (s.discount||0)>0?'-'+fmt(s.discount):'-',
       displayTotal,
-      (s._ch==='pos'&&!isCancelled)||(s._ch==='rental'&&!isCancelled)
+      !isCancelled
         ?`<span style="color:${profit<0?'var(--danger)':'#10b981'};font-weight:700">${profit<0?'-':''}${fmt(Math.abs(profit))}</span>`
         :'-',
       actions
