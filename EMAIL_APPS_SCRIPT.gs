@@ -39,6 +39,19 @@ function doPost(e) {
     var d = JSON.parse(e.postData.contents);
     if (d.secret !== SECRET) return _json({ ok: false, error: 'bad secret' });
 
+    // ── แจ้งจัดส่งสินค้า (มีเลขพัสดุ) ──
+    if (d.action === 'shipped') {
+      if (d.customerEmail && d.customerEmail.indexOf('@') > 0) {
+        MailApp.sendEmail({
+          to: d.customerEmail,
+          subject: '🚚 จัดส่งสินค้าแล้ว ' + (d.orderNo || '') + ' — ' + SHOP_NAME,
+          htmlBody: _shippedHtml(d),
+          name: SHOP_NAME
+        });
+      }
+      return _json({ ok: true, mode: 'shipped' });
+    }
+
     // สร้างใบเสร็จ PDF A4 (ถ้าล้มเหลวก็ยังส่ง email ได้ตามปกติ)
     var attachments = [];
     if (ATTACH_PDF) {
@@ -173,6 +186,45 @@ function _customerHtml(d) {
       'หากมีข้อสงสัย ติดต่อได้ที่ โทร ' + SHOP_TEL + ' หรือ Line ID: ' + SHOP_LINE +
     '</div>' +
     (ATTACH_PDF ? '<div style="margin-top:10px;font-size:12px;color:#666">📎 แนบใบเสร็จรับเงิน (PDF) มาพร้อมอีเมลฉบับนี้</div>' : '')
+  );
+}
+
+/** ลิงก์ติดตามพัสดุตามขนส่ง */
+function _trackUrl(carrier, no) {
+  if (!no) return '';
+  var m = {
+    'Flash Express': 'https://www.flashexpress.com/fle/tracking?se=' + encodeURIComponent(no),
+    'Kerry Express': 'https://th.kerryexpress.com/th/track/?track=' + encodeURIComponent(no),
+    'EMS':           'https://track.thailandpost.co.th/?trackNumber=' + encodeURIComponent(no)
+  };
+  return m[carrier] || '';
+}
+
+/** อีเมลแจ้งจัดส่งสินค้า */
+function _shippedHtml(d) {
+  var url = _trackUrl(d.carrier, d.trackingNo);
+  return _wrap('🚚 จัดส่งสินค้าแล้ว', '#0ea5e9',
+    '<p style="font-size:15px;margin:0 0 16px">สวัสดีคุณ <strong>' + (d.customerName || '') + '</strong><br>' +
+    'สินค้าตามคำสั่งซื้อ <strong>' + (d.orderNo || '') + '</strong> ได้จัดส่งเรียบร้อยแล้ว</p>' +
+
+    '<div style="border:2px solid #0ea5e9;border-radius:8px;padding:16px;margin-bottom:16px;background:#f0f9ff">' +
+      '<table style="width:100%;font-size:14px;line-height:2">' +
+        '<tr><td style="color:#666;width:140px">ช่องทางการจัดส่ง</td><td style="font-weight:bold">' + (d.carrier || '-') + '</td></tr>' +
+        '<tr><td style="color:#666">เลขพัสดุ</td><td style="font-weight:bold;font-size:17px;color:#0369a1;letter-spacing:1px">' + (d.trackingNo || '-') + '</td></tr>' +
+        '<tr><td style="color:#666">วันที่จัดส่ง</td><td>' + (d.shippedDate || '-') + '</td></tr>' +
+      '</table>' +
+      (url ? '<div style="margin-top:12px"><a href="' + url + '" style="display:inline-block;background:#0ea5e9;color:#fff;text-decoration:none;padding:10px 22px;border-radius:6px;font-weight:bold;font-size:14px">ติดตามพัสดุ →</a></div>' : '') +
+    '</div>' +
+
+    (d.shipNote ? '<div style="padding:10px 12px;background:#fff8e6;border-left:4px solid #f59e0b;font-size:13px;margin-bottom:16px">' + d.shipNote + '</div>' : '') +
+
+    '<div style="font-size:13px;color:#666;margin-bottom:8px">ที่อยู่จัดส่ง: ' + (d.customerAddress || '-') + '</div>' +
+
+    _table(d) +
+
+    '<div style="margin-top:20px;padding:12px;background:#f0fdf4;border-left:4px solid #10b981;font-size:13px;line-height:1.7">' +
+      'หากสินค้ามีปัญหาหรือไม่ได้รับพัสดุ ติดต่อได้ที่ โทร ' + SHOP_TEL + ' หรือ Line ID: ' + SHOP_LINE +
+    '</div>'
   );
 }
 
@@ -373,6 +425,32 @@ function _receiptPdf(d) {
                       .getAs(MimeType.PDF)
                       .setName('ใบเสร็จ-' + (d.orderNo || 'order') + '.pdf');
   return blob;
+}
+
+/** ทดสอบอีเมลแจ้งจัดส่ง — เปลี่ยน customerEmail เป็นอีเมลตัวเองก่อน Run */
+function testShipped() {
+  doPost({
+    postData: {
+      contents: JSON.stringify({
+        secret: SECRET,
+        action: 'shipped',
+        orderNo: 'ORD-TEST01',
+        date: '2026-07-29',
+        shippedDate: '2026-07-29',
+        carrier: 'Flash Express',
+        trackingNo: 'TH01234567890',
+        shipNote: 'จัดส่งวันนี้ ถึงภายใน 2-3 วัน',
+        customerName: 'ทดสอบ ระบบ',
+        customerPhone: '0812345678',
+        customerEmail: SHOP_EMAIL,
+        customerAddress: '123 ถนนทดสอบ กรุงเทพฯ 10000',
+        payMethod: 'qr',
+        items: [{ name: 'สินค้าทดสอบ A', qty: 2, price: 1500, subtotal: 3000 }],
+        subtotal: 3000, vat: 210, total: 3210
+      })
+    }
+  });
+  Logger.log('ส่งอีเมลแจ้งจัดส่งทดสอบไปที่ ' + SHOP_EMAIL + ' แล้ว');
 }
 
 /**

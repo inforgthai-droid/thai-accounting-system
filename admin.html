@@ -2710,7 +2710,7 @@ function renderSales(){
        +`<button class="btn btn-danger btn-xs" onclick="_deleteRental('${s.id}')">ลบ</button>`
        +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="confirmCancelRental('${s.id}')">ยกเลิก</button>`:'')
       :`<button class="btn btn-primary btn-xs" onclick="viewOrder('${s.id}')">ดู</button> `
-       +(!isCancelled?`<button class="btn btn-gray btn-xs" onclick="printOnlineOrder('${s.id}')">พิมพ์</button> `
+       +(!isCancelled?`<button class="btn btn-xs" style="background:#0ea5e9;color:#fff" onclick="openShipOrder('${s.id}')">ส่งสินค้า</button> `
        +`<button class="btn btn-sm" style="font-size:10px;background:#1a3a5c;color:#fff" onclick="openShippingLabel({orderNo:'${s.docNo}',customerName:'${(s.customerName||'').replace(/'/g,'&#39;')}',itemsText:'${(s.items||[]).slice(0,3).map(i=>i.name+' x'+i.qty).join(', ').replace(/'/g,'&#39;')}' })">จัดส่ง</button> `:'')
        +`<button class="btn btn-danger btn-xs" onclick="deleteOrder('${s.id}')">ลบ</button>`
        +(!isCancelled?` <button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="confirmCancelOrder('${s.id}')">ยกเลิก</button>`:'');
@@ -7512,6 +7512,11 @@ async function viewOrder(id){
         </select>
       </div>
       ${o.note?`<div style="grid-column:1/-1"><span class="fl">หมายเหตุ</span><strong>${o.note}</strong></div>`:''}
+      ${o.trackingNo?`<div style="grid-column:1/-1;background:#f0f9ff;border-left:3px solid #0ea5e9;padding:8px 10px;border-radius:4px">
+        <span class="fl">🚚 การจัดส่ง</span>
+        <strong>${o.carrier||'-'} — ${o.trackingNo}</strong>
+        <div style="font-size:11px;color:var(--muted)">ส่งเมื่อ ${o.shippedDate||'-'}</div>
+      </div>`:''}
     </div>
     ${o.slipUrl?`<div style="margin-bottom:1rem"><span class="fl">สลิปการโอนเงิน</span>
       <a href="${o.slipUrl}" target="_blank"><img src="${o.slipUrl}" style="max-width:200px;max-height:150px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;margin-top:4px"></a></div>`:''}
@@ -7527,6 +7532,90 @@ async function viewOrder(id){
    <button class="btn" style="background:#1a3a5c;color:#fff" onclick="closeModal();orderToShipping('${id}')">🚚 พิมพ์ใบจัดส่ง</button>
    <button class="btn btn-success" onclick="updateOrderStatus('${id}','เสร็จสิ้น');closeModal()">✅ เสร็จสิ้น</button>
    <button class="btn btn-primary" onclick="closeModal()">ปิด</button>`);
+}
+
+// ===== แจ้งจัดส่งสินค้า (Tracking) =====
+const RG_MAIL_API    = 'https://script.google.com/macros/s/AKfycbyV4ZDjJBwfnSloVMLEAmrHs7Iw9mastc1cxnL9ntlGAjqPP0Z9x1JAP94c4EObdRoh/exec';
+const RG_MAIL_SECRET = 'RG2026';
+const CARRIERS = ['Flash Express','Kerry Express','EMS','Lalamove','Grab Express','Other'];
+
+function openShipOrder(id){
+  const o=S.onlineOrders.find(x=>x.id===id);
+  if(!o){toast('ไม่พบออเดอร์','error');return;}
+  const hasEmail=!!(o.customerEmail&&o.customerEmail.indexOf('@')>0);
+  openModal('🚚 แจ้งจัดส่งสินค้า — '+(o.orderNo||''),`
+    <div class="fg">
+      <div class="fm" style="grid-column:1/-1">
+        <label class="fl">ลูกค้า</label>
+        <div style="font-size:14px;font-weight:700">${o.customerName||'-'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${o.customerAddress||'-'}</div>
+        <div style="font-size:12px;color:${hasEmail?'var(--muted)':'var(--danger)'};margin-top:2px">
+          ${hasEmail?'📧 '+o.customerEmail:'⚠️ ลูกค้าไม่ได้กรอกอีเมล — จะบันทึกอย่างเดียว ไม่ส่งแจ้งเตือน'}
+        </div>
+      </div>
+      <div class="fm">
+        <label class="fl">ช่องทางการจัดส่ง *</label>
+        <select class="fc" id="ship-carrier">
+          ${CARRIERS.map(c=>`<option value="${c}"${o.carrier===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fm">
+        <label class="fl">เลขพัสดุ / Tracking No. *</label>
+        <input class="fc" id="ship-track" value="${o.trackingNo||''}" placeholder="เช่น TH01234567890">
+      </div>
+      <div class="fm" style="grid-column:1/-1">
+        <label class="fl">หมายเหตุถึงลูกค้า (ไม่บังคับ)</label>
+        <input class="fc" id="ship-note" placeholder="เช่น จัดส่งวันนี้ ถึงภายใน 2-3 วัน">
+      </div>
+    </div>`,
+    `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn btn-success" onclick="confirmShipOrder('${id}')">✅ ยืนยันการจัดส่ง${hasEmail?' + ส่งอีเมล':''}</button>`,
+    {wide:false}
+  );
+}
+
+async function confirmShipOrder(id){
+  const o=S.onlineOrders.find(x=>x.id===id);
+  if(!o) return;
+  // ⚠️ อ่านค่าจาก DOM ก่อนปิด modal
+  const carrier=document.getElementById('ship-carrier')?.value||'';
+  const trackingNo=(document.getElementById('ship-track')?.value||'').trim();
+  const shipNote=(document.getElementById('ship-note')?.value||'').trim();
+  if(!trackingNo){toast('กรุณากรอกเลขพัสดุ','error');return;}
+  closeModal();
+
+  const shippedDate=todayISO();
+  try{
+    await updateFB('onlineOrders',id,{carrier,trackingNo,shippedDate,status:'กำลังจัดส่ง'});
+    Object.assign(o,{carrier,trackingNo,shippedDate,status:'กำลังจัดส่ง'});
+    toast('บันทึกการจัดส่งแล้ว','success');
+  }catch(e){toast('บันทึกไม่สำเร็จ: '+e.message,'error');return;}
+
+  // ส่งอีเมลแจ้งลูกค้า
+  if(o.customerEmail&&o.customerEmail.indexOf('@')>0){
+    fetch(RG_MAIL_API,{
+      method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({
+        secret:RG_MAIL_SECRET,
+        action:'shipped',
+        orderNo:o.orderNo||'',
+        date:o.date||'',
+        shippedDate,
+        carrier,trackingNo,
+        shipNote,
+        customerName:o.customerName||'',
+        customerPhone:o.customerPhone||'',
+        customerEmail:o.customerEmail||'',
+        customerAddress:o.customerAddress||'',
+        payMethod:o.payMethod||'',
+        items:(o.items||[]).map(i=>({name:i.name,qty:i.qty,price:i.price,subtotal:i.subtotal||i.price*i.qty})),
+        subtotal:o.subtotal||0,vat:o.vat||0,total:o.total||0,
+      })
+    }).then(()=>toast('ส่งอีเมลแจ้งลูกค้าแล้ว','success'))
+      .catch(e=>toast('ส่งอีเมลไม่สำเร็จ: '+e.message,'error'));
+  }
+  renderPage('saleshistory');
 }
 
 function orderToShipping(id){
