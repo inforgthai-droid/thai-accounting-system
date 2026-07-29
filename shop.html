@@ -1724,7 +1724,7 @@ function previewSlip(inp){if(!inp.files[0])return;const r=new FileReader();r.onl
 async function openCreditPayment(){
   const{sub,vat,grand}=cartTotals();
   const itemDesc=CART.map(x=>x.name+(x.qty>1?' x'+x.qty:'')).join(', ');
-  const orderData={orderNo:_docNo,date:todayISO(),customerName:O.name,customerPhone:O.phone,customerEmail:O.email||shopUser?.email||'',customerUid:shopUser?.uid||'',customerAddress:O.addr,note:O.note,payMethod:'credit',slipBase64:'',lang:LANG,items:CART.map(x=>({id:x.id,code:x.code,name:x.name,unit:x.unit,price:x.price,qty:x.qty,subtotal:x.price*x.qty})),subtotal:sub,vat,total:grand,status:'รอชำระบัตร'};
+  const orderData={orderNo:_docNo,date:todayISO(),customerName:O.name,customerPhone:O.phone,customerEmail:O.email||shopUser?.email||'',customerUid:shopUser?.uid||'',customerAddress:O.addr,note:O.note,payMethod:'credit',slipBase64:'',lang:LANG,items:CART.map(x=>({id:x.id,code:x.code,name:x.name,unit:x.unit,price:x.price,qty:x.qty,subtotal:x.price*x.qty,cost:(PRODS.find(p=>p.id===x.id)||{}).cost||0})),totalCost:CART.reduce((a,x)=>a+x.qty*(((PRODS.find(p=>p.id===x.id)||{}).cost)||0),0),subtotal:sub,vat,total:grand,status:'รอชำระบัตร'};
   try{
     const batch=db.batch();
     const oRef=db.collection('onlineOrders').doc();
@@ -1820,7 +1820,7 @@ async function confirmPay(){
   const{sub,vat,grand}=cartTotals();
   let slipB64='';
   if(O.pay==='transfer'){const f=$('slipf')?.files[0];if(f)try{slipB64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.slice(0,50000));r.onerror=rej;r.readAsDataURL(f);});}catch{}}
-  const orderData={orderNo:_docNo,date:todayISO(),customerName:O.name,customerPhone:O.phone,customerEmail:O.email||shopUser?.email||'',customerUid:shopUser?.uid||'',customerAddress:O.addr,note:O.note,payMethod:O.pay,slipBase64:slipB64,lang:LANG,items:CART.map(x=>({id:x.id,code:x.code,name:x.name,unit:x.unit,price:x.price,qty:x.qty,subtotal:x.price*x.qty})),subtotal:sub,vat,total:grand,status:'รอยืนยัน'};
+  const orderData={orderNo:_docNo,date:todayISO(),customerName:O.name,customerPhone:O.phone,customerEmail:O.email||shopUser?.email||'',customerUid:shopUser?.uid||'',customerAddress:O.addr,note:O.note,payMethod:O.pay,slipBase64:slipB64,lang:LANG,items:CART.map(x=>({id:x.id,code:x.code,name:x.name,unit:x.unit,price:x.price,qty:x.qty,subtotal:x.price*x.qty,cost:(PRODS.find(p=>p.id===x.id)||{}).cost||0})),totalCost:CART.reduce((a,x)=>a+x.qty*(((PRODS.find(p=>p.id===x.id)||{}).cost)||0),0),subtotal:sub,vat,total:grand,status:'รอยืนยัน'};
   try{
     const batch=db.batch();
     const oRef=db.collection('onlineOrders').doc();

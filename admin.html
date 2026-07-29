@@ -2600,20 +2600,33 @@ function renderSales(){
 
   // ── Merge POS + Online + Rental ──
   const posRows=[...S.sales].map(s=>({...s,_ch:'pos',_chLabel:'POS'}));
-  const ordRows=[...S.onlineOrders].map(o=>({
-    id:o.id,_ch:'online',_chLabel:'Online',
-    docNo:o.orderNo||o.id?.slice(-6)||'-',
-    date:o.date||o.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||today,
-    customerName:o.customerName||'-',
-    items:o.items||[],
-    subtotal:o.subtotal||o.total||0,
-    discount:o.discount||0,
-    vat:o.vat||0,
-    total:o.total||o.subtotal||0,
-    totalCost:0,
-    status:o.status||'รอยืนยัน',
-    payMethod:o.payMethod||'-',
-  }));
+  const ordRows=[...S.onlineOrders].map(o=>{
+    // ── หาต้นทุนจริงจาก S.products (ออเดอร์ออนไลน์ไม่ได้เก็บ cost ไว้) ──
+    let _cost=0, _hasCost=false;
+    (o.items||[]).forEach(i=>{
+      const p=S.products.find(x=>x.id===i.id)
+           || (i.code&&S.products.find(x=>x.code===i.code))
+           || (i.name&&S.products.find(x=>x.name===i.name));
+      const c=p?(p.cost||0):0;
+      if(c>0)_hasCost=true;
+      _cost+=(i.qty||1)*c;
+    });
+    return{
+      id:o.id,_ch:'online',_chLabel:'Online',
+      docNo:o.orderNo||o.id?.slice(-6)||'-',
+      date:o.date||o.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||today,
+      customerName:o.customerName||'-',
+      items:o.items||[],
+      subtotal:o.subtotal||o.total||0,
+      discount:o.discount||0,
+      vat:o.vat||0,
+      total:o.total||o.subtotal||0,
+      totalCost:o.totalCost!=null?o.totalCost:_cost,
+      _costKnown:o.totalCost!=null||_hasCost,
+      status:o.status||'รอยืนยัน',
+      payMethod:o.payMethod||'-',
+    };
+  });
   const rentRows=(_rentals||[]).map(r=>{
     const fee=(r.items||[]).reduce((s,i)=>s+(i.rentalFee||0),0);
     const dep=(r.items||[]).reduce((s,i)=>s+(i.deposit||0),0);
@@ -2660,7 +2673,8 @@ function renderSales(){
   const totalSub=activeAll.reduce((a,b)=>a+(b.subtotal||0),0);
   const totalCost=activeAll.reduce((a,b)=>a+(b.totalCost||0),0);
   const totalProfit=activeAll.filter(s=>s._ch==='pos').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0)
-    + activeAll.filter(s=>s._ch==='rental').reduce((a,s)=>a+(s.rentalFee||0),0);
+    + activeAll.filter(s=>s._ch==='rental').reduce((a,s)=>a+(s.rentalFee||0),0)
+    + activeAll.filter(s=>s._ch==='online'&&s._costKnown).reduce((a,s)=>a+((s.total||0)-(s.totalCost||0)),0);
   const posCount=activeAll.filter(s=>s._ch==='pos').length;
   const ordCount=activeAll.filter(s=>s._ch==='online').length;
   const rentCount=activeAll.filter(s=>s._ch==='rental').length;
@@ -2680,7 +2694,9 @@ function renderSales(){
       ?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-weight:700">เช่า</span>`
       :`<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:4px;padding:1px 6px;font-weight:700">Online</span>`;
     const cancelBadge=isCancelled?`<span style="font-size:10px;background:#fef2f2;color:var(--danger);border-radius:4px;padding:1px 6px;font-weight:700;margin-left:3px">ยกเลิก</span>`:'';
-    const profit=isCancelled?0:(s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):s._ch==='rental'?s.rentalFee||0:(s.profit!=null?s.profit:(s.total||0)-(s.totalCost||0)));
+    const profit=isCancelled?0:(s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):s._ch==='rental'?s.rentalFee||0:(s.total||0)-(s.totalCost||0));
+    // Online: ถ้าหาต้นทุนไม่เจอ อย่าโชว์กำไร (จะกลายเป็น 100% ซึ่งไม่จริง)
+    const profitUnknown=s._ch==='online'&&!s._costKnown;
     const displaySub=s._ch==='rental'?(isCancelled?`<s style="color:#aaa">${fmt(s.rentalFee||0)}</s>`:fmt(s.rentalFee||0)):(isCancelled?`<s style="color:#aaa">${fmt(s.subtotal||s.total)}</s>`:''+fmt(s.subtotal||s.total));
     const displayTotal=s._ch==='rental'
       ?(isCancelled?`<s style="color:#aaa">${fmt(s.rentalFee||0)}</s>`:`${fmt(s.rentalFee||0)}<span style="font-size:10px;color:#92400e;margin-left:4px">+มัดจำ ${fmt(s.rentalDeposit||0)}</span>`)
@@ -2710,9 +2726,11 @@ function renderSales(){
       displaySub,
       (s.discount||0)>0?'-'+fmt(s.discount):'-',
       displayTotal,
-      !isCancelled
-        ?`<span style="color:${profit<0?'var(--danger)':'#10b981'};font-weight:700">${profit<0?'-':''}${fmt(Math.abs(profit))}</span>`
-        :'-',
+      isCancelled
+        ?'-'
+        :profitUnknown
+        ?`<span style="color:var(--muted);font-size:11px" title="ไม่พบต้นทุนสินค้าในระบบ — ตั้งราคาทุนในหน้ารายการสินค้าเพื่อให้คำนวณกำไรได้">ไม่มีต้นทุน</span>`
+        :`<span style="color:${profit<0?'var(--danger)':'#10b981'};font-weight:700">${profit<0?'-':''}${fmt(Math.abs(profit))}</span>`,
       actions
     ];
   });
