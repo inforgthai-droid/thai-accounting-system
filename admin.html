@@ -8120,6 +8120,7 @@ function renderImportTax(){
       <input type="file" id="itax-file" accept="image/*,.pdf,application/pdf" multiple style="display:none" onchange="itaxHandleFiles(this.files)">
       <button class="btn btn-sm" style="background:#0ea5e9;color:#fff;padding:8px 16px" onclick="itaxCheckKeyThenUpload()">📤 เลือกไฟล์</button>
       <button class="btn btn-sm btn-gray" onclick="itaxSetKey()" title="ตั้งค่า Gemini API Key">🔑</button>
+      <button class="btn btn-sm btn-gray" onclick="itaxShowModels()" title="ดูรายชื่อโมเดลที่ใช้ได้">🧾</button>
     </div>
     <div id="itax-ai-status" style="margin-top:10px;font-size:13px;display:none"></div>
   </div>
@@ -8229,6 +8230,33 @@ function itaxStatus(html,color){
   el.style.color=color||'#0369a1';
   el.innerHTML=html;
 }
+let _itaxModel=null;
+async function itaxPickModel(key){
+  if(_itaxModel)return _itaxModel;
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key));
+  const j=await r.json();
+  if(j.error)throw new Error('ListModels: '+(j.error.message||''));
+  const ok=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent'));
+  if(!ok.length)throw new Error('ไม่พบโมเดลที่ใช้ได้กับ API Key นี้');
+  const prefer=['flash-latest','2.5-flash','2.0-flash','1.5-flash','flash','pro'];
+  for(const p of prefer){
+    const hit=ok.find(m=>m.name.includes(p)&&!m.name.includes('thinking')&&!m.name.includes('image')&&!m.name.includes('tts'));
+    if(hit){_itaxModel=hit.name;return _itaxModel;}
+  }
+  _itaxModel=ok[0].name;
+  return _itaxModel;
+}
+function itaxShowModels(){
+  const key=itaxGetKey();
+  if(!key){toast('ยังไม่ได้ตั้งค่า API Key','error');return;}
+  itaxStatus('⏳ กำลังดึงรายชื่อโมเดล...','#0369a1');
+  fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key))
+    .then(r=>r.json()).then(j=>{
+      if(j.error)throw new Error(j.error.message);
+      const ok=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name);
+      itaxStatus('<b>โมเดลที่ใช้ได้ ('+ok.length+'):</b><br><span style="font-size:11px;font-family:monospace">'+ok.join('<br>')+'</span>','#15803d');
+    }).catch(e=>itaxStatus('❌ '+e.message,'#dc2626'));
+}
 function _fileToBase64(f){
   return new Promise((res,rej)=>{
     const r=new FileReader();
@@ -8267,7 +8295,9 @@ async function itaxHandleFiles(files){
 - qty และ unit ต้องเป็นตัวเลขล้วน ไม่มีคอมม่า
 - ถ้าเอกสารมีหลายใบ (invoice ผู้ขาย + ใบภาษี DHL) ให้รวมข้อมูลเข้าด้วยกัน`});
 
-    const url='https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key='+encodeURIComponent(key);
+    const model=await itaxPickModel(key);
+    itaxStatus('⏳ ใช้โมเดล <b>'+model+'</b> — กำลังอ่านเอกสาร...','#0369a1');
+    const url='https://generativelanguage.googleapis.com/v1beta/'+model+':generateContent?key='+encodeURIComponent(key);
     const r=await fetch(url,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
