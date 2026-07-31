@@ -291,6 +291,7 @@ tbody tr:hover{background:#f0f9ff}
     <div id="p-categories" class="page"></div>
     <div id="p-shipping" class="page"></div>
     <div id="p-webdesign" class="page"></div>
+    <div id="p-importtax" class="page"></div>
   </div>
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -638,7 +639,7 @@ const MENU=[
   {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢',short:'ลูกค้า'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️',short:'ซัพพลาย'},
   {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'expenses',label:'ค่าใช้จ่าย',icon:'💸',short:'ค่าใช้จ่าย'},{key:'monthlyreport',label:'รายงานส่งบัญชี',icon:'📊',short:'ส่งบัญชี'},{key:'quotation',label:'ใบเสนอราคา',icon:'📋',short:'ใบเสนอราคา'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
   {g:'ร้านค้าออนไลน์'},{key:'orders',label:'ออเดอร์ออนไลน์',icon:'🛍️',short:'ออเดอร์'},{key:'shipping',label:'จัดส่งสินค้า',icon:'📦',short:'จัดส่ง'},{key:'webdesign',label:'ตกแต่งร้านค้า',icon:'🎨',short:'ตกแต่ง'},
-  {g:'วิเคราะห์'},{key:'infographic',label:'อินโฟกราฟิก',icon:'📊',short:'อินโฟ'},
+  {g:'วิเคราะห์'},{key:'infographic',label:'อินโฟกราฟิก',icon:'📊',short:'อินโฟ'},{key:'importtax',label:'คำนวณภาษีนำเข้า',icon:'🧮',short:'ภาษีนำเข้า'},
   {g:'ระบบ'},{key:'import',label:'Import Excel',icon:'📂'},{key:'settings',label:'ตั้งค่าระบบ',icon:'⚙️'},
 ];
 let currentPage='dashboard',sidebarOpen=true;
@@ -673,7 +674,7 @@ function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').
 function renderPage(key){
   const el=document.getElementById('p-'+key);
   if(!el)return;
-  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,expenses:renderExpenses,monthlyreport:renderMonthlyReport,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign};
+  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,expenses:renderExpenses,monthlyreport:renderMonthlyReport,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign,importtax:renderImportTax};
   if(key==='sales'){
     // โหลด rentals ก่อนถ้ายังไม่มี แล้วค่อย render
     if(_rentals.length===0){
@@ -8080,6 +8081,131 @@ function exportCSV(){
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
     toast('บันทึก CSV สำเร็จ ✓','success');
   }catch(e){toast('CSV error: '+e.message,'error');}
+}
+
+// ===== คำนวณภาษีนำเข้า =====
+let _itax={duty:0,vat:0,items:[]};
+function renderImportTax(){
+  const d=_itax;
+  const totalUSD=d.items.reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
+  const rowsHtml=d.items.map((it,idx)=>{
+    const sum=(it.qty||0)*(it.unit||0);
+    const pct=totalUSD>0?sum/totalUSD:0;
+    const duty=(d.duty||0)*pct;
+    const vat=(d.vat||0)*pct;
+    return`<tr>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee">${idx+1}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee"><input type="text" value="${it.code||''}" onchange="_itax.items[${idx}].code=this.value" style="width:100%;font-size:12px;border:1px solid #ddd;border-radius:4px;padding:2px 6px;font-family:Sarabun,sans-serif"></td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee"><input type="text" value="${it.name||''}" onchange="_itax.items[${idx}].name=this.value" style="width:100%;font-size:12px;border:1px solid #ddd;border-radius:4px;padding:2px 6px;font-family:Sarabun,sans-serif"></td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center"><input type="number" min="1" value="${it.qty||1}" onchange="_itax.items[${idx}].qty=+this.value;refreshImportTax()" style="width:60px;font-size:12px;border:1px solid #ddd;border-radius:4px;padding:2px 6px;text-align:center;font-family:Sarabun,sans-serif"></td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right"><input type="number" min="0" step="0.01" value="${it.unit||0}" onchange="_itax.items[${idx}].unit=+this.value;refreshImportTax()" style="width:80px;font-size:12px;border:1px solid #ddd;border-radius:4px;padding:2px 6px;text-align:right;font-family:Sarabun,sans-serif"></td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${sum.toFixed(2)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${(pct*100).toFixed(2)}%</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;color:#d95926">${duty.toFixed(2)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;color:#e34948">${vat.toFixed(2)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;font-weight:600">${(duty+vat).toFixed(2)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center"><button onclick="_itax.items.splice(${idx},1);refreshImportTax()" style="background:none;border:none;cursor:pointer;color:#e24b4a;font-size:14px">✕</button></td>
+    </tr>`;
+  }).join('');
+  const tDuty=(d.duty||0),tVat=(d.vat||0);
+  return`
+  <div class="sec-title">🧮 คำนวณภาษีนำเข้า (Import Duty & VAT)</div>
+  <div class="card" style="margin-bottom:1rem;padding:1rem 1.2rem">
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">เลขที่ใบแจ้งหนี้</div>
+        <input id="itax-inv" type="text" placeholder="Invoice No." value="${d.invoiceNo||''}" onchange="_itax.invoiceNo=this.value" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:180px">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">ซัพพลายเออร์</div>
+        <input id="itax-sup" type="text" placeholder="ชื่อผู้ขาย" value="${d.supplier||''}" onchange="_itax.supplier=this.value" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:200px">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">อากรนำเข้า (THB) <span style="color:#d95926;font-size:11px">จากใบ DHL/ศุลกากร</span></div>
+        <input id="itax-duty" type="number" min="0" step="0.01" placeholder="0.00" value="${d.duty||''}" onchange="_itax.duty=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:150px;text-align:right">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">VAT (THB) <span style="color:#e34948;font-size:11px">จากใบ DHL/ศุลกากร</span></div>
+        <input id="itax-vat" type="number" min="0" step="0.01" placeholder="0.00" value="${d.vat||''}" onchange="_itax.vat=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:150px;text-align:right">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">อัตราแลกเปลี่ยน (THB/USD)</div>
+        <input id="itax-fx" type="number" min="0" step="0.0001" placeholder="32.87" value="${d.fx||''}" onchange="_itax.fx=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:130px;text-align:right">
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1rem;padding:0">
+    <div style="padding:.8rem 1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee">
+      <b style="font-size:14px">รายการสินค้า</b>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm btn-primary" onclick="_itax.items.push({code:'',name:'',qty:1,unit:0});refreshImportTax()">+ เพิ่มรายการ</button>
+        <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="addFreightRow()">+ ค่าขนส่ง (Freight)</button>
+        <button class="btn btn-sm btn-gray" onclick="exportImportTaxExcel()">📊 Export Excel</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:#f8fafc">
+          <th style="padding:8px;border-bottom:1px solid #ddd;width:36px">#</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:left">รหัส</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:left">รายการ</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:center">จำนวน</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right">ราคา/ชิ้น (USD)</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right">รวม USD</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right">สัดส่วน %</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right;color:#d95926">อากร (THB)</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right;color:#e34948">VAT (THB)</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right">รวมภาษี (THB)</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;width:36px"></th>
+        </tr>
+      </thead>
+      <tbody id="itax-tbody">${rowsHtml}</tbody>
+      <tfoot>
+        <tr style="background:#f8fafc;font-weight:700">
+          <td colspan="5" style="padding:8px 8px;border-top:2px solid #ddd">รวมทั้งหมด</td>
+          <td style="padding:8px;border-top:2px solid #ddd;text-align:right">${totalUSD.toFixed(2)}</td>
+          <td style="padding:8px;border-top:2px solid #ddd;text-align:right">100.00%</td>
+          <td style="padding:8px;border-top:2px solid #ddd;text-align:right;color:#d95926">${tDuty.toFixed(2)}</td>
+          <td style="padding:8px;border-top:2px solid #ddd;text-align:right;color:#e34948">${tVat.toFixed(2)}</td>
+          <td style="padding:8px;border-top:2px solid #ddd;text-align:right">${(tDuty+tVat).toFixed(2)}</td>
+          <td style="border-top:2px solid #ddd"></td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+  </div>
+
+  <div class="card" style="padding:.8rem 1rem;background:#fffbeb;border:1px solid #fde68a">
+    <div style="font-size:12px;color:#92400e">
+      <b>วิธีคำนวณ:</b> นำอากรนำเข้าและ VAT รวมจากใบ DHL/ศุลกากร มาแบ่งสัดส่วนตาม % ของมูลค่า USD แต่ละรายการ (รวม Freight) — วิธีนี้ตรงกับที่ศุลกากรใช้จริง
+    </div>
+  </div>`;
+}
+function refreshImportTax(){
+  const el=document.getElementById('p-importtax');
+  if(el&&el.classList.contains('active'))el.innerHTML=renderImportTax();
+}
+function addFreightRow(){
+  _itax.items.push({code:'FREIGHT',name:'DHL Express Worldwide (Shipping Fee)',qty:1,unit:0});
+  refreshImportTax();
+}
+function exportImportTaxExcel(){
+  const d=_itax;
+  const totalUSD=d.items.reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
+  let csv='ลำดับ,รหัสสินค้า,รายการ,จำนวน,ราคา/ชิ้น (USD),รวม USD,สัดส่วน %,อากร (THB),VAT (THB),รวมภาษี (THB)\n';
+  d.items.forEach((it,idx)=>{
+    const sum=(it.qty||0)*(it.unit||0);
+    const pct=totalUSD>0?sum/totalUSD:0;
+    const duty=(d.duty||0)*pct;
+    const vat=(d.vat||0)*pct;
+    csv+=`${idx+1},"${it.code||''}","${it.name||''}",${it.qty||0},${(it.unit||0).toFixed(2)},${sum.toFixed(2)},${(pct*100).toFixed(2)}%,${duty.toFixed(2)},${vat.toFixed(2)},${(duty+vat).toFixed(2)}\n`;
+  });
+  csv+=`,,รวม,,, ${totalUSD.toFixed(2)},100.00%,${(d.duty||0).toFixed(2)},${(d.vat||0).toFixed(2)},${((d.duty||0)+(d.vat||0)).toFixed(2)}\n`;
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`VAT_Breakdown_${d.invoiceNo||'import'}_${todayISO()}.csv`;a.click();
 }
 
 // ===== IMPORT EXCEL =====
