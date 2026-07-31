@@ -8110,6 +8110,20 @@ function renderImportTax(){
   const tDuty=(d.duty||0),tVat=(d.vat||0);
   return`
   <div class="sec-title">🧮 คำนวณภาษีนำเข้า (Import Duty & VAT)</div>
+  <div class="card" style="margin-bottom:1rem;padding:1rem 1.2rem;border:2px dashed #0ea5e9;background:#f0f9ff">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div style="font-size:26px">📷</div>
+      <div style="flex:1;min-width:220px">
+        <div style="font-weight:700;font-size:14px;color:#0369a1">อัปโหลดใบแจ้งหนี้ / ใบภาษี (AI อ่านให้อัตโนมัติ)</div>
+        <div style="font-size:12px;color:#0c4a6e;margin-top:2px">รองรับรูปถ่าย (JPG/PNG) และ PDF — เลือกได้หลายไฟล์พร้อมกัน เช่น Invoice + ใบ DHL</div>
+      </div>
+      <input type="file" id="itax-file" accept="image/*,.pdf,application/pdf" multiple style="display:none" onchange="itaxHandleFiles(this.files)">
+      <button class="btn btn-sm" style="background:#0ea5e9;color:#fff;padding:8px 16px" onclick="itaxCheckKeyThenUpload()">📤 เลือกไฟล์</button>
+      <button class="btn btn-sm btn-gray" onclick="itaxSetKey()" title="ตั้งค่า Gemini API Key">🔑</button>
+    </div>
+    <div id="itax-ai-status" style="margin-top:10px;font-size:13px;display:none"></div>
+  </div>
+
   <div class="card" style="margin-bottom:1rem;padding:1rem 1.2rem">
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
       <div>
@@ -8191,6 +8205,99 @@ function addFreightRow(){
   _itax.items.push({code:'FREIGHT',name:'DHL Express Worldwide (Shipping Fee)',qty:1,unit:0});
   refreshImportTax();
 }
+// ---- AI อ่านใบแจ้งหนี้ (Gemini Vision) ----
+function itaxGetKey(){return localStorage.getItem('rg_gemini_key')||'';}
+function itaxSetKey(){
+  const cur=itaxGetKey();
+  const k=prompt('ใส่ Gemini API Key\n(ขอฟรีที่ https://aistudio.google.com/apikey)',cur);
+  if(k===null)return;
+  localStorage.setItem('rg_gemini_key',k.trim());
+  toast(k.trim()?'บันทึก API Key แล้ว ✓':'ลบ API Key แล้ว','success');
+}
+function itaxCheckKeyThenUpload(){
+  if(!itaxGetKey()){
+    if(!confirm('ยังไม่ได้ตั้งค่า Gemini API Key\n\nกด OK เพื่อใส่ Key (ขอฟรีที่ aistudio.google.com/apikey)'))return;
+    itaxSetKey();
+    if(!itaxGetKey())return;
+  }
+  document.getElementById('itax-file').click();
+}
+function itaxStatus(html,color){
+  const el=document.getElementById('itax-ai-status');
+  if(!el)return;
+  el.style.display=html?'block':'none';
+  el.style.color=color||'#0369a1';
+  el.innerHTML=html;
+}
+function _fileToBase64(f){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(f);
+  });
+}
+async function itaxHandleFiles(files){
+  if(!files||!files.length)return;
+  const key=itaxGetKey();
+  if(!key){toast('ยังไม่ได้ตั้งค่า API Key','error');return;}
+  const list=[...files];
+  itaxStatus('⏳ กำลังอ่านเอกสาร '+list.length+' ไฟล์... (อาจใช้เวลา 10-30 วินาที)','#0369a1');
+  try{
+    const parts=[];
+    for(const f of list){
+      const b64=await _fileToBase64(f);
+      const mime=f.type||(f.name.toLowerCase().endsWith('.pdf')?'application/pdf':'image/jpeg');
+      parts.push({inline_data:{mime_type:mime,data:b64}});
+    }
+    parts.push({text:`อ่านเอกสารใบแจ้งหนี้/ใบภาษีศุลกากรนี้ แล้วตอบกลับเป็น JSON เท่านั้น (ไม่ต้องมี markdown code fence) ตามโครงสร้าง:
+{
+  "invoiceNo": "เลขที่ invoice",
+  "supplier": "ชื่อผู้ขาย/ซัพพลายเออร์",
+  "duty": ตัวเลขอากรนำเข้ารวมเป็นบาท (IMPORT EXPORT DUTIES / Duty) ไม่มีให้ใส่ 0,
+  "vat": ตัวเลข VAT รวมเป็นบาท (IMPORT EXPORT TAXES / Vat) ไม่มีให้ใส่ 0,
+  "fx": อัตราแลกเปลี่ยน THB ต่อ 1 USD ไม่มีให้ใส่ 0,
+  "items": [
+    {"code":"รหัสสินค้า","name":"ชื่อ/รายละเอียดสินค้า","qty":จำนวน,"unit":ราคาต่อชิ้นเป็น USD}
+  ]
+}
+กฎ:
+- ดึงรายการสินค้าให้ครบทุกบรรทัด รวมทุกหน้าของเอกสาร
+- ถ้ามีค่าขนส่ง (DHL Express Worldwide / Freight / Shipping) ให้ใส่เป็น item เพิ่ม code="FREIGHT-DHL"
+- qty และ unit ต้องเป็นตัวเลขล้วน ไม่มีคอมม่า
+- ถ้าเอกสารมีหลายใบ (invoice ผู้ขาย + ใบภาษี DHL) ให้รวมข้อมูลเข้าด้วยกัน`});
+
+    const url='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+encodeURIComponent(key);
+    const r=await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts}],generationConfig:{temperature:0,responseMimeType:'application/json'}})
+    });
+    const j=await r.json();
+    if(j.error)throw new Error(j.error.message||'Gemini error');
+    let txt=j?.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    txt=txt.replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+    const d=JSON.parse(txt);
+
+    if(d.invoiceNo)_itax.invoiceNo=String(d.invoiceNo);
+    if(d.supplier)_itax.supplier=String(d.supplier);
+    if(+d.duty>0)_itax.duty=+d.duty;
+    if(+d.vat>0)_itax.vat=+d.vat;
+    if(+d.fx>0)_itax.fx=+d.fx;
+    if(Array.isArray(d.items)&&d.items.length){
+      _itax.items=d.items.map(i=>({code:String(i.code||''),name:String(i.name||''),qty:+i.qty||1,unit:+i.unit||0}));
+    }
+    refreshImportTax();
+    itaxStatus('✅ อ่านสำเร็จ — พบ '+(_itax.items.length)+' รายการ | อากร '+(_itax.duty||0).toLocaleString()+' บาท | VAT '+(_itax.vat||0).toLocaleString()+' บาท<br><span style="color:#92400e">⚠️ กรุณาตรวจสอบความถูกต้องก่อนใช้งาน</span>','#15803d');
+    toast('AI อ่านเอกสารสำเร็จ ✓','success');
+  }catch(e){
+    itaxStatus('❌ อ่านไม่สำเร็จ: '+e.message,'#dc2626');
+    toast('อ่านเอกสารไม่สำเร็จ','error');
+  }
+  const inp=document.getElementById('itax-file');
+  if(inp)inp.value='';
+}
+
 function exportImportTaxExcel(){
   const d=_itax;
   const totalUSD=d.items.reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
