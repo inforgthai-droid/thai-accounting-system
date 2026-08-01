@@ -5067,7 +5067,7 @@ function renderStock(){
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
       p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
       `<input type="text" value="${p.skuDemonTweeks||''}" placeholder="กรอก SKU"
-        style="width:110px;padding:4px 7px;font-size:12px;border:1.5px solid #e85d04;border-radius:6px;font-family:'Sarabun',sans-serif;color:#e85d04;font-weight:600;outline:none;background:#fff7f0"
+        style="width:180px;padding:4px 7px;font-size:12px;border:1.5px solid #e85d04;border-radius:6px;font-family:'Sarabun',sans-serif;color:#e85d04;font-weight:600;outline:none;background:#fff7f0"
         onchange="saveSkuDemon('${p.id}',this.value)"
         onclick="this.select()">`,
       badge(st,sc2),
@@ -5294,7 +5294,7 @@ function _updateStockTable(){
       `<span style="font-weight:700;font-size:15px;color:${p.stock<=0?'var(--danger)':p.stock<=(p.minStock||5)?'var(--warning)':'var(--success)'}">${p.stock}</span>`,
       p.minStock||5,''+fmt(p.cost),''+fmt(p.price),''+fmt((p.cost||0)*(p.stock||0)),
       `<input type="text" value="${p.skuDemonTweeks||''}" placeholder="กรอก SKU"
-        style="width:110px;padding:4px 7px;font-size:12px;border:1.5px solid #e85d04;border-radius:6px;font-family:'Sarabun',sans-serif;color:#e85d04;font-weight:600;outline:none;background:#fff7f0"
+        style="width:180px;padding:4px 7px;font-size:12px;border:1.5px solid #e85d04;border-radius:6px;font-family:'Sarabun',sans-serif;color:#e85d04;font-weight:600;outline:none;background:#fff7f0"
         onchange="saveSkuDemon('${p.id}',this.value)"
         onclick="this.select()">`,
       badge(st,sc2),
