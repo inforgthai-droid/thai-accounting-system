@@ -8166,7 +8166,7 @@ function renderImportTax(){
         <tr style="background:#f8fafc">
           <th style="padding:8px;border-bottom:1px solid #ddd;width:36px">#</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:left">รหัส</th>
-          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:left">รายการ</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:left">ชื่อสินค้า</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:center">จำนวน</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right">ราคา/ชิ้น (USD)</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right">รวม USD</th>
@@ -8292,6 +8292,7 @@ async function itaxHandleFiles(files){
 }
 กฎ:
 - ดึงรายการสินค้าให้ครบทุกบรรทัด รวมทุกหน้าของเอกสาร
+- ชื่อสินค้า (name) ให้แปลเป็นภาษาไทย และตัดตัวเลข 4 ตัวที่อยู่ด้านหน้าออก เช่น "4839 BALACLAVA BLACK CUBISCAN" → "บาลาคลาวา สีดำ" และตัดคำว่า CUBISCAN ออกด้วย
 - ถ้ามีค่าขนส่ง (DHL Express Worldwide / Freight / Shipping) ให้ใส่เป็น item เพิ่ม code="FREIGHT-DHL"
 - qty และ unit ต้องเป็นตัวเลขล้วน ไม่มีคอมม่า
 - ถ้าเอกสารมีหลายใบ (invoice ผู้ขาย + ใบภาษี DHL) ให้รวมข้อมูลเข้าด้วยกัน`});
