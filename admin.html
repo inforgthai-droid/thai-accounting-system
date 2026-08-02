@@ -8168,6 +8168,7 @@ function renderImportTax(){
       <div style="display:flex;gap:8px">
         <button class="btn btn-sm btn-primary" onclick="_itax.items.push({code:'',name:'',qty:1,unit:0});refreshImportTax()">+ เพิ่มรายการ</button>
         <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="addFreightRow()">+ ค่าขนส่ง (Freight)</button>
+        <button class="btn btn-sm btn-gray" onclick="viewImportHistory()">📋 ประวัติการนำเข้า</button>
         <button class="btn btn-sm btn-gray" onclick="exportImportTaxExcel()">📊 Export Excel</button>
         <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="importTaxToStock()">📦 นำเข้า Stock</button>
       </div>
@@ -8339,8 +8340,9 @@ async function itaxHandleFiles(files){
     if(Array.isArray(d.items)&&d.items.length){
       _itax.items=d.items.map(i=>({code:String(i.code||''),name:String(i.name||''),qty:+i.qty||1,unit:+i.unit||0}));
     }
+    _itax._pendingFiles=[...list]; // เก็บไว้สำหรับบันทึก
     refreshImportTax();
-    itaxStatus('✅ อ่านสำเร็จ — พบ '+(_itax.items.length)+' รายการ | อากร '+(_itax.duty||0).toLocaleString()+' บาท | VAT '+(_itax.vat||0).toLocaleString()+' บาท<br><span style="color:#92400e">⚠️ กรุณาตรวจสอบความถูกต้องก่อนใช้งาน</span>','#15803d');
+    itaxStatus('✅ อ่านสำเร็จ — พบ '+(_itax.items.length)+' รายการ | อากร '+(_itax.duty||0).toLocaleString()+' บาท | VAT '+(_itax.vat||0).toLocaleString()+' บาท<br><span style="color:#92400e">⚠️ กรุณาตรวจสอบความถูกต้องก่อนใช้งาน</span><br><button class="btn btn-sm" style="margin-top:8px;background:#7c3aed;color:#fff" onclick="saveImportRecord()">💾 บันทึกการนำเข้า</button>','#15803d');
     toast('AI อ่านเอกสารสำเร็จ ✓','success');
   }catch(e){
     itaxStatus('❌ อ่านไม่สำเร็จ: '+e.message,'#dc2626');
@@ -8421,6 +8423,114 @@ async function confirmImportTaxToStock(matched,newItems){
   if(errors) toast(`นำเข้าเสร็จ ${done} รายการ (ผิดพลาด ${errors} รายการ)`,'warning');
   else toast(`นำเข้า Stock สำเร็จ ${done} รายการ ✓`,'success');
   refreshImportTax();
+}
+
+async function saveImportRecord(){
+  const d=_itax;
+  if(!d.invoiceNo&&!d.items.length){toast('ยังไม่มีข้อมูลให้บันทึก','error');return;}
+  const btn=event&&event.target;
+  if(btn){btn.disabled=true;btn.textContent='⏳ กำลังบันทึก...';}
+  try{
+    // อัพโหลดไฟล์ไปยัง Firebase Storage
+    const fileUrls=[];
+    const files=d._pendingFiles||[];
+    for(const f of files){
+      try{
+        const ext=f.name.split('.').pop().toLowerCase();
+        const fname=`imports/${d.invoiceNo||Date.now()}_${f.name}`;
+        const ref=storage.ref(fname);
+        await ref.put(f);
+        const url=await ref.getDownloadURL();
+        fileUrls.push({name:f.name,url,type:f.type||ext});
+      }catch(e){console.warn('upload file failed',f.name,e);}
+    }
+    // คำนวณ summary
+    const totalUSD=d.items.reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
+    const totalItems=d.items.filter(i=>i.code!=='FREIGHT-DHL'&&i.code!=='FREIGHT').reduce((a,i)=>a+(i.qty||0),0);
+    const record={
+      invoiceNo:d.invoiceNo||'',
+      supplier:d.supplier||'',
+      duty:d.duty||0,
+      vat:d.vat||0,
+      proc:d.proc||0,
+      procVat:d.procVat||0,
+      fx:d.fx||0,
+      totalUSD,
+      totalItems,
+      items:d.items,
+      fileUrls,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      createdBy:S.user?.email||''
+    };
+    await addFB('importRecords',record);
+    _itax._pendingFiles=[];
+    if(btn){btn.textContent='✅ บันทึกแล้ว';btn.style.background='#16a34a';}
+    toast('บันทึกการนำเข้าสำเร็จ ✓','success');
+  }catch(e){
+    console.error(e);
+    if(btn){btn.disabled=false;btn.textContent='💾 บันทึกการนำเข้า';}
+    toast('บันทึกไม่สำเร็จ: '+e.message,'error');
+  }
+}
+
+async function viewImportHistory(){
+  openModal('📋 ประวัติการนำเข้าสินค้า','<div style="text-align:center;padding:20px;color:#666">⏳ กำลังโหลด...</div>','');
+  try{
+    const snap=await firebase.firestore().collection('importRecords').orderBy('createdAt','desc').limit(30).get();
+    if(snap.empty){
+      document.querySelector('#modal .modal-body').innerHTML='<div style="text-align:center;padding:20px;color:#666">ยังไม่มีประวัติการนำเข้า</div>';
+      return;
+    }
+    const rows=snap.docs.map(doc=>{
+      const r=doc.data();
+      const dt=r.createdAt?.toDate?.()?r.createdAt.toDate().toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      const filesHtml=(r.fileUrls||[]).map(f=>`<a href="${f.url}" target="_blank" style="font-size:11px;color:#0ea5e9;margin-right:6px">📎${f.name}</a>`).join('');
+      return`<tr style="border-bottom:1px solid #eee;cursor:pointer" onclick="loadImportRecord(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+        <td style="padding:8px;font-size:12px;color:#666;white-space:nowrap">${dt}</td>
+        <td style="padding:8px;font-size:13px;font-weight:600">${r.invoiceNo||'—'}</td>
+        <td style="padding:8px;font-size:12px">${r.supplier||'—'}</td>
+        <td style="padding:8px;font-size:12px;text-align:right">${(r.totalItems||0)} ชิ้น</td>
+        <td style="padding:8px;font-size:12px;text-align:right">${(r.totalUSD||0).toFixed(2)}</td>
+        <td style="padding:8px;font-size:12px;color:#d95926;text-align:right">${(r.duty||0).toLocaleString()}</td>
+        <td style="padding:8px;font-size:12px">${filesHtml||'—'}</td>
+      </tr>`;
+    }).join('');
+    document.querySelector('#modal .modal-body').innerHTML=`
+      <div style="font-size:12px;color:#666;margin-bottom:8px">คลิกที่แถวเพื่อโหลดข้อมูลกลับมาในฟอร์ม</div>
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#f8fafc;font-size:12px;font-weight:600">
+          <th style="padding:8px;text-align:left">วันที่</th>
+          <th style="padding:8px;text-align:left">Invoice No.</th>
+          <th style="padding:8px;text-align:left">ซัพพลายเออร์</th>
+          <th style="padding:8px;text-align:right">จำนวน</th>
+          <th style="padding:8px;text-align:right">USD</th>
+          <th style="padding:8px;text-align:right">อากร (THB)</th>
+          <th style="padding:8px;text-align:left">ไฟล์</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+  }catch(e){
+    document.querySelector('#modal .modal-body').innerHTML='<div style="color:red;padding:16px">โหลดไม่สำเร็จ: '+e.message+'</div>';
+  }
+}
+
+function loadImportRecord(r){
+  closeModal();
+  _itax.invoiceNo=r.invoiceNo||'';
+  _itax.supplier=r.supplier||'';
+  _itax.duty=r.duty||0;
+  _itax.vat=r.vat||0;
+  _itax.proc=r.proc||0;
+  _itax.procVat=r.procVat||0;
+  _itax.fx=r.fx||0;
+  _itax.items=(r.items||[]).map(i=>({code:i.code||'',name:i.name||'',qty:+i.qty||1,unit:+i.unit||0}));
+  _itax._pendingFiles=[];
+  refreshImportTax();
+  // แสดงลิงก์ไฟล์ใน status
+  const filesHtml=(r.fileUrls||[]).map(f=>`<a href="${f.url}" target="_blank" style="color:#0ea5e9;margin-right:8px">📎${f.name}</a>`).join('');
+  if(filesHtml) itaxStatus('📂 โหลดจากประวัติ: Invoice <b>'+r.invoiceNo+'</b><br>'+filesHtml,'#7c3aed');
+  toast('โหลดข้อมูลจากประวัติแล้ว ✓','success');
 }
 
 function exportImportTaxExcel(){
