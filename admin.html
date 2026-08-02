@@ -8479,7 +8479,7 @@ async function viewImportHistory(){
   try{
     const snap=await firebase.firestore().collection('importRecords').orderBy('createdAt','desc').limit(30).get();
     if(snap.empty){
-      document.querySelector('#modal .modal-body').innerHTML='<div style="text-align:center;padding:20px;color:#666">ยังไม่มีประวัติการนำเข้า</div>';
+      document.getElementById('modal-body').innerHTML='<div style="text-align:center;padding:20px;color:#666">ยังไม่มีประวัติการนำเข้า</div>';
       return;
     }
     const rows=snap.docs.map(doc=>{
@@ -8496,7 +8496,7 @@ async function viewImportHistory(){
         <td style="padding:8px;font-size:12px">${filesHtml||'—'}</td>
       </tr>`;
     }).join('');
-    document.querySelector('#modal .modal-body').innerHTML=`
+    document.getElementById('modal-body').innerHTML=`
       <div style="font-size:12px;color:#666;margin-bottom:8px">คลิกที่แถวเพื่อโหลดข้อมูลกลับมาในฟอร์ม</div>
       <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse">
@@ -8512,7 +8512,7 @@ async function viewImportHistory(){
         <tbody>${rows}</tbody>
       </table></div>`;
   }catch(e){
-    document.querySelector('#modal .modal-body').innerHTML='<div style="color:red;padding:16px">โหลดไม่สำเร็จ: '+e.message+'</div>';
+    document.getElementById('modal-body').innerHTML='<div style="color:red;padding:16px">โหลดไม่สำเร็จ: '+e.message+'</div>';
   }
 }
 
