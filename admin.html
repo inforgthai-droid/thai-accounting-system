@@ -8397,6 +8397,19 @@ async function importTaxToStock(){
 async function confirmImportTaxToStock(matched,newItems){
   closeModal();
   let done=0,errors=0;
+  const d=_itax;
+  const importDate=new Date().toISOString().split('T')[0];
+  const lotBase={
+    invoiceNo:d.invoiceNo||'',
+    supplier:d.supplier||'',
+    importDate,
+    fx:d.fx||0,
+    duty:d.duty||0,
+    vat:d.vat||0,
+    proc:(d.proc||0)+(d.procVat||0),
+    importRecordId:''  // จะ link ได้เมื่อ saveImportRecord ทำก่อน
+  };
+
   // อัปเดตสินค้าที่มีอยู่แล้ว
   for(const c of matched){
     try{
@@ -8404,6 +8417,16 @@ async function confirmImportTaxToStock(matched,newItems){
       await updateFB('products',c.prod.id,{stock:newStock,cost:+c.costPer.toFixed(2)});
       const idx=S.products.findIndex(p=>p.id===c.prod.id);
       if(idx>=0){S.products[idx].stock=newStock;S.products[idx].cost=+c.costPer.toFixed(2);}
+      // สร้าง lot
+      await addFB('inventoryLots',{
+        ...lotBase,
+        productId:c.prod.id,
+        productName:c.prod.name,
+        skuDemonTweeks:c.code,
+        costPer:+c.costPer.toFixed(2),
+        qtyIn:c.qty||0,
+        qtyRemaining:c.qty||0
+      });
       done++;
     }catch(e){errors++;console.error(e);}
   }
@@ -8416,13 +8439,23 @@ async function confirmImportTaxToStock(matched,newItems){
         stock:c.qty||0, minStock:1, unit:'ชิ้น',
         category:'', imageUrl:'', active:true
       };
-      const id=await addFB('products',newProd);
-      S.products.push({...newProd,id});
+      const prodId=await addFB('products',newProd);
+      S.products.push({...newProd,id:prodId});
+      // สร้าง lot
+      await addFB('inventoryLots',{
+        ...lotBase,
+        productId:prodId,
+        productName:c.name,
+        skuDemonTweeks:c.code,
+        costPer:+c.costPer.toFixed(2),
+        qtyIn:c.qty||0,
+        qtyRemaining:c.qty||0
+      });
       done++;
     }catch(e){errors++;console.error(e);}
   }
   if(errors) toast(`นำเข้าเสร็จ ${done} รายการ (ผิดพลาด ${errors} รายการ)`,'warning');
-  else toast(`นำเข้า Stock สำเร็จ ${done} รายการ ✓`,'success');
+  else toast(`นำเข้า Stock สำเร็จ ${done} รายการ ✓ (สร้าง lot FIFO แล้ว)`,'success');
   refreshImportTax();
 }
 
