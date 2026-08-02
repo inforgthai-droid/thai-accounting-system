@@ -2201,6 +2201,8 @@ async function checkout(){
     S.sales.push({id:sRef.id,...saleData});
     S.cart.forEach(item=>{const p=S.products.find(x=>x.id===item.pid);if(p)p.stock-=item.qty;});
     toast('บันทึกการขาย '+docNo+' สำเร็จ ✓','success');
+    // FIFO lot deduction — background, ไม่ block sale
+    _deductFifoLots(sRef.id, S.cart.map(x=>({pid:x.pid,qty:x.qty}))).catch(e=>console.warn('FIFO deduct warn:',e));
     const rec={id:sRef.id,...saleData};
     cartClear();
     // ป้องกันค่าวันที่ขายย้อนหลังติดค้างไปใช้กับรายการขายครั้งต่อไปโดยไม่ตั้งใจ
@@ -2210,6 +2212,33 @@ async function checkout(){
     const dEl2=document.getElementById('pos-sale-date-2');if(dEl2)dEl2.value=S.posSaleDate;
     showReceiptModal(rec);
   }catch(e){toast('Error: '+e.message,'error');}
+}
+
+async function _deductFifoLots(saleId, cartItems){
+  // cartItems = [{pid, qty}, ...]
+  for(const item of cartItems){
+    if(!item.pid||!item.qty) continue;
+    let remaining=item.qty;
+    // ดึง lots ของ product นี้ เรียงวันเก่าสุดก่อน (FIFO)
+    const snap=await db.collection('inventoryLots')
+      .where('productId','==',item.pid)
+      .orderBy('importDate','asc')
+      .get();
+    for(const doc of snap.docs){
+      if(remaining<=0) break;
+      const lot=doc.data();
+      if((lot.qtyRemaining||0)<=0) continue;
+      const deduct=Math.min(remaining, lot.qtyRemaining||0);
+      const newQty=(lot.qtyRemaining||0)-deduct;
+      await db.collection('inventoryLots').doc(doc.id).update({
+        qtyRemaining: newQty,
+        updatedAt: ts()
+      });
+      remaining-=deduct;
+    }
+    // ถ้า lots ไม่พอ (สินค้าที่นำเข้าก่อน Phase 1) — log ไว้แต่ไม่ error
+    if(remaining>0) console.warn(`FIFO: product ${item.pid} short ${remaining} units (no lot data)`);
+  }
 }
 
 function showReceiptModal(sale){
