@@ -8341,7 +8341,7 @@ async function itaxHandleFiles(files){
     if(Array.isArray(d.items)&&d.items.length){
       _itax.items=d.items.map(i=>({code:String(i.code||''),name:String(i.name||''),qty:+i.qty||1,unit:+i.unit||0}));
     }
-    _itax._pendingFiles=[...list]; // เก็บไว้สำหรับบันทึก
+    _itax._pendingFiles=[...(_itax._pendingFiles||[]),...list]; // สะสมทุกไฟล์
     refreshImportTax();
     itaxStatus('✅ อ่านสำเร็จ — พบ '+(_itax.items.length)+' รายการ | อากร '+(_itax.duty||0).toLocaleString()+' บาท | VAT '+(_itax.vat||0).toLocaleString()+' บาท<br><span style="color:#92400e">⚠️ กรุณาตรวจสอบความถูกต้องก่อนใช้งาน จากนั้นกด 💾 บันทึกการนำเข้า</span>','#15803d');
     toast('AI อ่านเอกสารสำเร็จ ✓','success');
@@ -8475,32 +8475,36 @@ async function saveImportRecord(){
 }
 
 async function viewImportHistory(){
-  openModal('📋 ประวัติการนำเข้าสินค้า','<div style="text-align:center;padding:20px;color:#666">⏳ กำลังโหลด...</div>','');
+  openModal('📋 ประวัติการนำเข้าสินค้า','<div style="text-align:center;padding:20px;color:#666">⏳ กำลังโหลด...</div>','',{wide:true});
   try{
-    const snap=await firebase.firestore().collection('importRecords').orderBy('createdAt','desc').limit(30).get();
+    const snap=await firebase.firestore().collection('importRecords').orderBy('createdAt','desc').limit(50).get();
     if(snap.empty){
       document.getElementById('modal-body').innerHTML='<div style="text-align:center;padding:20px;color:#666">ยังไม่มีประวัติการนำเข้า</div>';
+      document.getElementById('modal-footer').innerHTML=`<button class="btn btn-gray" onclick="closeModal()">ปิด</button>`;
       return;
     }
     const rows=snap.docs.map(doc=>{
-      const r=doc.data();
+      const r=doc.data(); const id=doc.id;
       const dt=r.createdAt?.toDate?.()?r.createdAt.toDate().toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-      const filesHtml=(r.fileUrls||[]).map(f=>`<a href="${f.url}" target="_blank" style="font-size:11px;color:#0ea5e9;margin-right:6px">📎${f.name}</a>`).join('');
-      return`<tr style="border-bottom:1px solid #eee;cursor:pointer" onclick="loadImportRecord(${JSON.stringify(r).replace(/"/g,'&quot;')})">
-        <td style="padding:8px;font-size:12px;color:#666;white-space:nowrap">${dt}</td>
-        <td style="padding:8px;font-size:13px;font-weight:600">${r.invoiceNo||'—'}</td>
-        <td style="padding:8px;font-size:12px">${r.supplier||'—'}</td>
-        <td style="padding:8px;font-size:12px;text-align:right">${(r.totalItems||0)} ชิ้น</td>
-        <td style="padding:8px;font-size:12px;text-align:right">${(r.totalUSD||0).toFixed(2)}</td>
-        <td style="padding:8px;font-size:12px;color:#d95926;text-align:right">${(r.duty||0).toLocaleString()}</td>
+      const filesHtml=(r.fileUrls||[]).map(f=>`<a href="${f.url}" target="_blank" style="display:block;font-size:11px;color:#0ea5e9;white-space:nowrap;margin-bottom:2px">📎 ${f.name}</a>`).join('');
+      const rJson=JSON.stringify(r).replace(/"/g,'&quot;');
+      return`<tr style="border-bottom:1px solid #eee" id="irow-${id}">
+        <td style="padding:8px;text-align:center"><input type="checkbox" class="irec-chk" data-id="${id}" style="width:16px;height:16px;cursor:pointer"></td>
+        <td style="padding:8px;font-size:12px;color:#666;white-space:nowrap;cursor:pointer" onclick="loadImportRecord(${rJson})">${dt}</td>
+        <td style="padding:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="loadImportRecord(${rJson})">${r.invoiceNo||'—'}</td>
+        <td style="padding:8px;font-size:12px;cursor:pointer" onclick="loadImportRecord(${rJson})">${r.supplier||'—'}</td>
+        <td style="padding:8px;font-size:12px;text-align:right;cursor:pointer" onclick="loadImportRecord(${rJson})">${(r.totalItems||0)} ชิ้น</td>
+        <td style="padding:8px;font-size:12px;text-align:right;cursor:pointer" onclick="loadImportRecord(${rJson})">${(r.totalUSD||0).toFixed(2)}</td>
+        <td style="padding:8px;font-size:12px;color:#d95926;text-align:right;cursor:pointer" onclick="loadImportRecord(${rJson})">${(r.duty||0).toLocaleString()}</td>
         <td style="padding:8px;font-size:12px">${filesHtml||'—'}</td>
       </tr>`;
     }).join('');
     document.getElementById('modal-body').innerHTML=`
-      <div style="font-size:12px;color:#666;margin-bottom:8px">คลิกที่แถวเพื่อโหลดข้อมูลกลับมาในฟอร์ม</div>
+      <div style="font-size:12px;color:#666;margin-bottom:8px">คลิกที่แถวเพื่อโหลดข้อมูลกลับมาในฟอร์ม | ติ๊กช่องซ้ายเพื่อเลือกลบ</div>
       <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse">
         <thead><tr style="background:#f8fafc;font-size:12px;font-weight:600">
+          <th style="padding:8px;width:36px"><input type="checkbox" id="irec-all" onchange="document.querySelectorAll('.irec-chk').forEach(c=>c.checked=this.checked)" style="width:16px;height:16px;cursor:pointer"></th>
           <th style="padding:8px;text-align:left">วันที่</th>
           <th style="padding:8px;text-align:left">Invoice No.</th>
           <th style="padding:8px;text-align:left">ซัพพลายเออร์</th>
@@ -8511,9 +8515,28 @@ async function viewImportHistory(){
         </tr></thead>
         <tbody>${rows}</tbody>
       </table></div>`;
+    document.getElementById('modal-footer').innerHTML=`
+      <button class="btn btn-gray" onclick="closeModal()">ปิด</button>
+      <button class="btn" style="background:#dc2626;color:#fff" onclick="deleteSelectedImportRecords()">🗑️ ลบที่เลือก</button>`;
   }catch(e){
     document.getElementById('modal-body').innerHTML='<div style="color:red;padding:16px">โหลดไม่สำเร็จ: '+e.message+'</div>';
   }
+}
+
+async function deleteSelectedImportRecords(){
+  const checked=[...document.querySelectorAll('.irec-chk:checked')].map(c=>c.dataset.id);
+  if(!checked.length){toast('ยังไม่ได้เลือกรายการ','error');return;}
+  if(!confirm(`ลบ ${checked.length} รายการ?\nไฟล์ใน Storage จะยังอยู่ แต่ข้อมูลจะหายถาวร`))return;
+  let done=0;
+  for(const id of checked){
+    try{
+      await firebase.firestore().collection('importRecords').doc(id).delete();
+      const row=document.getElementById('irow-'+id);
+      if(row)row.remove();
+      done++;
+    }catch(e){console.error(e);}
+  }
+  toast(`ลบสำเร็จ ${done} รายการ`,'success');
 }
 
 function loadImportRecord(r){
