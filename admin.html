@@ -8093,6 +8093,8 @@ function renderImportTax(){
     const pct=totalUSD>0?sum/totalUSD:0;
     const duty=(d.duty||0)*pct;
     const vat=(d.vat||0)*pct;
+    const proc=((d.proc||0)+(d.procVat||0))*pct;
+    const totalTax=duty+vat+proc;
     return`<tr>
       <td style="padding:5px 8px;border-bottom:1px solid #eee">${idx+1}</td>
       <td style="padding:5px 8px;border-bottom:1px solid #eee"><input type="text" value="${it.code||''}" onchange="_itax.items[${idx}].code=this.value" style="width:100%;font-size:12px;border:1px solid #ddd;border-radius:4px;padding:2px 6px;font-family:Sarabun,sans-serif"></td>
@@ -8103,12 +8105,13 @@ function renderImportTax(){
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px">${(pct*100).toFixed(2)}%</td>
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;color:#d95926">${duty.toFixed(2)}</td>
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;color:#e34948">${vat.toFixed(2)}</td>
-      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;font-weight:600">${(duty+vat).toFixed(2)}</td>
-      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;font-weight:700;color:#166534;background:#f0fdf4">${((it.unit||0)*(d.fx||1)+(duty+vat)/(it.qty||1)).toFixed(2)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;color:#7c3aed">${proc.toFixed(2)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;font-weight:600">${totalTax.toFixed(2)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;font-weight:700;color:#166534;background:#f0fdf4">${((it.unit||0)*(d.fx||1)+totalTax/(it.qty||1)).toFixed(2)}</td>
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center"><button onclick="_itax.items.splice(${idx},1);refreshImportTax()" style="background:none;border:none;cursor:pointer;color:#e24b4a;font-size:14px">✕</button></td>
     </tr>`;
   }).join('');
-  const tDuty=(d.duty||0),tVat=(d.vat||0);
+  const tDuty=(d.duty||0),tVat=(d.vat||0),tProc=(d.proc||0)+(d.procVat||0);
   return`
   <div class="sec-title">🧮 คำนวณภาษีนำเข้า (Import Duty & VAT)</div>
   <div class="card" style="margin-bottom:1rem;padding:1rem 1.2rem;border:2px dashed #0ea5e9;background:#f0f9ff">
@@ -8145,6 +8148,14 @@ function renderImportTax(){
         <input id="itax-vat" type="number" min="0" step="0.01" placeholder="0.00" value="${d.vat||''}" onchange="_itax.vat=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:150px;text-align:right">
       </div>
       <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">ค่าดำเนินการ DHL (THB) <span style="color:#7c3aed;font-size:11px">DUTY TAX PROCESSING</span></div>
+        <input id="itax-proc" type="number" min="0" step="0.01" placeholder="0.00" value="${d.proc||''}" onchange="_itax.proc=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:150px;text-align:right">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">VAT ค่าดำเนินการ (THB) <span style="color:#7c3aed;font-size:11px">VAT of processing</span></div>
+        <input id="itax-procvat" type="number" min="0" step="0.01" placeholder="0.00" value="${d.procVat||''}" onchange="_itax.procVat=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:150px;text-align:right">
+      </div>
+      <div>
         <div style="font-size:12px;color:#666;margin-bottom:4px">อัตราแลกเปลี่ยน (THB/USD)</div>
         <input id="itax-fx" type="number" min="0" step="0.0001" placeholder="32.87" value="${d.fx||''}" onchange="_itax.fx=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:130px;text-align:right">
       </div>
@@ -8174,6 +8185,7 @@ function renderImportTax(){
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right">สัดส่วน %</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right;color:#d95926">อากร (THB)</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right;color:#e34948">VAT (THB)</th>
+          <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right;color:#7c3aed">ค่าดำเนินการ (THB)</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right">รวมภาษี (THB)</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;text-align:right;color:#166534">ต้นทุน/ชิ้น (THB)</th>
           <th style="padding:8px;border-bottom:1px solid #ddd;width:36px"></th>
@@ -8187,7 +8199,8 @@ function renderImportTax(){
           <td style="padding:8px;border-top:2px solid #ddd;text-align:right">100.00%</td>
           <td style="padding:8px;border-top:2px solid #ddd;text-align:right;color:#d95926">${tDuty.toFixed(2)}</td>
           <td style="padding:8px;border-top:2px solid #ddd;text-align:right;color:#e34948">${tVat.toFixed(2)}</td>
-          <td style="padding:8px;border-top:2px solid #ddd;text-align:right">${(tDuty+tVat).toFixed(2)}</td>
+          <td style="padding:8px;border-top:2px solid #ddd;text-align:right;color:#7c3aed">${tProc.toFixed(2)}</td>
+          <td style="padding:8px;border-top:2px solid #ddd;text-align:right">${(tDuty+tVat+tProc).toFixed(2)}</td>
           <td style="border-top:2px solid #ddd"></td>
           <td style="border-top:2px solid #ddd"></td>
         </tr>
