@@ -4236,6 +4236,7 @@ function openBulkEditGroup(baseName){
 
   window._beRows=prods.map(p=>({
     id:p.id, name:p.name, code:p.code||'',
+    skuDemonTweeks:p.skuDemonTweeks||'',
     price:p.price||0, cost:p.cost||0,
     stock:p.stock||0, minStock:p.minStock||p.min||1,
     imageUrl:p.imageUrl||p.image||'',
@@ -4339,6 +4340,7 @@ function openBulkEditGroup(baseName){
             <tr style="background:var(--bg2);color:var(--muted);text-align:left">
               <th style="padding:7px 8px;font-weight:600;white-space:nowrap">สี / ไซส์ / Variant</th>
               <th style="padding:7px 8px;font-weight:600;white-space:nowrap">รหัสสินค้า</th>
+              <th style="padding:7px 8px;font-weight:600;white-space:nowrap;color:#e85d04">SKU DemonTweeks</th>
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">ราคาขาย</th>
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">ต้นทุน</th>
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">สต็อก</th>
@@ -4359,6 +4361,11 @@ function openBulkEditGroup(baseName){
                 <input type="text" value="${(p.code||'').replace(/"/g,'&quot;')}"
                   onchange="window._beRows[${i}].code=this.value.trim()" onclick="this.select()"
                   style="width:110px;padding:4px 7px;border:1.5px solid var(--accent);border-radius:6px;font-size:12px;font-weight:700;color:var(--primary);background:#f0f9ff;font-family:'Sarabun',sans-serif">
+              </td>
+              <td style="padding:4px 8px">
+                <input type="text" value="${(p.skuDemonTweeks||'').replace(/"/g,'&quot;')}"
+                  onchange="window._beRows[${i}].skuDemonTweeks=this.value.trim()" onclick="this.select()"
+                  style="width:160px;padding:4px 7px;border:1.5px solid #e85d04;border-radius:6px;font-size:12px;font-weight:700;color:#e85d04;background:#fff7ed;font-family:'Sarabun',sans-serif" placeholder="เว้นว่างได้">
               </td>
               <td style="padding:4px 8px">
                 <input type="number" value="${p.price||0}"
@@ -4418,6 +4425,7 @@ async function saveBulkEditGroup(){
     validRows.forEach(r=>{
       const upd={
         code:r.code,
+        skuDemonTweeks:r.skuDemonTweeks||'',
         price:isNaN(masterPrice)?r.price:masterPrice,
         cost:isNaN(masterCost)?r.cost:masterCost,
         stock:r.stock,
@@ -4436,6 +4444,7 @@ async function saveBulkEditGroup(){
       const r=idMap[p.id];
       return {...p,
         code:r.code,
+        skuDemonTweeks:r.skuDemonTweeks||'',
         price:isNaN(masterPrice)?r.price:masterPrice,
         cost:isNaN(masterCost)?r.cost:masterCost,
         stock:r.stock,minStock:r.minStock,
