@@ -8301,6 +8301,8 @@ async function itaxHandleFiles(files){
   "supplier": "ชื่อผู้ขาย/ซัพพลายเออร์",
   "duty": ตัวเลขอากรนำเข้ารวมเป็นบาท (IMPORT EXPORT DUTIES / Duty) ไม่มีให้ใส่ 0,
   "vat": ตัวเลข VAT รวมเป็นบาท (IMPORT EXPORT TAXES / Vat) ไม่มีให้ใส่ 0,
+  "proc": ตัวเลขค่าดำเนินการ DHL NET เป็นบาท (DUTY TAX PROCESSING ช่อง NET) ไม่มีให้ใส่ 0,
+  "procVat": ตัวเลข VAT ของค่าดำเนินการ DHL เป็นบาท (DUTY TAX PROCESSING ช่อง VAT) ไม่มีให้ใส่ 0,
   "fx": อัตราแลกเปลี่ยน THB ต่อ 1 USD ไม่มีให้ใส่ 0,
   "items": [
     {"code":"รหัสสินค้า","name":"ชื่อ/รายละเอียดสินค้า","qty":จำนวน,"unit":ราคาต่อชิ้นเป็น USD}
@@ -8331,6 +8333,8 @@ async function itaxHandleFiles(files){
     if(d.supplier)_itax.supplier=String(d.supplier);
     if(+d.duty>0)_itax.duty=+d.duty;
     if(+d.vat>0)_itax.vat=+d.vat;
+    if(+d.proc>0)_itax.proc=+d.proc;
+    if(+d.procVat>0)_itax.procVat=+d.procVat;
     if(+d.fx>0)_itax.fx=+d.fx;
     if(Array.isArray(d.items)&&d.items.length){
       _itax.items=d.items.map(i=>({code:String(i.code||''),name:String(i.name||''),qty:+i.qty||1,unit:+i.unit||0}));
@@ -8365,7 +8369,8 @@ async function importTaxToStock(){
     const thb=sumUSD*fx;
     const dutyShare=(d.duty||0)*pct;
     const vatShare=(d.vat||0)*pct;
-    const totalCost=thb+dutyShare+vatShare;
+    const procShare=((d.proc||0)+(d.procVat||0))*pct;
+    const totalCost=thb+dutyShare+vatShare+procShare;
     const costPer=totalCost/(i.qty||1);
     const sellPer=_itaxRoundPrice(costPer*1.35);
     return{...i,costPer,sellPer};
