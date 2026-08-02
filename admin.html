@@ -8168,7 +8168,8 @@ function renderImportTax(){
       <div style="display:flex;gap:8px">
         <button class="btn btn-sm btn-primary" onclick="_itax.items.push({code:'',name:'',qty:1,unit:0});refreshImportTax()">+ เพิ่มรายการ</button>
         <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="addFreightRow()">+ ค่าขนส่ง (Freight)</button>
-        <button class="btn btn-sm btn-gray" onclick="viewImportHistory()">📋 ประวัติการนำเข้า</button>
+        <button class="btn btn-sm btn-gray" onclick="viewImportHistory()">📋 ประวัติ</button>
+        <button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="saveImportRecord()">💾 บันทึกการนำเข้า</button>
         <button class="btn btn-sm btn-gray" onclick="exportImportTaxExcel()">📊 Export Excel</button>
         <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="importTaxToStock()">📦 นำเข้า Stock</button>
       </div>
@@ -8342,7 +8343,7 @@ async function itaxHandleFiles(files){
     }
     _itax._pendingFiles=[...list]; // เก็บไว้สำหรับบันทึก
     refreshImportTax();
-    itaxStatus('✅ อ่านสำเร็จ — พบ '+(_itax.items.length)+' รายการ | อากร '+(_itax.duty||0).toLocaleString()+' บาท | VAT '+(_itax.vat||0).toLocaleString()+' บาท<br><span style="color:#92400e">⚠️ กรุณาตรวจสอบความถูกต้องก่อนใช้งาน</span><br><button class="btn btn-sm" style="margin-top:8px;background:#7c3aed;color:#fff" onclick="saveImportRecord()">💾 บันทึกการนำเข้า</button>','#15803d');
+    itaxStatus('✅ อ่านสำเร็จ — พบ '+(_itax.items.length)+' รายการ | อากร '+(_itax.duty||0).toLocaleString()+' บาท | VAT '+(_itax.vat||0).toLocaleString()+' บาท<br><span style="color:#92400e">⚠️ กรุณาตรวจสอบความถูกต้องก่อนใช้งาน จากนั้นกด 💾 บันทึกการนำเข้า</span>','#15803d');
     toast('AI อ่านเอกสารสำเร็จ ✓','success');
   }catch(e){
     itaxStatus('❌ อ่านไม่สำเร็จ: '+e.message,'#dc2626');
