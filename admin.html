@@ -6647,6 +6647,10 @@ function printQuotation(id){
   const q=S.quotations.find(x=>x.id===id);
   if(!q) return;
   const co=S.company;
+  const isPaid=q.status==='ชำระแล้ว';
+  const docTitle=isPaid?'ใบเสร็จรับเงิน':'ใบเสนอราคา';
+  const docSubtitle=isPaid?'RECEIPT':'QUOTATION';
+  const docLabel=isPaid?'เลขที่ใบเสร็จ / Receipt No.':'เลขที่ใบเสนอราคา / Quotation No.';
 
   // barcode (Code128 via CSS bars — ใช้ text แทน library)
   function barcodeHtml(text){
@@ -6680,7 +6684,7 @@ function printQuotation(id){
   const LOGO_B64=RG_LOGO;
 
   const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
-<title>ใบเสนอราคา ${q.no}</title>
+<title>${docTitle} ${q.no}</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700;900&family=Noto+Sans:wght@400;700;900&display=swap');
@@ -6716,8 +6720,8 @@ table.items td{font-size:12px}
   </div>
   <!-- เลขที่ใบเสนอ ขวา -->
   <div style="text-align:right">
-    <div style="font-size:22px;font-weight:900;letter-spacing:.5px">ใบเสนอราคา</div>
-    <div style="font-size:14px;color:#6b7280;letter-spacing:2px;margin-bottom:8px">QUOTATION</div>
+    <div style="font-size:22px;font-weight:900;letter-spacing:.5px">${docTitle}</div>
+    <div style="font-size:14px;color:#6b7280;letter-spacing:2px;margin-bottom:8px">${docSubtitle}</div>
     <table style="margin-left:auto;font-size:12px;border-collapse:collapse">
       <tr><td style="color:#6b7280;padding:2px 10px 2px 0;text-align:right">เลขที่ / No.:</td><td style="font-weight:900;font-size:14px">${q.no}</td></tr>
       <tr><td style="color:#6b7280;text-align:right">วันที่ / Date:</td><td style="font-weight:700">${q.date}</td></tr>
@@ -6786,7 +6790,7 @@ ${remarkStr}
 <!-- Barcode + QR Code ล่างสุด -->
 <div style="margin-top:36px;padding-top:16px;border-top:1px dashed #ccc;display:flex;justify-content:space-between;align-items:center">
   <div style="text-align:center">
-    <div style="font-size:10px;color:#6b7280;margin-bottom:4px">เลขที่ใบเสนอราคา / Quotation No.</div>
+    <div style="font-size:10px;color:#6b7280;margin-bottom:4px">${docLabel}</div>
     <svg id="qt-bc-print" style="display:block;margin:0 auto"></svg>
     <div style="font-size:10px;font-family:monospace;letter-spacing:3px;margin-top:2px">${q.no}</div>
   </div>
