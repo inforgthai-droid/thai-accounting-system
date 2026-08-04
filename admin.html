@@ -6712,10 +6712,10 @@ table.items td{font-size:12px}
   <div style="display:flex;flex-direction:column;gap:6px">
     <img src="${LOGO_B64}" style="height:36px;max-width:240px;object-fit:contain;object-position:left">
     <div style="font-size:12px;color:#444;line-height:1.7">
-      <div>29 ซอย รามอินทรา 39 แยก 3</div>
-      <div>แขวงอนุสาวรีย์ เขตบางเขน</div>
-      <div>กรุงเทพมหานคร 10220</div>
+      ${co.name?`<div style="font-weight:700;color:#111">${co.name}</div>`:''}
+      ${(co.address||'').split('\n').filter(Boolean).map(l=>`<div>${l}</div>`).join('')||'<div>29 ซอย รามอินทรา 39 แยก 3</div><div>แขวงอนุสาวรีย์ เขตบางเขน</div><div>กรุงเทพมหานคร 10220</div>'}
       <div>โทร / Tel: ${co.tel||'089-140-0606'}</div>
+      ${(co.showTaxIdInQuotation&&co.taxId)?`<div>เลขประจำตัวผู้เสียภาษี / Tax ID: ${co.taxId}</div>`:''}
     </div>
   </div>
   <!-- เลขที่ใบเสนอ ขวา -->
@@ -7068,6 +7068,7 @@ function renderSettings(){
         <div class="fm"><label class="fl">อีเมล</label><input class="fc" id="cfg-email" value="${c.email||''}"></div>
         <div class="fm"><label class="fl">เว็บไซต์</label><input class="fc" id="cfg-website" value="${c.website||''}"></div>
         <div class="fm"><label class="fl">เลขประจำตัวผู้เสียภาษี</label><input class="fc" id="cfg-taxId" value="${c.taxId||''}"></div>
+        <div class="fm" style="grid-column:1/-1"><label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="cfg-showTaxIdQt" ${c.showTaxIdInQuotation?'checked':''} style="width:16px;height:16px;cursor:pointer"> แสดงเลขประจำตัวผู้เสียภาษีของร้านในใบเสนอราคา/ใบเสร็จ</label></div>
         <div class="fm"><label class="fl">ปีบัญชี (พ.ศ.)</label><input class="fc" id="cfg-year" value="${c.accountingYear||'2567'}"></div>
         <div class="fm"><label class="fl">สกุลเงิน</label><select class="fc" id="cfg-currency"><option${c.currency==='THB'?' selected':''}>THB</option><option${c.currency==='USD'?' selected':''}>USD</option><option${c.currency==='EUR'?' selected':''}>EUR</option></select></div>
       </div>
@@ -7410,6 +7411,7 @@ async function saveSettings(previewOnly=false){
   const data={
     name:get('cfg-name'),address:get('cfg-address'),tel:get('cfg-tel'),
     email:get('cfg-email'),website:get('cfg-website'),taxId:get('cfg-taxId'),
+    showTaxIdInQuotation:chk('cfg-showTaxIdQt')??false,
     logoEmoji:get('cfg-emoji')||'🏪',
     logoUrl:(()=>{
       // ถ้ามีไฟล์ที่อัปโหลด ใช้ Base64
