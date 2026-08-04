@@ -6359,6 +6359,18 @@ function qtForm(q={}){
   </div>
 
   <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
+    <div style="font-weight:700;font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">ข้อมูลร้านค้า / หัวใบ (Seller)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="grid-column:1/-1"><label class="fl">ชื่อร้านค้า</label><input class="fc" id="qt-shopName" value="${(S.company.name||'').replace(/"/g,'&quot;')}"></div>
+      <div style="grid-column:1/-1"><label class="fl">ที่อยู่ร้าน (กด Enter ขึ้นบรรทัดใหม่)</label><textarea class="fc" id="qt-shopAddr" rows="3" style="resize:vertical">${S.company.address||''}</textarea></div>
+      <div><label class="fl">เบอร์โทรร้าน</label><input class="fc" id="qt-shopTel" value="${(S.company.tel||'').replace(/"/g,'&quot;')}"></div>
+      <div><label class="fl">เลขประจำตัวผู้เสียภาษีร้าน</label><input class="fc" id="qt-shopTaxId" value="${(S.company.taxId||'').replace(/"/g,'&quot;')}"></div>
+      <div style="grid-column:1/-1"><label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="qt-shopShowTaxId" ${S.company.showTaxIdInQuotation?'checked':''} style="width:16px;height:16px;cursor:pointer"> แสดงเลขประจำตัวผู้เสียภาษีของร้านในใบเสนอราคา/ใบเสร็จ</label></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">💡 การแก้ไขข้อมูลร้านค้าที่นี่จะมีผลกับทุกใบ (ข้อมูลร้านเป็นค่ากลางของระบบ)</div>
+  </div>
+
+  <div style="background:var(--bg);border-radius:8px;padding:12px 14px">
     <div style="font-weight:700;font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">ข้อมูลลูกค้า / Customer</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div><label class="fl">ชื่อลูกค้า (ไทย)</label><input class="fc" id="qt-custTh" value="${q.customerName||''}" placeholder="เช่น บริษัท ABC จำกัด"></div>
@@ -6537,6 +6549,19 @@ async function saveQuotation(id){
     ...(id?{}:{createdAt:ts()})
   };
   if(!data.no){toast('กรุณากรอกเลขที่','error');return;}
+  // บันทึกข้อมูลร้านค้า (หัวใบ) — ค่ากลางของระบบ
+  const shopName=document.getElementById('qt-shopName')?.value?.trim();
+  if(shopName!==undefined){
+    const shopData={
+      name:shopName||S.company.name,
+      address:document.getElementById('qt-shopAddr')?.value||'',
+      tel:document.getElementById('qt-shopTel')?.value?.trim()||'',
+      taxId:document.getElementById('qt-shopTaxId')?.value?.trim()||'',
+      showTaxIdInQuotation:document.getElementById('qt-shopShowTaxId')?.checked||false
+    };
+    Object.assign(S.company,shopData);
+    updateFB('settings','company',shopData).catch(e=>console.warn('save shop warn:',e));
+  }
   if(id){
     await updateFB('quotations',id,data);
     const i=S.quotations.findIndex(x=>x.id===id);
