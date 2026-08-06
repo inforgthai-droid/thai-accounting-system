@@ -1,5 +1,6 @@
-const CACHE_NAME = 'rg-admin-v4';
+const CACHE_NAME = 'rg-admin-v3';
 const STATIC_ASSETS = [
+  '/thai-accounting-system/admin.html',
   'https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap'
 ];
 
@@ -19,19 +20,18 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Network first — บังคับดึงไฟล์สดจากเซิร์ฟเวอร์เสมอ (ข้าม HTTP cache) แล้วค่อย fallback เป็น cache ถ้าออฟไลน์
+// Network first — cache เฉพาะ admin.html เท่านั้น ไม่แตะ shop.html
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('firestore.googleapis.com')) return;
   if (e.request.url.includes('firebase')) return;
+
+  // ข้าม shop.html และ index.html — ให้โหลดสดทุกครั้ง
   if (e.request.url.includes('shop.html')) return;
   if (e.request.url.includes('index.html')) return;
 
-  const isHtml = e.request.url.includes('admin.html') || e.request.mode === 'navigate';
-
   e.respondWith(
-    // สำหรับ admin.html: fetch แบบ reload บังคับข้าม HTTP cache ของเบราว์เซอร์ → ได้ไฟล์ล่าสุดเสมอ
-    fetch(isHtml ? new Request(e.request.url, { cache: 'reload' }) : e.request)
+    fetch(e.request)
       .then(res => {
         const clone = res.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
