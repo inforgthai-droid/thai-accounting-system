@@ -292,6 +292,7 @@ tbody tr:hover{background:#f0f9ff}
     <div id="p-shipping" class="page"></div>
     <div id="p-webdesign" class="page"></div>
     <div id="p-importtax" class="page"></div>
+    <div id="p-inventorylots" class="page"></div>
   </div>
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -635,7 +636,7 @@ function closeModal(){document.getElementById('modal-overlay').classList.remove(
 document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target.id==='modal-overlay')closeModal();});
 const MENU=[
   {g:'ร้านค้า'},{key:'dashboard',label:'ภาพรวม',icon:'📊',short:'ภาพรวม'},{key:'pos',label:'ขายหน้าร้าน (POS)',icon:'🛒',short:'ขายหน้าร้าน'},{key:'rental',label:'เช่าอุปกรณ์',icon:'🏎️',short:'เช่า'},{key:'sales',label:'ประวัติการขาย',icon:'📑',short:'ประวัติ'},
-  {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦',short:'สินค้า'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️',short:'หมวดหมู่'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭',short:'สต็อก'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚',short:'ซื้อเข้า'},
+  {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦',short:'สินค้า'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️',short:'หมวดหมู่'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭',short:'สต็อก'},{key:'inventorylots',label:'Lot คงเหลือ (FIFO)',icon:'📥',short:'Lot'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚',short:'ซื้อเข้า'},
   {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢',short:'ลูกค้า'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️',short:'ซัพพลาย'},
   {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'expenses',label:'ค่าใช้จ่าย',icon:'💸',short:'ค่าใช้จ่าย'},{key:'monthlyreport',label:'รายงานส่งบัญชี',icon:'📊',short:'ส่งบัญชี'},{key:'quotation',label:'ใบเสนอราคา',icon:'📋',short:'ใบเสนอราคา'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
   {g:'ร้านค้าออนไลน์'},{key:'orders',label:'ออเดอร์ออนไลน์',icon:'🛍️',short:'ออเดอร์'},{key:'shipping',label:'จัดส่งสินค้า',icon:'📦',short:'จัดส่ง'},{key:'webdesign',label:'ตกแต่งร้านค้า',icon:'🎨',short:'ตกแต่ง'},
@@ -674,7 +675,8 @@ function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').
 function renderPage(key){
   const el=document.getElementById('p-'+key);
   if(!el)return;
-  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,expenses:renderExpenses,monthlyreport:renderMonthlyReport,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign,importtax:renderImportTax};
+  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,expenses:renderExpenses,monthlyreport:renderMonthlyReport,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign,importtax:renderImportTax,inventorylots:renderInventoryLots};
+  if(key==='inventorylots')setTimeout(loadInventoryLots,50);
   if(key==='sales'){
     // โหลด rentals ก่อนถ้ายังไม่มี แล้วค่อย render
     if(_rentals.length===0){
@@ -1957,7 +1959,17 @@ function renderPOS(){
                 <option value="10" ${(S.posInstallMonth||3)===10?'selected':''}>10 ด.</option>
               </select>
             </div>
-            ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.040*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
+            <div style="grid-column:1/-1;display:flex;gap:5px;align-items:center">
+              <button onclick="S.posPayMethod='pay_solution_install';updatePOSCart()"
+                style="flex:1;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='pay_solution_install'?'#7c3aed':'#334155'};background:${S.posPayMethod==='pay_solution_install'?'#ede9fe':'transparent'};color:${S.posPayMethod==='pay_solution_install'?'#6d28d9':'var(--text)'}">💳 ผ่อนบัตรเครดิต 0% Pay Solution<br><span style="font-size:9px;opacity:.85">ร้านรับภาระดอกเบี้ย</span></button>
+              <select onchange="S.posInstallMonth=parseInt(this.value);updatePOSCart()" style="height:52px;border-radius:8px;border:2px solid ${S.posPayMethod==='pay_solution_install'?'#7c3aed':'#334155'};background:var(--card);color:var(--text);font-size:12px;font-weight:700;padding:0 6px;cursor:pointer;font-family:'Sarabun',sans-serif;min-width:60px">
+                <option value="3" ${(S.posInstallMonth||3)===3?'selected':''}>3 ด.</option>
+                <option value="6" ${(S.posInstallMonth||3)===6?'selected':''}>6 ด.</option>
+                <option value="10" ${(S.posInstallMonth||3)===10?'selected':''}>10 ด.</option>
+                <option value="18" ${(S.posInstallMonth||3)===18?'selected':''}>18 ด.</option>
+              </select>
+            </div>
+            ${_installInfoLine()}
           </div>`}
         </div>
         <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
@@ -2143,7 +2155,17 @@ function updatePOSCart(){
             <option value="10" ${(S.posInstallMonth||3)===10?'selected':''}>10 ด.</option>
           </select>
         </div>
-        ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.040*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
+        <div style="grid-column:1/-1;display:flex;gap:5px;align-items:center">
+          <button onclick="S.posPayMethod='pay_solution_install';updatePOSCart()"
+            style="flex:1;padding:8px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;border:2px solid ${S.posPayMethod==='pay_solution_install'?'#7c3aed':'#334155'};background:${S.posPayMethod==='pay_solution_install'?'#ede9fe':'transparent'};color:${S.posPayMethod==='pay_solution_install'?'#6d28d9':'var(--text)'}">💳 ผ่อนบัตรเครดิต 0% Pay Solution<br><span style="font-size:9px;opacity:.85">ร้านรับภาระดอกเบี้ย</span></button>
+          <select onchange="S.posInstallMonth=parseInt(this.value);updatePOSCart()" style="height:52px;border-radius:8px;border:2px solid ${S.posPayMethod==='pay_solution_install'?'#7c3aed':'#334155'};background:var(--card);color:var(--text);font-size:12px;font-weight:700;padding:0 6px;cursor:pointer;font-family:'Sarabun',sans-serif;min-width:60px">
+            <option value="3" ${(S.posInstallMonth||3)===3?'selected':''}>3 ด.</option>
+            <option value="6" ${(S.posInstallMonth||3)===6?'selected':''}>6 ด.</option>
+            <option value="10" ${(S.posInstallMonth||3)===10?'selected':''}>10 ด.</option>
+            <option value="18" ${(S.posInstallMonth||3)===18?'selected':''}>18 ด.</option>
+          </select>
+        </div>
+        ${_installInfoLine()}
       </div>`}
     </div>
     <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
@@ -2152,13 +2174,35 @@ function updatePOSCart(){
     <button onclick="openFullReceipt()" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;background:#eff6ff;color:var(--accent);border:1.5px solid var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">ใบเสร็จเต็มรูปแบบ / ใบกำกับภาษี</button>
     <button onclick="openShippingLabel({itemsText:S.cart.map(i=>i.name+' x'+i.qty).join(', ')})" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">จัดส่งสินค้า</button>`:''}`;
 }
+// ── MDR (ค่าธรรมเนียมผ่อน) แบบตั้งค่าได้ ── อัตราเป็น % ต่อรายการ (ยอด × MDR% + VAT 7% ของ MDR)
+function _mdrTable(payMethod){
+  const c=S.company||{};
+  if(payMethod==='pay_solution_install') return c.mdrPaySolution||{3:2.5,6:3.5,10:5.0,18:8.0};
+  // credit_installment (GHL/KFC) — 10 เดือน = 15% ตามรายงานจริง
+  return c.mdrInstall||{3:5.0,6:9.0,10:15.0};
+}
+function _installNet(total, payMethod, months){
+  const tbl=_mdrTable(payMethod);
+  const mdrPct=(tbl[months]||0)/100;
+  const fee=Math.round(total*mdrPct*100)/100;
+  const vat=Math.round(fee*0.07*100)/100;
+  const net=Math.round((total-fee-vat)*100)/100;
+  return {fee,vat,net,mdrPct};
+}
+function _installInfoLine(){
+  const pm=S.posPayMethod;
+  if(pm!=='credit_installment'&&pm!=='pay_solution_install') return '';
+  const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);
+  const _m=S.posInstallMonth||3;
+  const r=_installNet(_t,pm,_m);
+  const label=pm==='pay_solution_install'?'Pay Solution':'ร้านรับภาระ';
+  return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 '+label+' ผ่อน '+_m+' เดือน (MDR '+(r.mdrPct*100).toFixed(1)+'%) | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(r.net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+VAT: '+fmt(Math.round((r.fee+r.vat)*100)/100)+' บาท</span></div>';
+}
 function calcNetProfit(total, totalCost, payMethod, shopeeRate, installMonth){
-  if(payMethod==='credit_installment'){
+  if(payMethod==='credit_installment'||payMethod==='pay_solution_install'){
     const m=installMonth||S.posInstallMonth||3;
-    const interest=total*0.008*m;
-    const fee=total*0.040;
-    const vat=(interest+fee)*0.07;
-    return Math.round(total-interest-fee-vat)-totalCost;
+    const r=_installNet(total,payMethod,m);
+    return Math.round(r.net)-totalCost;
   }
   const rate = shopeeRate || {'shopee_pay':0.70,'shopee_spaylater':0.70,'shopee_cc':0.70,'shopee_cc_install':0.70,'shopee_mobile_banking':0.70,'shopee_qr_promptpay':0.70,'credit':0.97325}[payMethod] || null;
   if(rate) return Math.round(total * rate) - totalCost;
@@ -2185,8 +2229,9 @@ async function checkout(){
   const payMethod=isSplit?`split:${S.posSplit1Method}+${S.posSplit2Method}`:S.posPayMethod||'cash';
   const SHOPEE_RATE={'shopee_pay':0.70,'shopee_spaylater':0.70,'shopee_cc':0.70,'shopee_cc_install':0.70,'shopee_mobile_banking':0.70,'shopee_qr_promptpay':0.70};
   const shopeeRate=isSplit?null:(SHOPEE_RATE[payMethod]||null);
-  const installMonth=(payMethod==='credit_installment')?(S.posInstallMonth||3):null;
-  const netRevenue=payMethod==='credit_installment'?(()=>{const m=installMonth;return Math.round(total-total*0.008*m-total*0.040-(total*0.008*m+total*0.040)*0.07);})():shopeeRate?Math.round(total*shopeeRate):total;
+  const isInstall=(payMethod==='credit_installment'||payMethod==='pay_solution_install');
+  const installMonth=isInstall?(S.posInstallMonth||3):null;
+  const netRevenue=isInstall?Math.round(_installNet(total,payMethod,installMonth).net):shopeeRate?Math.round(total*shopeeRate):total;
   const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',payMethod,shopeeRate,installMonth,netRevenue,
     split1Method:isSplit?S.posSplit1Method:null,split1Amt:isSplit?S.posSplit1Amt:null,
     split2Method:isSplit?S.posSplit2Method:null,split2Amt:isSplit?(total-S.posSplit1Amt):null,
@@ -2201,8 +2246,8 @@ async function checkout(){
     S.sales.push({id:sRef.id,...saleData});
     S.cart.forEach(item=>{const p=S.products.find(x=>x.id===item.pid);if(p)p.stock-=item.qty;});
     toast('บันทึกการขาย '+docNo+' สำเร็จ ✓','success');
-    // FIFO lot deduction — background, ไม่ block sale
-    _deductFifoLots(sRef.id, S.cart.map(x=>({pid:x.pid,qty:x.qty}))).catch(e=>console.warn('FIFO deduct warn:',e));
+    // FIFO lot deduction + คิดต้นทุนจริงจาก lot — background, ไม่ block sale
+    _deductFifoLots(sRef.id, S.cart.map(x=>({pid:x.pid,qty:x.qty,fallbackCost:x.cost||0})), {total,payMethod,shopeeRate,installMonth}).catch(e=>console.warn('FIFO deduct warn:',e));
     const rec={id:sRef.id,...saleData};
     cartClear();
     // ป้องกันค่าวันที่ขายย้อนหลังติดค้างไปใช้กับรายการขายครั้งต่อไปโดยไม่ตั้งใจ
@@ -2214,11 +2259,16 @@ async function checkout(){
   }catch(e){toast('Error: '+e.message,'error');}
 }
 
-async function _deductFifoLots(saleId, cartItems){
-  // cartItems = [{pid, qty}, ...]
+async function _deductFifoLots(saleId, cartItems, saleInfo){
+  // cartItems = [{pid, qty, fallbackCost}, ...]
+  // saleInfo = {total, payMethod, shopeeRate, installMonth} — ใช้คำนวณกำไรใหม่จากต้นทุน FIFO จริง
+  let fifoCost=0;              // ต้นทุนจริงรวมจาก lot ที่ตัดไป
+  const costDetail=[];        // เก็บรายละเอียดต้นทุนต่อ item
+  let usedFifo=false;         // มีอย่างน้อย 1 item ที่ใช้ต้นทุน lot จริง
   for(const item of cartItems){
     if(!item.pid||!item.qty) continue;
     let remaining=item.qty;
+    let itemCost=0;
     // ดึง lots ของ product นี้ เรียงวันเก่าสุดก่อน (FIFO)
     const snap=await db.collection('inventoryLots')
       .where('productId','==',item.pid)
@@ -2234,11 +2284,120 @@ async function _deductFifoLots(saleId, cartItems){
         qtyRemaining: newQty,
         updatedAt: ts()
       });
+      itemCost+=deduct*(lot.costPer||0);
       remaining-=deduct;
+      usedFifo=true;
     }
-    // ถ้า lots ไม่พอ (สินค้าที่นำเข้าก่อน Phase 1) — log ไว้แต่ไม่ error
-    if(remaining>0) console.warn(`FIFO: product ${item.pid} short ${remaining} units (no lot data)`);
+    // ถ้า lots ไม่พอ (สินค้าที่นำเข้าก่อน Phase 1) — ใช้ต้นทุนสำรอง (product.cost) กับส่วนที่ขาด
+    if(remaining>0){
+      itemCost+=remaining*(item.fallbackCost||0);
+      console.warn(`FIFO: product ${item.pid} short ${remaining} units — ใช้ต้นทุนสำรอง ${item.fallbackCost||0}/ชิ้น`);
+    }
+    fifoCost+=itemCost;
+    costDetail.push({pid:item.pid,qty:item.qty,fifoCost:Math.round(itemCost*100)/100});
   }
+  // ── อัปเดตกำไรของบิลนี้ให้คิดจากต้นทุน FIFO จริง ──
+  if(usedFifo&&saleInfo){
+    const totalCostFifo=Math.round(fifoCost*100)/100;
+    const profitFifo=calcNetProfit(saleInfo.total||0,totalCostFifo,saleInfo.payMethod,saleInfo.shopeeRate||null,saleInfo.installMonth||null);
+    try{
+      await db.collection('sales').doc(saleId).update({
+        totalCost: totalCostFifo,
+        profit: profitFifo,
+        costMethod: 'fifo',
+        fifoCostDetail: costDetail,
+        updatedAt: ts()
+      });
+      const s=S.sales.find(x=>x.id===saleId);
+      if(s){s.totalCost=totalCostFifo;s.profit=profitFifo;s.costMethod='fifo';s.fifoCostDetail=costDetail;}
+      console.log(`FIFO cost applied: sale ${saleId} → ต้นทุน ${totalCostFifo}, กำไร ${profitFifo}`);
+    }catch(e){console.warn('FIFO cost update warn:',e);}
+  }
+}
+
+// ── หน้า Lot คงเหลือ (FIFO) ──
+function renderInventoryLots(){
+  return `<div style="padding:4px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <div><h2 style="margin:0;font-size:20px">📥 Lot คงเหลือ (FIFO)</h2>
+      <div style="font-size:12px;color:var(--muted)">ต้นทุนจริงต่อ lot ตามรอบนำเข้า — ตัดขายเก่าสุดก่อน</div></div>
+      <div style="display:flex;gap:8px">
+        <input id="invlot-search" placeholder="🔍 ค้นหาชื่อ/SKU..." oninput="renderInvLotList()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;min-width:200px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer"><input type="checkbox" id="invlot-hidezero" onchange="renderInvLotList()"> ซ่อน lot ที่หมดแล้ว</label>
+        <button class="btn" onclick="loadInventoryLots()" style="padding:8px 14px">🔄 รีเฟรช</button>
+      </div>
+    </div>
+    <div id="invlot-summary"></div>
+    <div id="invlot-list" style="margin-top:12px"><div style="text-align:center;padding:40px;color:var(--muted)">⏳ กำลังโหลด...</div></div>
+  </div>`;
+}
+async function loadInventoryLots(){
+  const listEl=document.getElementById('invlot-list');
+  if(listEl) listEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">⏳ กำลังโหลด...</div>';
+  try{
+    const snap=await db.collection('inventoryLots').orderBy('importDate','asc').get();
+    S._invLots=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderInvLotList();
+  }catch(e){
+    if(listEl) listEl.innerHTML=`<div style="text-align:center;padding:40px;color:var(--danger)">โหลดไม่สำเร็จ: ${e.message}</div>`;
+  }
+}
+function renderInvLotList(){
+  const lots=S._invLots||[];
+  const q=(document.getElementById('invlot-search')?.value||'').toLowerCase().trim();
+  const hideZero=document.getElementById('invlot-hidezero')?.checked;
+  // จัดกลุ่มตาม product
+  const groups={};
+  lots.forEach(l=>{
+    if(hideZero&&(l.qtyRemaining||0)<=0) return;
+    if(q){const hay=((l.productName||'')+' '+(l.skuDemonTweeks||'')+' '+(l.invoiceNo||'')).toLowerCase();if(!hay.includes(q))return;}
+    const k=l.productId||l.productName||'?';
+    (groups[k]=groups[k]||{name:l.productName||'-',sku:l.skuDemonTweeks||'',lots:[]}).lots.push(l);
+  });
+  const keys=Object.keys(groups);
+  // summary
+  let totQty=0,totVal=0,totLots=0;
+  lots.forEach(l=>{if((l.qtyRemaining||0)>0){totQty+=l.qtyRemaining||0;totVal+=(l.qtyRemaining||0)*(l.costPer||0);totLots++;}});
+  const sumEl=document.getElementById('invlot-summary');
+  if(sumEl) sumEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px"><div style="font-size:11px;color:var(--muted)">Lot ที่ยังมีของ</div><div style="font-size:22px;font-weight:800">${totLots}</div></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px"><div style="font-size:11px;color:var(--muted)">จำนวนคงเหลือรวม</div><div style="font-size:22px;font-weight:800">${totQty.toLocaleString()} ชิ้น</div></div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px"><div style="font-size:11px;color:#166534">มูลค่าต้นทุนคงเหลือ</div><div style="font-size:22px;font-weight:800;color:#166534">${fmt(Math.round(totVal))} ฿</div></div>
+  </div>`;
+  const listEl=document.getElementById('invlot-list');
+  if(!listEl) return;
+  if(!keys.length){listEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">ไม่พบข้อมูล lot</div>';return;}
+  listEl.innerHTML=keys.map(k=>{
+    const g=groups[k];
+    const gQty=g.lots.reduce((a,l)=>a+(l.qtyRemaining||0),0);
+    const gVal=g.lots.reduce((a,l)=>a+(l.qtyRemaining||0)*(l.costPer||0),0);
+    const rows=g.lots.map(l=>{
+      const rem=l.qtyRemaining||0, used=(l.qtyIn||0)-rem;
+      const depleted=rem<=0;
+      return `<tr style="border-bottom:1px solid var(--border);${depleted?'opacity:.5':''}">
+        <td style="padding:6px 8px;font-size:12px">${l.importDate||'-'}</td>
+        <td style="padding:6px 8px;font-size:12px">${l.invoiceNo||'-'}${l.supplier?`<br><span style="color:var(--muted);font-size:10px">${l.supplier}</span>`:''}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:12px;font-weight:700;color:#166534">${fmt(l.costPer||0)}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:12px">${l.qtyIn||0}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:12px;color:var(--muted)">${used}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:800;color:${depleted?'var(--muted)':'var(--accent)'}">${rem}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:12px;font-weight:700">${fmt(Math.round(rem*(l.costPer||0)))}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">
+      <div style="padding:10px 14px;background:var(--bg);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <div><b style="font-size:14px">${g.name}</b>${g.sku?`<span style="color:var(--muted);font-size:11px;margin-left:8px">SKU: ${g.sku}</span>`:''}</div>
+        <div style="font-size:12px">คงเหลือรวม <b style="color:var(--accent)">${gQty}</b> ชิ้น | มูลค่า <b style="color:#166534">${fmt(Math.round(gVal))} ฿</b></div>
+      </div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:560px">
+        <thead><tr style="background:var(--bg);border-bottom:2px solid var(--border);font-size:11px;color:var(--muted)">
+          <th style="padding:6px 8px;text-align:left">วันนำเข้า</th><th style="padding:6px 8px;text-align:left">Invoice</th>
+          <th style="padding:6px 8px;text-align:right">ต้นทุน/ชิ้น</th><th style="padding:6px 8px;text-align:right">นำเข้า</th>
+          <th style="padding:6px 8px;text-align:right">ขายไป</th><th style="padding:6px 8px;text-align:right">คงเหลือ</th><th style="padding:6px 8px;text-align:right">มูลค่าคงเหลือ</th>
+        </tr></thead><tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  }).join('');
 }
 
 function showReceiptModal(sale){
@@ -2301,8 +2460,8 @@ function showReceiptModal(sale){
       <div style="text-align:center;font-size:11px;font-weight:700;margin-bottom:4px">${
         sale.split1Method?
           `💳 ชำระหลายช่องทาง`
-        :(sale.payMethod==='credit_installment'
-          ?`💳 ผ่อนบัตรเครดิต 0% (${sale.installMonth||3} เดือน) | ${fmtM(Math.round(sale.total/(sale.installMonth||3)))}/เดือน`
+        :(sale.payMethod==='credit_installment'||sale.payMethod==='pay_solution_install'
+          ?`💳 ผ่อนบัตรเครดิต 0%${sale.payMethod==='pay_solution_install'?' Pay Solution':''} (${sale.installMonth||3} เดือน) | ${fmtM(Math.round(sale.total/(sale.installMonth||3)))}/เดือน`
           :({'cash':'💵 เงินสด / โอนเงิน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[sale.payMethod]||'💵 เงินสด / โอนเงิน'))
       }</div>
 
@@ -2844,7 +3003,7 @@ function viewSale(id){
       <div><span style="color:var(--muted)">ลูกค้า:</span> <b>${s.customerName||'-'}</b></div>
       <div><span style="color:var(--muted)">สถานะ:</span> ${statusBadge}</div>
       <div><span style="color:var(--muted)">ชำระด้วย:</span> <b>${s.split1Method?`หลายช่องทาง: ${fmtM(s.split1Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[s.split1Method]||s.split1Method }) + ${fmtM(s.split2Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[s.split2Method]||s.split2Method })`
-        :({'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[s.payMethod]||'💵 เงินสด/โอน')}</b></div>
+        :({'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','credit_installment':`💳 ผ่อน 0% (${s.installMonth||3}ด.)`,'pay_solution_install':`💳 ผ่อน 0% Pay Solution (${s.installMonth||3}ด.)`,'shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[s.payMethod]||'💵 เงินสด/โอน')}</b></div>
     </div>
     <div class="tbl"><table style="font-size:12px">
       <thead><tr>
@@ -3200,7 +3359,7 @@ th.r{text-align:right}th.c{text-align:center}
       <div>เลขที่: <b>${s.docNo}</b></div>
       <div>วันที่: <b>${s.date}</b></div>
       <div>ชำระด้วย: <b>${s.split1Method?`หลายช่องทาง: ${fmtM(s.split1Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[s.split1Method]||s.split1Method }) + ${fmtM(s.split2Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[s.split2Method]||s.split2Method })`
-        :({'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[s.payMethod]||'💵 เงินสด/โอน')}</b></div>
+        :({'cash':'💵 เงินสด/โอน','credit':'💳 บัตรเครดิต','credit_installment':`💳 ผ่อน 0% (${s.installMonth||3}ด.)`,'pay_solution_install':`💳 ผ่อน 0% Pay Solution (${s.installMonth||3}ด.)`,'shopee_pay':'🟠 Shopee Pay','shopee_spaylater':'🟠 SPayLater','shopee_cc':'🟠 บัตรเครดิต Shopee','shopee_cc_install':'🟠 ผ่อน Shopee','shopee_mobile_banking':'🟠 Shopee Mobile Banking','shopee_qr_promptpay':'🟠 Shopee QR Promptpay'}[s.payMethod]||'💵 เงินสด/โอน')}</b></div>
     </div>
   </div>
 </div>
@@ -6232,7 +6391,7 @@ function exportMonthlyReport(month){
   });
   const expenses=S.expenses.filter(e=>(e.date||'').slice(0,7)===month);
 
-  const PAY={cash:'เงินสด/โอน',credit:'บัตรเครดิต',credit_installment:'ผ่อนบัตร 0%',shopee_pay:'Shopee Pay',shopee_spaylater:'SPayLater',shopee_cc:'บัตรเครดิต Shopee',shopee_cc_install:'ผ่อน Shopee',shopee_mobile_banking:'Shopee Banking',shopee_qr_promptpay:'Shopee QR',qr:'QR พร้อมเพย์',transfer:'โอนเงิน',cod:'COD'};
+  const PAY={cash:'เงินสด/โอน',credit:'บัตรเครดิต',credit_installment:'ผ่อนบัตร 0%',pay_solution_install:'ผ่อน 0% Pay Solution',shopee_pay:'Shopee Pay',shopee_spaylater:'SPayLater',shopee_cc:'บัตรเครดิต Shopee',shopee_cc_install:'ผ่อน Shopee',shopee_mobile_banking:'Shopee Banking',shopee_qr_promptpay:'Shopee QR',qr:'QR พร้อมเพย์',transfer:'โอนเงิน',cod:'COD'};
 
   const wb=XLSX.utils.book_new();
 
@@ -7097,6 +7256,22 @@ function renderSettings(){
         <div class="fm"><label class="fl">ปีบัญชี (พ.ศ.)</label><input class="fc" id="cfg-year" value="${c.accountingYear||'2567'}"></div>
         <div class="fm"><label class="fl">สกุลเงิน</label><select class="fc" id="cfg-currency"><option${c.currency==='THB'?' selected':''}>THB</option><option${c.currency==='USD'?' selected':''}>USD</option><option${c.currency==='EUR'?' selected':''}>EUR</option></select></div>
       </div>
+      <div style="border-top:1px solid var(--border);margin:12px 0;padding-top:12px;font-weight:700;color:var(--primary)">💳 อัตราค่าธรรมเนียมผ่อน 0% (MDR %) — ร้านรับภาระ</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">เงินเข้าจริง = ยอดขาย × (1 − MDR% × 1.07) | VAT 7% คิดบนค่าธรรมเนียม — ปรับตามเรตจริงของธนาคาร</div>
+      ${(()=>{const mi=c.mdrInstall||{3:5.0,6:9.0,10:15.0};const mp=c.mdrPaySolution||{3:2.5,6:3.5,10:5.0,18:8.0};return `
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:#1d4ed8">ผ่อนบัตรเครดิต 0% (GHL/KFC)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+        <div class="fm"><label class="fl">3 เดือน (%)</label><input type="number" step="0.01" class="fc" id="cfg-mdr-i3" value="${mi[3]??5}"></div>
+        <div class="fm"><label class="fl">6 เดือน (%)</label><input type="number" step="0.01" class="fc" id="cfg-mdr-i6" value="${mi[6]??9}"></div>
+        <div class="fm"><label class="fl">10 เดือน (%)</label><input type="number" step="0.01" class="fc" id="cfg-mdr-i10" value="${mi[10]??15}"></div>
+      </div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:#6d28d9">ผ่อนบัตรเครดิต 0% Pay Solution</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px">
+        <div class="fm"><label class="fl">3 เดือน (%)</label><input type="number" step="0.01" class="fc" id="cfg-mdr-p3" value="${mp[3]??2.5}"></div>
+        <div class="fm"><label class="fl">6 เดือน (%)</label><input type="number" step="0.01" class="fc" id="cfg-mdr-p6" value="${mp[6]??3.5}"></div>
+        <div class="fm"><label class="fl">10 เดือน (%)</label><input type="number" step="0.01" class="fc" id="cfg-mdr-p10" value="${mp[10]??5}"></div>
+        <div class="fm"><label class="fl">18 เดือน (%)</label><input type="number" step="0.01" class="fc" id="cfg-mdr-p18" value="${mp[18]??8}"></div>
+      </div>`})()}
       <div style="border-top:1px solid var(--border);margin:12px 0;padding-top:12px;font-weight:700;color:var(--primary)">💳 ข้อมูลการชำระเงิน (ร้านค้าออนไลน์)</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
         <div class="fm"><label class="fl">เบอร์พร้อมเพย์</label><input class="fc" id="cfg-promptpay" value="${c.promptpay||c.tel||''}" placeholder="0XX-XXX-XXXX"></div>
@@ -7437,6 +7612,8 @@ async function saveSettings(previewOnly=false){
     name:get('cfg-name'),address:get('cfg-address'),tel:get('cfg-tel'),
     email:get('cfg-email'),website:get('cfg-website'),taxId:get('cfg-taxId'),
     showTaxIdInQuotation:chk('cfg-showTaxIdQt')??false,
+    mdrInstall:{3:parseFloat(get('cfg-mdr-i3'))||0,6:parseFloat(get('cfg-mdr-i6'))||0,10:parseFloat(get('cfg-mdr-i10'))||0},
+    mdrPaySolution:{3:parseFloat(get('cfg-mdr-p3'))||0,6:parseFloat(get('cfg-mdr-p6'))||0,10:parseFloat(get('cfg-mdr-p10'))||0,18:parseFloat(get('cfg-mdr-p18'))||0},
     logoEmoji:get('cfg-emoji')||'🏪',
     logoUrl:(()=>{
       // ถ้ามีไฟล์ที่อัปโหลด ใช้ Base64
