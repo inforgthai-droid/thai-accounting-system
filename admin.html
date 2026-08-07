@@ -8302,6 +8302,15 @@ let _itax={duty:0,vat:0,items:[]};
 function renderImportTax(){
   const d=_itax;
   const totalUSD=d.items.reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
+  // คำนวณต้นทุนรวมของ freight rows เพื่อกระจายลงสินค้าแต่ละชิ้น
+  const isFreight=i=>/^FREIGHT/i.test(i.code||'');
+  const freightUSD=d.items.filter(isFreight).reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
+  const productUSD=totalUSD-freightUSD;
+  const freightTotalTHB=d.items.filter(isFreight).reduce((a,i)=>{
+    const s=(i.qty||0)*(i.unit||0);
+    const p=totalUSD>0?s/totalUSD:0;
+    return a+s*(d.fx||1)+(d.duty||0)*p+(d.vat||0)*p+((d.proc||0)+(d.procVat||0))*p;
+  },0);
   const rowsHtml=d.items.map((it,idx)=>{
     const sum=(it.qty||0)*(it.unit||0);
     const pct=totalUSD>0?sum/totalUSD:0;
@@ -8309,6 +8318,9 @@ function renderImportTax(){
     const vat=(d.vat||0)*pct;
     const proc=((d.proc||0)+(d.procVat||0))*pct;
     const totalTax=duty+vat+proc;
+    // กระจายค่าส่งลงสินค้า (ไม่รวม freight row เอง)
+    const freightShare=(!isFreight(it)&&productUSD>0)?freightTotalTHB*(sum/productUSD):0;
+    const costPerUnit=(it.unit||0)*(d.fx||1)+totalTax/(it.qty||1)+freightShare/(it.qty||1);
     return`<tr>
       <td style="padding:5px 8px;border-bottom:1px solid #eee">${idx+1}</td>
       <td style="padding:5px 8px;border-bottom:1px solid #eee"><input type="text" value="${it.code||''}" onchange="_itax.items[${idx}].code=this.value" style="width:100%;font-size:12px;border:1px solid #ddd;border-radius:4px;padding:2px 6px;font-family:Sarabun,sans-serif"></td>
@@ -8321,7 +8333,7 @@ function renderImportTax(){
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;color:#e34948">${vat.toFixed(2)}</td>
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;color:#7c3aed">${proc.toFixed(2)}</td>
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;font-weight:600">${totalTax.toFixed(2)}</td>
-      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;font-weight:700;color:#166534;background:#f0fdf4">${((it.unit||0)*(d.fx||1)+totalTax/(it.qty||1)).toFixed(2)}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:right;font-size:12px;font-weight:700;color:#166534;background:#f0fdf4">${costPerUnit.toFixed(2)}</td>
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center"><button onclick="_itax.items.splice(${idx},1);refreshImportTax()" style="background:none;border:none;cursor:pointer;color:#e24b4a;font-size:14px">✕</button></td>
     </tr>`;
   }).join('');
@@ -8427,7 +8439,7 @@ function renderImportTax(){
 
   <div class="card" style="padding:.8rem 1rem;background:#fffbeb;border:1px solid #fde68a">
     <div style="font-size:12px;color:#92400e">
-      <b>วิธีคำนวณ:</b> นำอากรนำเข้าและ VAT รวมจากใบ DHL/ศุลกากร มาแบ่งสัดส่วนตาม % ของมูลค่า USD แต่ละรายการ (รวม Freight) — วิธีนี้ตรงกับที่ศุลกากรใช้จริง
+      <b>วิธีคำนวณ:</b> นำอากร+VAT จากใบ DHL แบ่งสัดส่วนตาม % USD — <b>ต้นทุน/ชิ้น รวมค่าส่ง (Freight) กระจายตามสัดส่วนราคาสินค้าแล้ว</b>
     </div>
   </div>`;
 }
@@ -8579,7 +8591,16 @@ async function importTaxToStock(){
   if(!d.duty&&!d.vat){if(!confirm('ยังไม่ได้ใส่อากรและ VAT จาก DHL — ต้นทุนจะคิดเฉพาะราคา USD×อัตราแลกเปลี่ยน\nดำเนินการต่อไหม?'))return;}
   const totalUSD=d.items.reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
   const fx=d.fx||1;
-  // คำนวณต้นทุน/ชิ้น รวมอากร+VAT
+  // คำนวณค่าส่งรวม (freight rows) เพื่อกระจายลงสินค้า
+  const _isFreight=i=>/^FREIGHT/i.test(i.code||'');
+  const freightUSD=d.items.filter(_isFreight).reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
+  const productOnlyUSD=totalUSD-freightUSD;
+  const freightTotalTHB=d.items.filter(_isFreight).reduce((a,i)=>{
+    const s=(i.qty||0)*(i.unit||0);
+    const p=totalUSD>0?s/totalUSD:0;
+    return a+s*fx+(d.duty||0)*p+(d.vat||0)*p+((d.proc||0)+(d.procVat||0))*p;
+  },0);
+  // คำนวณต้นทุน/ชิ้น รวมอากร+VAT+ค่าส่ง
   const calcs=productItems.map(i=>{
     const sumUSD=(i.qty||0)*(i.unit||0);
     const pct=totalUSD>0?sumUSD/totalUSD:0;
@@ -8587,7 +8608,8 @@ async function importTaxToStock(){
     const dutyShare=(d.duty||0)*pct;
     const vatShare=(d.vat||0)*pct;
     const procShare=((d.proc||0)+(d.procVat||0))*pct;
-    const totalCost=thb+dutyShare+vatShare+procShare;
+    const freightShare=productOnlyUSD>0?freightTotalTHB*(sumUSD/productOnlyUSD):0;
+    const totalCost=thb+dutyShare+vatShare+procShare+freightShare;
     const costPer=totalCost/(i.qty||1);
     const sellPer=_itaxRoundPrice(costPer*1.35);
     return{...i,costPer,sellPer};
