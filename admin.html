@@ -7767,7 +7767,7 @@ async function deleteOrder(id){
 }
 
 // ===== INVENTORY LOTS (FIFO) =====
-let _lotData=[], _lotSearch='', _lotFilter='all';
+let _lotData=[], _lotSearch='', _lotFilter='all', _lotDate='all';
 
 function renderInventoryLots(){
   const el=document.getElementById('p-inventorylots');
@@ -7776,8 +7776,11 @@ function renderInventoryLots(){
     <div style="padding:16px 20px;max-width:1100px;margin:0 auto">
       <h2 style="margin:0 0 16px;font-size:18px;font-weight:700">📥 Lot คงเหลือ (FIFO)</h2>
       <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-        <input id="lot-search" class="fc" placeholder="ค้นหาสินค้า / Invoice..." style="flex:1;min-width:200px" oninput="_lotSearch=this.value;renderInvLotList()">
-        <select id="lot-filter" class="fc" style="width:160px" onchange="_lotFilter=this.value;renderInvLotList()">
+        <select id="lot-date-filter" class="fc" style="width:180px" onchange="_lotDate=this.value;renderInvLotList()">
+          <option value="all">📅 ทุกวันที่นำเข้า</option>
+        </select>
+        <input id="lot-search" class="fc" placeholder="ค้นหาสินค้า / Invoice..." style="flex:1;min-width:180px" oninput="_lotSearch=this.value;renderInvLotList()">
+        <select id="lot-filter" class="fc" style="width:140px" onchange="_lotFilter=this.value;renderInvLotList()">
           <option value="all">ทั้งหมด</option>
           <option value="remaining">มีคงเหลือ</option>
           <option value="empty">หมดแล้ว</option>
@@ -7793,6 +7796,13 @@ async function loadInventoryLots(){
   try{
     const snap=await db.collection('inventoryLots').orderBy('importDate','asc').get();
     _lotData=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // สร้าง dropdown วันที่
+    const dates=[...new Set(_lotData.map(l=>l.importDate||'').filter(Boolean))].sort().reverse();
+    const sel=document.getElementById('lot-date-filter');
+    if(sel){
+      sel.innerHTML=`<option value="all">📅 ทุกวันที่นำเข้า</option>`
+        +dates.map(d=>`<option value="${d}"${_lotDate===d?' selected':''}>${d}</option>`).join('');
+    }
     renderInvLotList();
   }catch(e){
     const el=document.getElementById('lot-list');
@@ -7808,6 +7818,7 @@ function renderInvLotList(){
   // กรองและกลุ่มตาม productId
   const grouped={};
   for(const lot of _lotData){
+    if(_lotDate!=='all' && lot.importDate!==_lotDate) continue;
     const name=(lot.productName||lot.productId||'').toLowerCase();
     const inv=(lot.invoiceNo||'').toLowerCase();
     if(q && !name.includes(q) && !inv.includes(q) && !(lot.productId||'').toLowerCase().includes(q)) continue;
@@ -7821,7 +7832,20 @@ function renderInvLotList(){
   const keys=Object.keys(grouped);
   if(!keys.length){el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)">ไม่พบข้อมูล</div>`;return;}
 
-  let html='';
+  // สรุปรวมทั้งหมด
+  let grandRem=0, grandVal=0;
+  for(const pid of keys){
+    const g=grouped[pid];
+    grandRem+=g.lots.reduce((a,l)=>a+(l.qtyRemaining||0),0);
+    grandVal+=g.lots.reduce((a,l)=>a+(l.qtyRemaining||0)*(l.costPer||0),0);
+  }
+
+  let html=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;gap:24px;font-size:13px;flex-wrap:wrap">
+    <span>📦 สินค้า <b>${keys.length}</b> รายการ</span>
+    <span>คงเหลือรวม: <b style="color:var(--success)">${grandRem} ชิ้น</b></span>
+    <span>มูลค่ารวม: <b style="color:var(--primary)">${grandVal.toLocaleString('th-TH',{minimumFractionDigits:2})} ฿</b></span>
+  </div>`;
+
   for(const pid of keys){
     const g=grouped[pid];
     const totalRem=g.lots.reduce((a,l)=>a+(l.qtyRemaining||0),0);
