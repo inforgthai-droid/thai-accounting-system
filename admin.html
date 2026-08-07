@@ -685,6 +685,8 @@ function renderPage(key){
     }
   } else if(key==='infographic'){
     renderInfographic();
+  } else if(key==='inventorylots'){
+    renderInventoryLots();
   } else {
     if(map[key])el.innerHTML=map[key]();
   }
