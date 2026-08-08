@@ -4437,6 +4437,7 @@ function openBulkEditGroup(baseName){
 async function saveBulkEditGroup(){
   const rows=window._beRows||[];
   if(!rows.length){toast('ไม่มีข้อมูล variant','error');return;}
+  const masterName=(document.getElementById('be-name')?.value||'').trim();
   const unit=document.getElementById('be-unit')?.value||'ชิ้น';
   const category=document.getElementById('be-cat')?.value||'';
   const brand=document.getElementById('be-brand')?.value||'';
@@ -4457,6 +4458,7 @@ async function saveBulkEditGroup(){
     const batch=db.batch();
     validRows.forEach(r=>{
       const upd={
+        ...(masterName?{name:masterName}:{}),
         code:r.code,
         skuDemonTweeks:r.skuDemonTweeks||'',
         price:isNaN(masterPrice)?r.price:masterPrice,
@@ -4476,6 +4478,7 @@ async function saveBulkEditGroup(){
       if(!idMap[p.id]) return p;
       const r=idMap[p.id];
       return {...p,
+        ...(masterName?{name:masterName}:{}),
         code:r.code,
         skuDemonTweeks:r.skuDemonTweeks||'',
         price:isNaN(masterPrice)?r.price:masterPrice,
