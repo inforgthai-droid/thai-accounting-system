@@ -2827,15 +2827,20 @@ function renderSales(){
       </div>
 
       <!-- Quick date shortcuts -->
-      <div style="display:flex;gap:4px;flex-wrap:wrap">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
         <button onclick="S._salesDateFrom=S._salesDateTo=todayISO();renderPage('sales')"
-          style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:${df===today&&dt===today?'var(--accent)':'#fff'};color:${df===today&&dt===today?'#fff':'#888'};font-family:'Sarabun',sans-serif">วันนี้</button>
+          style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:${df===today&&dt===today?'var(--accent)':'var(--bg)'};color:${df===today&&dt===today?'#fff':'#888'};font-family:'Sarabun',sans-serif">วันนี้</button>
         <button onclick="S._salesDateFrom=todayISO().slice(0,7)+'-01';S._salesDateTo=todayISO();renderPage('sales')"
-          style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:${df&&df.slice(0,7)===thisMonth&&(!dt||dt===today)?'var(--accent)':'#fff'};color:${df&&df.slice(0,7)===thisMonth&&(!dt||dt===today)?'#fff':'#888'};font-family:'Sarabun',sans-serif">เดือนนี้</button>
+          style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:${df&&df.slice(0,7)===thisMonth&&(!dt||dt===today)?'var(--accent)':'var(--bg)'};color:${df&&df.slice(0,7)===thisMonth&&(!dt||dt===today)?'#fff':'#888'};font-family:'Sarabun',sans-serif">เดือนนี้</button>
         <button onclick="S._salesDateFrom=todayISO().slice(0,4)+'-01-01';S._salesDateTo=todayISO();renderPage('sales')"
-          style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif;background:#fff;color:#888">ปีนี้</button>
+          style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif;background:var(--bg);color:#888">ปีนี้</button>
+        <select onchange="(()=>{const v=this.value;if(!v)return;const[y,m]=v.split('-');const last=new Date(+y,+m,0).getDate();S._salesDateFrom=v+'-01';S._salesDateTo=v+'-'+String(last).padStart(2,'0');renderPage('sales');})()"
+          style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)">
+          <option value="">📅 เลือกเดือน</option>
+          ${(()=>{const opts=[];const d=new Date();for(let i=0;i<24;i++){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const val=y+'-'+m;const sel=(df&&df.slice(0,7)===val&&dt&&dt.slice(0,7)===val);opts.push(`<option value="${val}"${sel?' selected':''}>${y}/${m}</option>`);d.setMonth(d.getMonth()-1);}return opts.join('');})()}
+        </select>
         ${df||dt?`<button onclick="S._salesDateFrom=S._salesDateTo='';renderPage('sales')"
-          style="padding:4px 10px;border:1px solid var(--danger);border-radius:6px;font-size:11px;cursor:pointer;background:#fff;color:var(--danger);font-family:'Sarabun',sans-serif">✕ ล้าง</button>`:''}
+          style="padding:4px 10px;border:1px solid var(--danger);border-radius:6px;font-size:11px;cursor:pointer;background:var(--bg);color:var(--danger);font-family:'Sarabun',sans-serif">✕ ล้าง</button>`:''}
       </div>
     </div>
   </div>
