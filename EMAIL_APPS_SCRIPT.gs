@@ -301,10 +301,14 @@ function _pdfRows(items) {
 
 /** สร้างใบเสร็จ A4 เป็น PDF blob */
 function _receiptPdf(d) {
-  var vat      = Number(d.vat) || 0;
-  var total    = Number(d.total) || 0;
-  var subtotal = Number(d.subtotal) || 0;
-  var baseAmt  = total - vat;
+  var vat              = Number(d.vat) || 0;
+  var total            = Number(d.total) || 0;
+  var subtotal         = Number(d.subtotal) || 0;
+  var couponDiscount   = Number(d.couponDiscount) || 0;
+  var couponCode       = d.couponCode || '';
+  var nextCouponCode   = d.nextCouponCode || '';
+  var nextCouponExpiry = d.nextCouponExpiry || '';
+  var baseAmt          = total - vat;
 
   var bcUri = _barcodeUri(d.orderNo || '');
   var qrUri = _qrUri('https://' + SHOP_SITE + '/');
@@ -378,6 +382,9 @@ function _receiptPdf(d) {
     '<tr><td colspan="4" style="border:none"></td>' +
       '<td style="text-align:right;color:#555;border-top:1px solid #e0e0e0;padding:5px 8px">ยอดรวม</td>' +
       '<td style="text-align:right;border-top:1px solid #e0e0e0;padding:5px 8px">' + _money(subtotal) + '</td></tr>' +
+    (couponDiscount > 0
+      ? '<tr><td colspan="4" style="border:none"></td><td style="text-align:right;color:#555;padding:5px 8px">โค้ด ' + couponCode + '</td><td style="text-align:right;padding:5px 8px;color:#ef4444">-' + _money(couponDiscount) + '</td></tr>'
+      : '') +
     (vat > 0
       ? '<tr><td colspan="4" style="border:none"></td><td style="text-align:right;color:#555;padding:5px 8px">ราคาก่อน VAT</td><td style="text-align:right;padding:5px 8px">' + _money(baseAmt) + '</td></tr>' +
         '<tr><td colspan="4" style="border:none"></td><td style="text-align:right;color:#555;padding:5px 8px">VAT ' + VAT_RATE + '%</td><td style="text-align:right;padding:5px 8px">' + _money(vat) + '</td></tr>'
@@ -404,6 +411,19 @@ function _receiptPdf(d) {
   '<span style="font-weight:bold">ขอบคุณที่ใช้บริการ / Thank you for your purchase</span>' +
   '<div style="color:#888;font-size:11px;margin-top:4px">โทร ' + SHOP_TEL + ' | Line ID: ' + SHOP_LINE + ' | ' + SHOP_EMAIL + '</div>' +
 '</div>' +
+// NEXT COUPON SECTION
+(nextCouponCode
+  ? '<div style="margin:14px auto;max-width:260px;padding:8px 14px;border:1.5px dashed #c00;border-radius:6px;text-align:center">' +
+      '<div style="font-size:9px;color:#c00;font-weight:700;letter-spacing:.5px;margin-bottom:3px">-- โค้ดส่วนลดพิเศษ --</div>' +
+      '<div style="font-size:20px;font-weight:800;letter-spacing:4px;color:#000;margin:3px 0">' + nextCouponCode + '</div>' +
+      '<div style="font-size:9px;color:#c00;margin-bottom:3px">ลด 5% สำหรับการสั่งซื้อครั้งถัดไป</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:8px;color:#888;border-top:0.5px dashed #ddd;padding-top:3px;margin-top:2px">' +
+        '<span>ใช้ได้ครั้งเดียว</span>' +
+        (nextCouponExpiry ? '<span>หมดอายุ ' + nextCouponExpiry + '</span>' : '') +
+      '</div>' +
+      '<div style="font-size:8px;color:#888;margin-top:1px">shop.racinggarage.net หรือ POS หน้าร้าน</div>' +
+    '</div>'
+  : '') +
 
 // BARCODE + QR
 '<table style="width:100%;border:none;margin-top:18px;border-top:1px dashed #ccc;padding-top:14px"><tr>' +
