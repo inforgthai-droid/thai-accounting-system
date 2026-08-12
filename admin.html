@@ -501,6 +501,54 @@ let PI=[];
 const SEED={};
 const ts=()=>firebase.firestore.FieldValue.serverTimestamp();
 const inc=n=>firebase.firestore.FieldValue.increment(n);
+
+// ── Discount Coupon System ──
+function _genCouponCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let r='';for(let i=0;i<5;i++)r+=chars[Math.floor(Math.random()*chars.length)];
+  return'RG5-'+r;
+}
+async function createReceiptCoupon(saleId,saleDate){
+  let code=_genCouponCode();
+  // ป้องกัน collision
+  for(let i=0;i<5;i++){
+    const ex=await db.collection('discountCodes').where('code','==',code).limit(1).get();
+    if(ex.empty)break;
+    code=_genCouponCode();
+  }
+  const expDate=new Date(saleDate);
+  expDate.setMonth(expDate.getMonth()+1);
+  const expISO=expDate.toISOString().split('T')[0];
+  await db.collection('discountCodes').add({
+    code,discount:5,used:false,
+    expireDate:expISO,
+    createdFromSale:saleId,
+    createdAt:ts()
+  });
+  return{code,expireDate:expISO};
+}
+async function validateCoupon(code){
+  if(!code)return null;
+  const snap=await db.collection('discountCodes').where('code','==',code.trim().toUpperCase()).limit(1).get();
+  if(snap.empty)return{valid:false,msg:'ไม่พบโค้ดนี้'};
+  const d=snap.docs[0];const dat=d.data();
+  if(dat.used)return{valid:false,msg:'โค้ดนี้ถูกใช้แล้ว'};
+  const today=todayISO();
+  if(dat.expireDate&&dat.expireDate<today)return{valid:false,msg:'โค้ดหมดอายุแล้ว ('+dat.expireDate+')'};
+  return{valid:true,discount:dat.discount||5,docId:d.id,code:dat.code,expireDate:dat.expireDate};
+}
+async function markCouponUsed(docId,orderId){
+  await db.collection('discountCodes').doc(docId).update({used:true,usedAt:ts(),usedByOrder:orderId});
+}
+async function applyPosCoupon(){
+  const inp=document.getElementById('pos-coupon-input')||document.getElementById('pos-coupon-input-m');
+  const code=(inp?.value||S._posCouponCode||'').trim().toUpperCase();
+  if(!code)return;
+  S._posCouponCode=code;
+  const result=await validateCoupon(code);
+  S._posCouponInfo=result;
+  updatePOSCart();
+}
 async function addFB(col,data){return (await db.collection(col).add({...data,createdAt:ts()})).id;}
 async function updateFB(col,id,data){await db.collection(col).doc(id).update({...data,updatedAt:ts()});}
 async function deleteFB(col,id){await db.collection(col).doc(id).delete();}
@@ -1865,6 +1913,17 @@ function renderPOS(){
             <span style="color:var(--danger);font-weight:600">-${fmt(discAmt)}</span>
           </div>
         </div>
+        <div class="pos-row" style="align-items:center">
+          <span style="font-size:11px">โค้ดส่วนลด</span>
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="text" id="pos-coupon-input" value="${S._posCouponCode||''}" placeholder="RG5-XXXXX"
+              style="width:90px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:12px;font-family:'Sarabun',sans-serif;text-transform:uppercase"
+              onchange="S._posCouponCode=this.value.trim().toUpperCase();S._posCouponInfo=null">
+            <button onclick="applyPosCoupon()" style="padding:2px 8px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">ใช้</button>
+            ${S._posCouponInfo?.valid?`<span style="font-size:11px;color:#16a34a;font-weight:700">✓ -${S._posCouponInfo.discount}%</span>`:''}
+            ${S._posCouponInfo?.valid===false?`<span style="font-size:10px;color:#dc2626">${S._posCouponInfo.msg}</span>`:''}
+          </div>
+        </div>
         <!-- VAT TOGGLE -->
         <div style="background:#f8fafc;border-radius:8px;padding:8px;margin:4px 0;border:1px solid var(--border)">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -1985,7 +2044,7 @@ function cartSetPrice(i,v){
   updatePOSCart();
 }
 function cartRemove(i){S.cart.splice(i,1);updatePOSCart();}
-function cartClear(){S.cart=[];S.posDiscount=0;S.posNote='';S.posPayMethod='cash';S.posPayMode='full';S.posInstallMonth=3;S.posSplit1Amt=0;updatePOSCart();}
+function cartClear(){S.cart=[];S.posDiscount=0;S.posNote='';S.posPayMethod='cash';S.posPayMode='full';S.posInstallMonth=3;S.posSplit1Amt=0;S._posCouponCode='';S._posCouponInfo=null;updatePOSCart();}
 
 function updatePOSCart(){
   // อัปเดตเฉพาะ cart panel ไม่ re-render ทั้งหน้า POS
@@ -1998,7 +2057,9 @@ function updatePOSCart(){
   const totalCost=S.cart.reduce((a,b)=>a+b.cost*b.qty,0);
   const disc=parseFloat(S.posDiscount)||0;
   const discAmt=disc>0?(disc<=100?sub*disc/100:disc):0;
-  const afterDisc=sub-discAmt;
+  const couponDisc=(S._posCouponInfo?.valid)?S._posCouponInfo.discount||0:0;
+  const couponAmt=couponDisc>0?Math.round((sub-discAmt)*couponDisc/100):0;
+  const afterDisc=sub-discAmt-couponAmt;
   const vatR=S.company.vatRate??7;
   const vatIncl=S.posVatMode!=='exclusive';
   const applyVat=S.posApplyVat!==false&&vatR>0;
@@ -2055,6 +2116,17 @@ function updatePOSCart(){
           style="width:55px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px 4px;font-size:12px;font-family:'Sarabun',sans-serif">
         <span style="font-size:11px;color:var(--muted)">${disc>0&&disc<=100?'%':''}</span>
         <span style="color:var(--danger);font-weight:600">-${fmt(discAmt)}</span>
+      </div>
+    </div>
+    <div class="pos-row" style="align-items:center">
+      <span style="font-size:11px">โค้ดส่วนลด</span>
+      <div style="display:flex;gap:4px;align-items:center">
+        <input type="text" id="pos-coupon-input-m" value="${S._posCouponCode||''}" placeholder="RG5-XXXXX"
+          style="width:90px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:12px;font-family:'Sarabun',sans-serif;text-transform:uppercase"
+          onchange="S._posCouponCode=this.value.trim().toUpperCase();S._posCouponInfo=null">
+        <button onclick="applyPosCoupon()" style="padding:2px 8px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">ใช้</button>
+        ${S._posCouponInfo?.valid?`<span style="font-size:11px;color:#16a34a;font-weight:700">✓ -${S._posCouponInfo.discount}%</span>`:''}
+        ${S._posCouponInfo?.valid===false?`<span style="font-size:10px;color:#dc2626">${S._posCouponInfo.msg}</span>`:''}
       </div>
     </div>
     <div style="background:#f8fafc;border-radius:8px;padding:8px;margin:4px 0;border:1px solid var(--border)">
@@ -2173,7 +2245,9 @@ async function checkout(){
   const totalCost=S.cart.reduce((a,b)=>a+b.cost*b.qty,0);
   const disc=parseFloat(S.posDiscount)||0;
   const discAmt=disc>0?(disc<=100?sub*disc/100:disc):0;
-  const afterDisc=sub-discAmt;
+  const couponDisc=(S._posCouponInfo?.valid)?S._posCouponInfo.discount||0:0;
+  const couponAmt=couponDisc>0?Math.round((sub-discAmt)*couponDisc/100):0;
+  const afterDisc=sub-discAmt-couponAmt;
   const vatR=(S.company.vatRate??7);
   const vatIncl=S.posVatMode!=='exclusive';
   const applyVat=S.posApplyVat!==false&&vatR>0;
@@ -2194,13 +2268,18 @@ async function checkout(){
     split1Method:isSplit?S.posSplit1Method:null,split1Amt:isSplit?S.posSplit1Amt:null,
     split2Method:isSplit?S.posSplit2Method:null,split2Amt:isSplit?(total-S.posSplit1Amt):null,
     items:S.cart.map(x=>({pid:x.pid,code:x.code,name:x.name,unit:x.unit,price:x.price,cost:x.cost,qty:x.qty,subtotal:x.price*x.qty})),
-    subtotal:sub,discount:discAmt,vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total,totalCost,profit:calcNetProfit(total,totalCost,payMethod,shopeeRate,installMonth)};
+    subtotal:sub,discount:discAmt,couponCode:S._posCouponInfo?.valid?S._posCouponInfo.code:null,couponDiscount:couponAmt||null,
+    vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total,totalCost,profit:calcNetProfit(total,totalCost,payMethod,shopeeRate,installMonth)};
   try{
     const batch=db.batch();
     const sRef=db.collection('sales').doc();
     batch.set(sRef,{...saleData,createdAt:ts()});
     S.cart.forEach(item=>batch.update(db.collection('products').doc(item.pid),{stock:inc(-item.qty)}));
     await batch.commit();
+    // Mark coupon used (background)
+    if(S._posCouponInfo?.valid&&S._posCouponInfo.docId){
+      markCouponUsed(S._posCouponInfo.docId,docNo).catch(e=>console.warn('coupon mark warn:',e));
+    }
     S.sales.push({id:sRef.id,...saleData});
     S.cart.forEach(item=>{const p=S.products.find(x=>x.id===item.pid);if(p)p.stock-=item.qty;});
     toast('บันทึกการขาย '+docNo+' สำเร็จ ✓','success');
@@ -2323,6 +2402,7 @@ function showReceiptModal(sale){
       <table style="width:100%;border-collapse:collapse">
         <tr><td colspan="2" style="font-size:12px">ยอดรวม</td><td align="right" style="font-size:12px">${fmtM(sale.subtotal)}</td></tr>
         ${(sale.discount||0)>0?`<tr><td colspan="2" style="font-size:12px">ส่วนลด</td><td align="right" style="font-size:12px;color:red">-${fmtM(sale.discount)}</td></tr>`:''}
+        ${(sale.couponDiscount||0)>0?`<tr><td colspan="2" style="font-size:12px">โค้ด ${sale.couponCode||''}</td><td align="right" style="font-size:12px;color:red">-${fmtM(sale.couponDiscount)}</td></tr>`:''}
         ${vatSection}
         <tr style="font-weight:800;font-size:15px;border-top:1.5px solid #000">
           <td colspan="2" style="padding-top:4px">รวมสุทธิ</td>
@@ -2348,6 +2428,16 @@ function showReceiptModal(sale){
         <div style="font-weight:700;font-size:13px">${c.receiptFooter||'ขอบคุณที่ใช้บริการ'}</div>
         ${c.receiptFooter2?`<div style="font-size:11px;color:#555">${c.receiptFooter2}</div>`:''}
         <div style="font-size:10px;color:#888">Thank you</div>
+      </div>
+      <div id="receipt-coupon-wrap" style="margin-top:6px;padding:6px 8px;border:1.5px dashed #c00;border-radius:4px;text-align:center;display:none">
+        <div style="font-size:9px;color:#c00;font-weight:700;letter-spacing:.5px;margin-bottom:2px">-- โค้ดส่วนลดพิเศษ --</div>
+        <div id="receipt-coupon-code" style="font-size:16px;font-weight:800;letter-spacing:3px;color:#000;margin:2px 0"></div>
+        <div style="font-size:9px;color:#c00;margin-bottom:3px">ลด 5% สำหรับการสั่งซื้อครั้งถัดไป</div>
+        <div style="display:flex;justify-content:space-between;font-size:8px;color:#888;border-top:0.5px dashed #ddd;padding-top:3px;margin-top:2px">
+          <span>ใช้ได้ครั้งเดียว</span>
+          <span>หมดอายุ <span id="receipt-coupon-exp"></span></span>
+        </div>
+        <div style="font-size:8px;color:#888;margin-top:1px">shop.racinggarage.net หรือ POS หน้าร้าน</div>
       </div>
       <div style="text-align:center;margin-top:8px;padding-top:6px;border-top:1px dashed #000">
         <div style="font-size:9px;color:#888;margin-bottom:3px">SCAN TO VERIFY RECEIPT</div>
@@ -2403,6 +2493,20 @@ function showReceiptModal(sale){
       s.onload=makeQR;
       document.head.appendChild(s);
     }
+    // สร้างโค้ดส่วนลดอัตโนมัติ
+    createReceiptCoupon(sale.id||sale.docNo, sale.date||todayISO()).then(({code,expireDate})=>{
+      window._lastCoupon={code,expireDate};
+      const wrap=document.getElementById('receipt-coupon-wrap');
+      const codeEl=document.getElementById('receipt-coupon-code');
+      const expEl=document.getElementById('receipt-coupon-exp');
+      if(wrap){wrap.style.display='block';}
+      if(codeEl){codeEl.textContent=code;}
+      if(expEl){
+        // แปลง YYYY-MM-DD → DD/MM/YYYY+543
+        const [y,m,d]=expireDate.split('-');
+        expEl.textContent=d+'/'+m+'/'+(+y+543);
+      }
+    }).catch(e=>console.warn('coupon create warn:',e));
   },200);
 }
 
