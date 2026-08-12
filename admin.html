@@ -3362,6 +3362,7 @@ th.r{text-align:right}th.c{text-align:center}
       <td style="text-align:right;border-top:1px solid #e0e0e0;padding:5px 8px">${fmtM(s.subtotal||0)}</td>
     </tr>
     ${(s.discount||0)>0?`<tr><td colspan="4"></td><td style="text-align:right;color:#555;padding:5px 8px">ส่วนลด</td><td style="text-align:right;padding:5px 8px;color:#ef4444">-${fmtM(s.discount)}</td></tr>`:''}
+    ${(s.couponDiscount||0)>0?`<tr><td colspan="4"></td><td style="text-align:right;color:#555;padding:5px 8px">โค้ด ${s.couponCode||''}</td><td style="text-align:right;padding:5px 8px;color:#ef4444">-${fmtM(s.couponDiscount)}</td></tr>`:''}
     ${applyVat?`<tr><td colspan="4"></td><td style="text-align:right;color:#555;padding:5px 8px">ราคาก่อน VAT</td><td style="text-align:right;padding:5px 8px">${fmtM(baseAmt)}</td></tr>
     <tr><td colspan="4"></td><td style="text-align:right;color:#555;padding:5px 8px">VAT ${vatR}%</td><td style="text-align:right;padding:5px 8px">${fmtM(s.vat)}</td></tr>`:''}
     <tr class="total-line"><td colspan="4" style="font-size:12px;color:#555;padding:6px 8px"><i>${bahtText(s.total||0)}</i></td>
@@ -9893,7 +9894,9 @@ async function printFullReceipt(){
   const sub=S.cart.reduce((a,b)=>a+b.price*b.qty,0);
   const disc=parseFloat(S.posDiscount)||0;
   const discAmt=disc>0?(disc<=100?sub*disc/100:disc):0;
-  const afterDisc=sub-discAmt;
+  const couponDiscPct=(S._posCouponInfo?.valid)?S._posCouponInfo.discount||0:0;
+  const couponAmt=couponDiscPct>0?Math.round((sub-discAmt)*couponDiscPct/100):0;
+  const afterDisc=sub-discAmt-couponAmt;
   const vatR=c.vatRate||7;
   const vatIncl=S.posVatMode!=='exclusive';
   const applyVat=S.posApplyVat!==false&&vatR>0;
@@ -10048,6 +10051,11 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
         <td colspan="4"></td>
         <td style="text-align:right;color:#555">ส่วนลด</td>
         <td style="text-align:right;color:#ef4444">-${fmtM(discAmt)}</td>
+      </tr>`:''}
+      ${couponAmt>0?`<tr class="tbl-foot">
+        <td colspan="4"></td>
+        <td style="text-align:right;color:#555">โค้ด ${S._posCouponInfo?.code||''}</td>
+        <td style="text-align:right;color:#ef4444">-${fmtM(couponAmt)}</td>
       </tr>`:''}
       ${applyVat?`<tr class="tbl-foot">
         <td colspan="4"></td>
