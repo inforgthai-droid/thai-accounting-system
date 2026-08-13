@@ -319,6 +319,8 @@ function _receiptPdf(d) {
 
   var html =
 '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบเสร็จ ' + (d.orderNo || '') + '</title>' +
+'<link rel="preconnect" href="https://fonts.googleapis.com">' +
+'<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700;800&display=swap" rel="stylesheet">' +
 '<style>' +
 '*{box-sizing:border-box;margin:0;padding:0}' +
 '@page{size:A4;margin:15mm}' +
@@ -419,7 +421,7 @@ function _receiptPdf(d) {
       '<div style="font-size:9px;color:#c00;margin-bottom:3px">ลด 5% สำหรับการสั่งซื้อครั้งถัดไป</div>' +
       '<div style="display:flex;justify-content:space-between;font-size:8px;color:#888;border-top:0.5px dashed #ddd;padding-top:3px;margin-top:2px">' +
         '<span>ใช้ได้ครั้งเดียว</span>' +
-        (nextCouponExpiry ? '<span>หมดอายุ ' + nextCouponExpiry + '</span>' : '') +
+        (nextCouponExpiry ? (function(d){var p=d.split('-');return '<span>หมดอายุ '+p[2]+'/'+p[1]+'/'+(Number(p[0])+543)+'</span>';})(nextCouponExpiry) : '') +
       '</div>' +
       '<div style="font-size:8px;color:#888;margin-top:1px">shop.racinggarage.net หรือ POS หน้าร้าน</div>' +
     '</div>'
