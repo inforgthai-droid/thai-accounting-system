@@ -3740,7 +3740,7 @@ function renderProducts(){
   const cats=sortCatsByPriority([...new Set(S.products.map(p=>p.category).filter(Boolean))]);
 
   let list=S.products;
-  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase()));
+  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')+(p.skuDemonTweeks||'')).toLowerCase().includes(q.toLowerCase()));
   if(catFilter) list=list.filter(p=>p.category===catFilter);
   list=applyListSort(list,S._prodSortKey,S._prodSortDir);
 
@@ -3769,7 +3769,7 @@ function renderProducts(){
   <!-- Toolbar -->
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
     <!-- Search — ใช้ prodSearch() ไม่ re-render ทั้งหน้า -->
-    <input class="fc" id="prod-search-input" placeholder="ค้นหาชื่อ รหัส หมวด / สแกน Barcode..." value="${q}"
+    <input class="fc" id="prod-search-input" placeholder="ค้นหาชื่อ รหัส หมวด SKU DemonTweeks / สแกน Barcode..." value="${q}"
       oninput="prodSearch(this.value)"
       onkeydown="prodScanKey(event,this)"
       style="width:260px;padding:7px 10px;font-size:13px"
@@ -3878,7 +3878,7 @@ function toggleProdView(){
   const btn = document.getElementById('prod-view-btn');
   let vlist=S.products.filter(p=>{
       const q=S._prodQ||''; const cat=S._prodCat||'';
-      if(q && !(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase())) return false;
+      if(q && !(p.name+p.code+(p.category||'')+(p.skuDemonTweeks||'')).toLowerCase().includes(q.toLowerCase())) return false;
       if(cat && p.category!==cat) return false;
       return true;
     });
@@ -3935,7 +3935,7 @@ function _updateProdTable(){
   const q=S._prodQ||'';
   const catFilter=S._prodCat||'';
   let list=S.products;
-  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase()));
+  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')+(p.skuDemonTweeks||'')).toLowerCase().includes(q.toLowerCase()));
   if(catFilter) list=list.filter(p=>p.category===catFilter);
   list=applyListSort(list,S._prodSortKey,S._prodSortDir);
 
@@ -5254,7 +5254,7 @@ function renderStock(){
 
   // Filter list
   let list=S.products;
-  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase()));
+  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')+(p.skuDemonTweeks||'')).toLowerCase().includes(q.toLowerCase()));
   if(statusF==='low') list=list.filter(p=>p.stock>0&&p.stock<=(p.minStock||5));
   if(statusF==='out') list=list.filter(p=>p.stock<=0);
   if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
@@ -5420,7 +5420,7 @@ function toggleStockView(){
   const btn = document.getElementById('stock-view-btn');
   const q=S._stockQ||''; const statusF=S._stockStatus||'all'; 
   let list=S.products;
-  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase()));
+  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')+(p.skuDemonTweeks||'')).toLowerCase().includes(q.toLowerCase()));
   if(statusF==='low') list=list.filter(p=>p.stock>0&&p.stock<=(p.minStock||5));
   if(statusF==='out') list=list.filter(p=>p.stock<=0);
   if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
@@ -5449,7 +5449,7 @@ function _updateStockTable(){
   const q=S._stockQ||'';
   const statusF=S._stockStatus||'all';
   let list=S.products;
-  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')).toLowerCase().includes(q.toLowerCase()));
+  if(q) list=list.filter(p=>(p.name+p.code+(p.category||'')+(p.skuDemonTweeks||'')).toLowerCase().includes(q.toLowerCase()));
   if(statusF==='low') list=list.filter(p=>p.stock>0&&p.stock<=(p.minStock||5));
   if(statusF==='out') list=list.filter(p=>p.stock<=0);
   if(statusF==='ok') list=list.filter(p=>p.stock>(p.minStock||5));
