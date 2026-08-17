@@ -7295,6 +7295,32 @@ function renderSettings(){
       </div>
     </div>
 
+    <!-- Welcome Coupon -->
+    <div class="card">
+      <div style="font-weight:700;color:var(--primary);margin-bottom:1rem;font-size:15px">🎁 โค้ดต้อนรับลูกค้าใหม่ (First Order Coupon)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div class="fm" style="grid-column:1/-1"><label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="cfg-welcomeEnabled" ${c.welcomeCouponEnabled?'checked':''} style="width:16px;height:16px;cursor:pointer">
+          เปิดใช้งาน — แจกโค้ดส่วนลด 5% ให้ลูกค้าที่ยังไม่เคยสั่งซื้อ
+        </label></div>
+        <div class="fm"><label class="fl">จำนวนโค้ดที่แจกได้ทั้งหมด</label>
+          <input class="fc" id="cfg-welcomeLimit" type="number" min="1" value="${c.welcomeCouponLimit||100}" placeholder="100">
+        </div>
+        <div class="fm"><label class="fl">อายุโค้ด</label>
+          <select class="fc" id="cfg-welcomeExpiry">
+            <option value="7" ${c.welcomeCouponExpiry==7?'selected':''}>7 วัน</option>
+            <option value="30" ${(c.welcomeCouponExpiry==30||!c.welcomeCouponExpiry)?'selected':''}>30 วัน</option>
+            <option value="60" ${c.welcomeCouponExpiry==60?'selected':''}>60 วัน</option>
+            <option value="90" ${c.welcomeCouponExpiry==90?'selected':''}>90 วัน</option>
+            <option value="0" ${c.welcomeCouponExpiry==0?'selected':''}>ไม่มีวันหมดอายุ</option>
+          </select>
+        </div>
+        <div class="fm"><label class="fl">แจกไปแล้ว</label>
+          <input class="fc" value="${c.welcomeCouponIssued||0}" disabled style="opacity:.6">
+        </div>
+      </div>
+    </div>
+
     <!-- ใบเสร็จ / บิล -->
     <div class="card">
       <div style="font-weight:700;color:var(--primary);margin-bottom:1rem;font-size:15px">🧾 ใบเสร็จ & บิล</div>
@@ -7691,6 +7717,9 @@ async function saveSettings(previewOnly=false){
     promptpay:get('cfg-promptpay'),bankName:get('cfg-bank'),
     bankAccount:get('cfg-bankacct'),bankAccountName:get('cfg-bankname'),
     omiseKey:get('cfg-omise'),
+    welcomeCouponEnabled:chk('cfg-welcomeEnabled')??false,
+    welcomeCouponLimit:parseInt(get('cfg-welcomeLimit')||'100'),
+    welcomeCouponExpiry:parseInt(get('cfg-welcomeExpiry')||'30'),
     qrCodeUrl:(()=>{
       if(window._qrBase64==='__clear__') return '';
       if(window._qrBase64) return window._qrBase64;
