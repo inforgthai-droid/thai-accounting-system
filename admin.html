@@ -293,6 +293,8 @@ tbody tr:hover{background:#f0f9ff}
     <div id="p-webdesign" class="page"></div>
     <div id="p-importtax" class="page"></div>
     <div id="p-inventorylots" class="page"></div>
+    <div id="p-members" class="page"></div>
+    <div id="p-promotions" class="page"></div>
   </div>
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -686,6 +688,7 @@ const MENU=[
   {g:'ร้านค้า'},{key:'dashboard',label:'ภาพรวม',icon:'📊',short:'ภาพรวม'},{key:'pos',label:'ขายหน้าร้าน (POS)',icon:'🛒',short:'ขายหน้าร้าน'},{key:'rental',label:'เช่าอุปกรณ์',icon:'🏎️',short:'เช่า'},{key:'sales',label:'ประวัติการขาย',icon:'📑',short:'ประวัติ'},
   {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦',short:'สินค้า'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️',short:'หมวดหมู่'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭',short:'สต็อก'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚',short:'ซื้อเข้า'},{key:'inventorylots',label:'Lot คงเหลือ (FIFO)',icon:'📥',short:'Lot'},
   {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢',short:'ลูกค้า'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️',short:'ซัพพลาย'},
+  {g:'สมาชิก'},{key:'members',label:'จัดการสมาชิก',icon:'👤',short:'สมาชิก'},{key:'promotions',label:'โปรโมชั่น',icon:'🎁',short:'โปรโมชั่น'},
   {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'expenses',label:'ค่าใช้จ่าย',icon:'💸',short:'ค่าใช้จ่าย'},{key:'monthlyreport',label:'รายงานส่งบัญชี',icon:'📊',short:'ส่งบัญชี'},{key:'quotation',label:'ใบเสนอราคา',icon:'📋',short:'ใบเสนอราคา'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
   {g:'ร้านค้าออนไลน์'},{key:'orders',label:'ออเดอร์ออนไลน์',icon:'🛍️',short:'ออเดอร์'},{key:'shipping',label:'จัดส่งสินค้า',icon:'📦',short:'จัดส่ง'},{key:'webdesign',label:'ตกแต่งร้านค้า',icon:'🎨',short:'ตกแต่ง'},
   {g:'วิเคราะห์'},{key:'infographic',label:'อินโฟกราฟิก',icon:'📊',short:'อินโฟ'},{key:'importtax',label:'คำนวณภาษีนำเข้า',icon:'🧮',short:'ภาษีนำเข้า'},
@@ -723,7 +726,7 @@ function toggleSB(){sidebarOpen=!sidebarOpen;document.getElementById('sidebar').
 function renderPage(key){
   const el=document.getElementById('p-'+key);
   if(!el)return;
-  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,expenses:renderExpenses,monthlyreport:renderMonthlyReport,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign,importtax:renderImportTax,inventorylots:renderInventoryLots};
+  const map={dashboard:renderDashboard,pos:renderPOS,rental:renderRental,sales:renderSales,products:renderProducts,stock:renderStock,purchases:renderPurchases,customers:renderCustomers,suppliers:renderSuppliers,journal:renderJournal,expenses:renderExpenses,monthlyreport:renderMonthlyReport,quotation:renderQuotation,invoice:renderInvoice,vat:renderVat,payroll:renderPayroll,financial:renderFinancial,taxforms:renderTaxForms,settings:renderSettings,infographic:renderInfographic,orders:renderOrders,import:renderImport,categories:renderCategories,shipping:renderShippingPage,webdesign:renderWebDesign,importtax:renderImportTax,inventorylots:renderInventoryLots,members:renderMembers,promotions:renderPromotions};
   if(key==='sales'){
     // โหลด rentals ก่อนถ้ายังไม่มี แล้วค่อย render
     if(_rentals.length===0){
@@ -1831,7 +1834,9 @@ function renderPOS(){
   const totalCost=S.cart.reduce((a,b)=>a+b.cost*b.qty,0);
   const disc=parseFloat(S.posDiscount)||0;
   const discAmt=disc>0?(disc<=100?sub*disc/100:disc):0;
-  const afterDisc=sub-discAmt;
+  const couponDiscR=(S._posCouponInfo?.valid)?S._posCouponInfo.discount||0:0;
+  const couponAmt=couponDiscR>0?Math.round((sub-discAmt)*couponDiscR/100):0;
+  const afterDisc=sub-discAmt-couponAmt;
   const vatR=S.company.vatRate??7;
   const vatIncl=S.posVatMode!=='exclusive';
   const applyVat=S.posApplyVat!==false && vatR>0;
@@ -1840,6 +1845,8 @@ function renderPOS(){
     if(vatIncl){ vatAmt=Math.round(afterDisc*(vatR/(100+vatR))); total=afterDisc; }
     else { vatAmt=Math.round(afterDisc*vatR/100); total=afterDisc+vatAmt; }
   }
+  const redeemAmt=Math.min(S._posRedeemPoints||0,total);
+  const totalAfterRedeem=Math.max(0,total-redeemAmt);
   const baseAmt=vatIncl?total-vatAmt:afterDisc;
   return`<div class="pos-wrap">
     <div class="pos-left">
@@ -1950,8 +1957,9 @@ function renderPOS(){
           <div style="font-size:11px;color:var(--muted)">ราคาก่อนภาษี ${fmt(baseAmt)} + VAT ${fmt(vatAmt)} = ${fmt(total)}</div>`
           :'<div style="font-size:11px;color:var(--muted)">ไม่คิด VAT</div>'}
         </div>
-        <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>${fmt(total)}</span></div>
-        <div class="pos-row" style="color:#10b981;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>${fmt(afterDisc-totalCost)}</span></div>
+        ${redeemAmt>0?`<div class="pos-row" style="color:#22c55e;font-weight:700"><span>🌟 ใช้คะแนนสมาชิก</span><span>-${fmt(redeemAmt)}</span></div>`:''}
+        <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>${fmt(totalAfterRedeem)}</span></div>
+        <div class="pos-row" style="color:#10b981;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>${fmt(afterDisc-totalCost-redeemAmt)}</span></div>
         <div style="margin-bottom:8px">
           <label class="fl">วันที่ขาย</label>
           <input type="date" class="fc" id="pos-sale-date"
@@ -1965,6 +1973,36 @@ function renderPOS(){
         <div style="margin-bottom:8px">
           <label class="fl">ลูกค้า / หมายเหตุ</label>
           <input class="fc" value="${S.posNote}" onchange="S.posNote=this.value" placeholder="ลูกค้าทั่วไป">
+        </div>
+        <!-- MEMBER LOOKUP -->
+        <div style="margin-bottom:8px;background:#1e293b;border-radius:8px;padding:8px">
+          <label class="fl" style="margin-bottom:4px">👤 เบอร์สมาชิก</label>
+          ${S._posMember?`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#0f172a;border-radius:6px">
+            <div>
+              <div style="font-weight:700;font-size:13px">${S._posMember.name}</div>
+              <div style="font-size:11px;color:#aaa">${S._posMember.phone} | คะแนน: <b style="color:#22c55e">${S._posMemberPoints||0} pt</b></div>
+            </div>
+            <button onclick="posRemoveMember()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px">✕</button>
+          </div>
+          ${(S._posMemberPoints||0)>=100?`
+          <div style="margin-top:6px">
+            <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px">ใช้คะแนน (ขั้นต่ำ 100, 1pt=1฿) มีทั้งหมด ${S._posMemberPoints} pt</label>
+            <div style="display:flex;gap:4px">
+              <input type="number" id="pos-redeem-input" min="100" max="${Math.min(S._posMemberPoints,total||0)}" step="100"
+                value="${S._posRedeemPoints||''}" placeholder="0"
+                style="flex:1;border:1px solid #334155;background:#0f172a;color:#fff;border-radius:6px;padding:4px 8px;font-size:13px;font-family:'Sarabun',sans-serif"
+                oninput="S._posRedeemPoints=Math.min(parseInt(this.value)||0,${S._posMemberPoints});updatePOSCart()">
+              <button onclick="posRedeemMax(${Math.min(S._posMemberPoints,Math.floor(total||0))})" style="padding:4px 10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">ใช้ทั้งหมด</button>
+            </div>
+            ${(S._posRedeemPoints||0)>0?`<div style="font-size:11px;color:#22c55e;margin-top:3px">✓ หักจากยอด ${S._posRedeemPoints} บาท</div>`:''}
+          </div>`:'<div style="margin-top:4px;font-size:11px;color:#aaa">คะแนนไม่ถึง 100 pt (ยังใช้ไม่ได้)</div>'}
+          `:`
+          <div style="display:flex;gap:4px">
+            <input class="fc" id="pos-member-phone" placeholder="0XXXXXXXXX" maxlength="10"
+              style="flex:1" onkeydown="if(event.key==='Enter')posLookupMember()">
+            <button onclick="posLookupMember()" style="padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Sarabun',sans-serif;flex-shrink:0">ค้นหา</button>
+          </div>`}
         </div>
         <div style="margin-bottom:10px">
           <label class="fl" style="margin-bottom:4px">รูปแบบชำระเงิน</label>
@@ -2044,7 +2082,7 @@ function cartSetPrice(i,v){
   updatePOSCart();
 }
 function cartRemove(i){S.cart.splice(i,1);updatePOSCart();}
-function cartClear(){S.cart=[];S.posDiscount=0;S.posNote='';S.posPayMethod='cash';S.posPayMode='full';S.posInstallMonth=3;S.posSplit1Amt=0;S._posCouponCode='';S._posCouponInfo=null;updatePOSCart();}
+function cartClear(){S.cart=[];S.posDiscount=0;S.posNote='';S.posPayMethod='cash';S.posPayMode='full';S.posInstallMonth=3;S.posSplit1Amt=0;S._posCouponCode='';S._posCouponInfo=null;S._posMember=null;S._posMemberPoints=0;S._posRedeemPoints=0;updatePOSCart();}
 
 function updatePOSCart(){
   // อัปเดตเฉพาะ cart panel ไม่ re-render ทั้งหน้า POS
@@ -2256,6 +2294,8 @@ async function checkout(){
     if(vatIncl){vatAmt=Math.round(afterDisc*(vatR/(100+vatR)));total=afterDisc;}
     else{vatAmt=Math.round(afterDisc*vatR/100);total=afterDisc+vatAmt;}
   }
+  const redeemAmt=Math.min(S._posRedeemPoints||0,total);
+  const totalFinal=Math.max(0,total-redeemAmt);
   const docNo=await nextNo('POS','sales');
   const saleDate=document.getElementById('pos-sale-date')?.value||S.posSaleDate||todayISO();
   const isSplit=S.posPayMode==='split';
@@ -2263,13 +2303,14 @@ async function checkout(){
   const SHOPEE_RATE={'shopee_pay':0.70,'shopee_spaylater':0.70,'shopee_cc':0.70,'shopee_cc_install':0.70,'shopee_mobile_banking':0.70,'shopee_qr_promptpay':0.70};
   const shopeeRate=isSplit?null:(SHOPEE_RATE[payMethod]||null);
   const installMonth=(payMethod==='credit_installment')?(S.posInstallMonth||3):null;
-  const netRevenue=payMethod==='credit_installment'?(()=>{const m=installMonth;return Math.round(total-total*0.008*m-total*0.040-(total*0.008*m+total*0.040)*0.07);})():shopeeRate?Math.round(total*shopeeRate):total;
-  const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',payMethod,shopeeRate,installMonth,netRevenue,
+  const netRevenue2=payMethod==='credit_installment'?(()=>{const m=installMonth;return Math.round(totalFinal-totalFinal*0.008*m-totalFinal*0.040-(totalFinal*0.008*m+totalFinal*0.040)*0.07);})():shopeeRate?Math.round(totalFinal*shopeeRate):totalFinal;
+  const saleData={docNo,date:saleDate,customerName:S.posNote||'ลูกค้าทั่วไป',payMethod,shopeeRate,installMonth,netRevenue:netRevenue2,
     split1Method:isSplit?S.posSplit1Method:null,split1Amt:isSplit?S.posSplit1Amt:null,
-    split2Method:isSplit?S.posSplit2Method:null,split2Amt:isSplit?(total-S.posSplit1Amt):null,
+    split2Method:isSplit?S.posSplit2Method:null,split2Amt:isSplit?(totalFinal-S.posSplit1Amt):null,
     items:S.cart.map(x=>({pid:x.pid,code:x.code,name:x.name,unit:x.unit,price:x.price,cost:x.cost,qty:x.qty,subtotal:x.price*x.qty})),
     subtotal:sub,discount:discAmt,couponCode:S._posCouponInfo?.valid?S._posCouponInfo.code:null,couponDiscount:couponAmt||null,
-    vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total,totalCost,profit:calcNetProfit(total,totalCost,payMethod,shopeeRate,installMonth)};
+    pointsRedeemed:redeemAmt||null,memberId:S._posMember?.id||null,memberName:S._posMember?.name||null,
+    vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total:totalFinal,totalCost,profit:calcNetProfit(totalFinal,totalCost,payMethod,shopeeRate,installMonth)};
   try{
     const batch=db.batch();
     const sRef=db.collection('sales').doc();
@@ -2279,6 +2320,12 @@ async function checkout(){
     // Mark coupon used (background)
     if(S._posCouponInfo?.valid&&S._posCouponInfo.docId){
       markCouponUsed(S._posCouponInfo.docId,docNo).catch(e=>console.warn('coupon mark warn:',e));
+    }
+    // Member points (background)
+    if(S._posMember?.id){
+      const _mid=S._posMember.id;const _sid=sRef.id;
+      if(redeemAmt>0) redeemPoints(_mid,_sid,redeemAmt).catch(e=>console.warn('redeem warn:',e));
+      earnPoints(_mid,_sid,sub-discAmt).then(pts=>{if(pts>0)toast('🌟 สมาชิก '+S._posMember.name+' ได้รับ '+pts+' คะแนน','success');}).catch(e=>console.warn('earn warn:',e));
     }
     S.sales.push({id:sRef.id,...saleData});
     S.cart.forEach(item=>{const p=S.products.find(x=>x.id===item.pid);if(p)p.stock-=item.qty;});
@@ -11569,6 +11616,298 @@ function pStats(stats){
 // initApp() จะถูกเรียกโดยอัตโนมัติหลัง Auth ตรวจสอบสิทธิ์แล้ว
 </script>
 <script>
+// ==================== MEMBERS ====================
+let _memberSearch='';
+
+async function renderMembers(){
+  const el=document.getElementById('p-members');if(!el)return;
+  el.innerHTML=`<div style="padding:16px 20px;max-width:1000px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0;font-size:18px">👤 จัดการสมาชิก</h2>
+      <button class="btn btn-success" onclick="openAddMember()">➕ เพิ่มสมาชิกใหม่</button>
+    </div>
+    <input class="fc" id="member-search" placeholder="ค้นหาชื่อหรือเบอร์โทร..." value="${_memberSearch}"
+      oninput="_memberSearch=this.value;renderMemberList()" style="margin-bottom:12px">
+    <div id="member-list"></div>
+  </div>`;
+  await renderMemberList();
+}
+
+async function renderMemberList(){
+  const el=document.getElementById('member-list');if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:#aaa">⏳ กำลังโหลด...</div>';
+  try{
+    const today=todayISO();
+    let snap=await db.collection('members').orderBy('createdAt','desc').limit(200).get();
+    let rows=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const q=_memberSearch.trim().toLowerCase();
+    if(q) rows=rows.filter(m=>(m.name||'').toLowerCase().includes(q)||(m.phone||'').includes(q));
+    if(!rows.length){el.innerHTML='<div style="text-align:center;padding:30px;color:#aaa">ไม่พบสมาชิก</div>';return;}
+
+    // โหลดคะแนนรวม (แบบ batch)
+    const pointMap={};
+    for(const m of rows){
+      const pts=await db.collection('pointTransactions')
+        .where('memberId','==',m.id).where('used','==',false).where('expireAt','>=',today).get();
+      pointMap[m.id]=pts.docs.reduce((s,d)=>s+(d.data().points||0),0);
+    }
+
+    el.innerHTML=`<table class="tbl"><thead><tr>
+      <th>ชื่อ</th><th>เบอร์โทร</th><th>คะแนนคงเหลือ</th><th>สมัครเมื่อ</th><th></th>
+    </tr></thead><tbody>
+    ${rows.map(m=>`<tr>
+      <td>${m.name||'-'}</td>
+      <td>${m.phone||'-'}</td>
+      <td style="text-align:center;font-weight:700;color:${pointMap[m.id]>=100?'#22c55e':'#aaa'}">${pointMap[m.id]||0} pt</td>
+      <td style="color:#aaa;font-size:12px">${m.createdAt?.split('T')[0]||'-'}</td>
+      <td><button class="btn btn-xs btn-gray" onclick="viewMember('${m.id}')">ดูประวัติ</button>
+          <button class="btn btn-xs btn-danger" onclick="deleteMember('${m.id}','${m.name||''}')">ลบ</button></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+  }catch(e){el.innerHTML='<div style="color:var(--danger);padding:12px">Error: '+e.message+'</div>';}
+}
+
+function openAddMember(){
+  openModal('➕ เพิ่มสมาชิกใหม่',`
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><label class="fl">ชื่อ-นามสกุล *</label><input class="fc" id="nm-name" placeholder="ชื่อ-นามสกุล"></div>
+      <div><label class="fl">เบอร์โทรศัพท์ *</label><input class="fc" id="nm-phone" placeholder="0XX-XXX-XXXX" maxlength="10"></div>
+      <div><label class="fl">อีเมล (ถ้ามี)</label><input class="fc" id="nm-email" placeholder="email@example.com"></div>
+      <button class="btn btn-success" onclick="saveMember()">💾 บันทึก</button>
+    </div>`);
+}
+
+async function saveMember(){
+  const name=document.getElementById('nm-name')?.value?.trim();
+  const phone=document.getElementById('nm-phone')?.value?.trim().replace(/\D/g,'');
+  const email=document.getElementById('nm-email')?.value?.trim()||'';
+  if(!name||!phone){toast('กรุณากรอกชื่อและเบอร์โทร','error');return;}
+  // ตรวจซ้ำ
+  const ex=await db.collection('members').where('phone','==',phone).limit(1).get();
+  if(!ex.empty){toast('เบอร์นี้มีสมาชิกอยู่แล้ว','error');return;}
+  await db.collection('members').add({name,phone,email,createdAt:new Date().toISOString(),totalPointsEarned:0});
+  toast('เพิ่มสมาชิกสำเร็จ ✓','success');
+  closeModal();renderMembers();
+}
+
+async function deleteMember(id,name){
+  if(!confirm('ลบสมาชิก "'+name+'" ?'))return;
+  await db.collection('members').doc(id).delete();
+  toast('ลบสมาชิกแล้ว','success');
+  renderMembers();
+}
+
+async function viewMember(id){
+  const snap=await db.collection('members').doc(id).get();
+  const m=snap.data();
+  const today=todayISO();
+  const pts=await db.collection('pointTransactions').where('memberId','==',id).orderBy('createdAt','desc').limit(50).get();
+  const available=pts.docs.filter(d=>!d.data().used&&(d.data().expireAt>=today)).reduce((s,d)=>s+(d.data().points||0),0);
+  let hist='';
+  pts.docs.forEach(d=>{
+    const p=d.data();
+    const expired=p.expireAt<today;
+    const color=p.used?'#666':expired?'#f87171':'#22c55e';
+    const status=p.used?'ใช้แล้ว':expired?'หมดอายุ':'ใช้ได้';
+    hist+=`<tr><td style="font-size:12px">${p.createdAt?.split('T')[0]||'-'}</td>
+      <td style="text-align:center;font-weight:700;color:${p.type==='earn'?'#22c55e':'#f87171'}">${p.type==='earn'?'+':'-'}${p.points}pt</td>
+      <td style="font-size:12px">${p.saleId||'-'}</td>
+      <td style="font-size:12px;color:${color}">${status} (${p.expireAt||'-'})</td>
+    </tr>`;
+  });
+  openModal('👤 '+m.name,`
+    <div style="margin-bottom:12px;padding:10px;background:#1a1a1a;border-radius:8px;font-size:13px">
+      <div>📱 ${m.phone}</div><div style="color:#aaa">${m.email||''}</div>
+      <div style="font-size:20px;font-weight:900;color:#22c55e;margin-top:6px">${available} คะแนน</div>
+      <div style="font-size:11px;color:#aaa">ใช้ได้ขั้นต่ำ 100 คะแนน = ${Math.floor(available/100)*100} บาท</div>
+    </div>
+    <table class="tbl" style="font-size:12px"><thead><tr><th>วันที่</th><th>คะแนน</th><th>บิล</th><th>สถานะ</th></tr></thead>
+    <tbody>${hist||'<tr><td colspan="4" style="text-align:center;color:#aaa">ยังไม่มีประวัติ</td></tr>'}</tbody></table>`);
+}
+
+// ==================== PROMOTIONS ====================
+async function renderPromotions(){
+  const el=document.getElementById('p-promotions');if(!el)return;
+  el.innerHTML=`<div style="padding:16px 20px;max-width:900px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 style="margin:0;font-size:18px">🎁 โปรโมชั่นสมาชิก</h2>
+      <button class="btn btn-success" onclick="openAddPromo()">➕ สร้างโปรโมชั่น</button>
+    </div>
+    <div id="promo-list"><div style="text-align:center;padding:20px;color:#aaa">⏳ กำลังโหลด...</div></div>
+  </div>`;
+  await renderPromoList();
+}
+
+async function renderPromoList(){
+  const el=document.getElementById('promo-list');if(!el)return;
+  const today=todayISO();
+  const snap=await db.collection('promotions').orderBy('startDate','desc').limit(50).get();
+  if(snap.empty){el.innerHTML='<div style="text-align:center;padding:30px;color:#aaa">ยังไม่มีโปรโมชั่น</div>';return;}
+  el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">
+  ${snap.docs.map(d=>{
+    const p=d.data();
+    const active=p.startDate<=today&&(!p.endDate||p.endDate>=today);
+    const typeLabel=p.type==='points_multiplier'?`คะแนน ×${p.multiplier||2}`:p.type==='discount_percent'?`ส่วนลด ${p.discountPercent||0}%`:'?';
+    return `<div style="background:#1a1a1a;border:1px solid ${active?'#22c55e':'#333'};border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div>
+        <div style="font-weight:700">${p.name||'ไม่มีชื่อ'} <span style="font-size:11px;background:${active?'#166534':'#333'};color:${active?'#86efac':'#aaa'};padding:2px 8px;border-radius:10px">${active?'กำลังใช้งาน':'สิ้นสุดแล้ว'}</span></div>
+        <div style="font-size:13px;color:#aaa;margin-top:2px">🎯 ${typeLabel} | ${p.startDate} → ${p.endDate||'ไม่มีวันสิ้นสุด'}</div>
+        ${p.description?`<div style="font-size:12px;color:#888;margin-top:2px">${p.description}</div>`:''}
+      </div>
+      <button class="btn btn-xs btn-danger" onclick="deletePromo('${d.id}','${p.name||''}')">ลบ</button>
+    </div>`;
+  }).join('')}
+  </div>`;
+}
+
+function openAddPromo(){
+  openModal('➕ สร้างโปรโมชั่น',`
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><label class="fl">ชื่อโปรโมชั่น *</label><input class="fc" id="pr-name" placeholder="เช่น โปรเดือนเกิด 2x คะแนน"></div>
+      <div><label class="fl">ประเภท</label>
+        <select class="fc" id="pr-type" onchange="togglePromoType()">
+          <option value="points_multiplier">🌟 คะแนนพิเศษ (เช่น 2x, 3x)</option>
+          <option value="discount_percent">💸 ส่วนลดพิเศษ (%) สำหรับสมาชิก</option>
+        </select>
+      </div>
+      <div id="pr-field-multiplier"><label class="fl">ตัวคูณคะแนน</label>
+        <input class="fc" id="pr-multiplier" type="number" min="2" max="10" value="2" placeholder="2">
+      </div>
+      <div id="pr-field-discount" style="display:none"><label class="fl">% ส่วนลด</label>
+        <input class="fc" id="pr-discount" type="number" min="1" max="50" value="10" placeholder="10">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label class="fl">วันเริ่ม *</label><input class="fc" id="pr-start" type="date" value="${todayISO()}"></div>
+        <div><label class="fl">วันสิ้นสุด (ว่าง=ไม่จำกัด)</label><input class="fc" id="pr-end" type="date"></div>
+      </div>
+      <div><label class="fl">หมายเหตุ</label><input class="fc" id="pr-desc" placeholder="รายละเอียดเพิ่มเติม"></div>
+      <button class="btn btn-success" onclick="savePromo()">💾 บันทึก</button>
+    </div>`);
+}
+
+function togglePromoType(){
+  const t=document.getElementById('pr-type')?.value;
+  document.getElementById('pr-field-multiplier').style.display=t==='points_multiplier'?'block':'none';
+  document.getElementById('pr-field-discount').style.display=t==='discount_percent'?'block':'none';
+}
+
+async function savePromo(){
+  const name=document.getElementById('pr-name')?.value?.trim();
+  const type=document.getElementById('pr-type')?.value;
+  const startDate=document.getElementById('pr-start')?.value;
+  const endDate=document.getElementById('pr-end')?.value||null;
+  if(!name||!startDate){toast('กรุณากรอกชื่อและวันเริ่ม','error');return;}
+  const data={name,type,startDate,endDate,createdAt:new Date().toISOString(),description:document.getElementById('pr-desc')?.value?.trim()||''};
+  if(type==='points_multiplier') data.multiplier=parseInt(document.getElementById('pr-multiplier')?.value)||2;
+  if(type==='discount_percent') data.discountPercent=parseFloat(document.getElementById('pr-discount')?.value)||10;
+  await db.collection('promotions').add(data);
+  toast('สร้างโปรโมชั่นสำเร็จ ✓','success');
+  closeModal();renderPromotions();
+}
+
+async function deletePromo(id,name){
+  if(!confirm('ลบโปรโมชั่น "'+name+'" ?'))return;
+  await db.collection('promotions').doc(id).delete();
+  toast('ลบโปรโมชั่นแล้ว','success');
+  renderPromotions();
+}
+
+// ==================== POS MEMBER FUNCTIONS ====================
+async function posLookupMember(){
+  const phone=document.getElementById('pos-member-phone')?.value?.trim().replace(/\D/g,'');
+  if(!phone||phone.length<9){toast('กรอกเบอร์โทรให้ครบ','error');return;}
+  const m=await lookupMember(phone);
+  if(!m){toast('ไม่พบสมาชิกเบอร์นี้','error');return;}
+  const pts=await getMemberPoints(m.id);
+  S._posMember=m;
+  S._posMemberPoints=pts;
+  S._posRedeemPoints=0;
+  updatePOSCart();
+  toast('พบสมาชิก: '+m.name+' | คะแนน: '+pts+' pt','success');
+}
+
+function posRemoveMember(){
+  S._posMember=null;S._posMemberPoints=0;S._posRedeemPoints=0;
+  updatePOSCart();
+}
+
+function posRedeemMax(max){
+  // round down to nearest 100
+  const v=Math.floor(max/100)*100;
+  S._posRedeemPoints=v;
+  updatePOSCart();
+}
+
+// ==================== MEMBER LOOKUP (shared) ====================
+async function lookupMember(phone){
+  if(!phone) return null;
+  const snap=await db.collection('members').where('phone','==',phone.trim()).limit(1).get();
+  if(snap.empty) return null;
+  return{id:snap.docs[0].id,...snap.docs[0].data()};
+}
+
+async function getMemberPoints(memberId){
+  const today=todayISO();
+  const snap=await db.collection('pointTransactions')
+    .where('memberId','==',memberId).where('used','==',false).where('expireAt','>=',today).get();
+  return snap.docs.reduce((s,d)=>s+(d.data().points||0),0);
+}
+
+async function getActivePromotion(){
+  const today=todayISO();
+  const snap=await db.collection('promotions').where('startDate','<=',today).limit(20).get();
+  return snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>!p.endDate||p.endDate>=today);
+}
+
+async function earnPoints(memberId,saleId,saleAmount){
+  // หาโปรโมชั่นที่ active
+  const promos=await getActivePromotion();
+  const multiplierPromo=promos.find(p=>p.type==='points_multiplier');
+  const multiplier=multiplierPromo?multiplierPromo.multiplier:1;
+  const pts=Math.floor(saleAmount/100)*multiplier;
+  if(pts<=0) return 0;
+  // expire = 3 เดือนจากวันนี้
+  const exp=new Date();exp.setMonth(exp.getMonth()+3);
+  const expISO=exp.toISOString().split('T')[0];
+  await db.collection('pointTransactions').add({
+    memberId,saleId,points:pts,type:'earn',
+    used:false,expireAt:expISO,
+    multiplier,createdAt:new Date().toISOString()
+  });
+  await db.collection('members').doc(memberId).update({totalPointsEarned:firebase.firestore.FieldValue.increment(pts)});
+  return pts;
+}
+
+async function redeemPoints(memberId,saleId,pointsToUse){
+  if(pointsToUse<100){toast('ใช้คะแนนขั้นต่ำ 100 คะแนน','error');return false;}
+  const today=todayISO();
+  // โหลด lots ที่ยังใช้ได้ เรียงจากหมดอายุก่อน
+  const snap=await db.collection('pointTransactions')
+    .where('memberId','==',memberId).where('used','==',false).where('expireAt','>=',today)
+    .orderBy('expireAt','asc').get();
+  let remaining=pointsToUse;
+  const batch=db.batch();
+  for(const doc of snap.docs){
+    if(remaining<=0) break;
+    const p=doc.data().points||0;
+    if(p<=remaining){
+      batch.update(doc.ref,{used:true,usedAt:new Date().toISOString(),usedInSale:saleId});
+      remaining-=p;
+    } else {
+      // แยก lot
+      batch.update(doc.ref,{points:p-remaining});
+      await db.collection('pointTransactions').add({
+        memberId,saleId,points:remaining,type:'redeem',
+        used:true,usedAt:new Date().toISOString(),usedInSale:saleId,
+        expireAt:doc.data().expireAt,createdAt:new Date().toISOString()
+      });
+      remaining=0;
+    }
+  }
+  await batch.commit();
+  return true;
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
