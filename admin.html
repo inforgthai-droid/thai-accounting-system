@@ -11885,7 +11885,7 @@ function posRedeemMax(max){
 }
 function posToggleRedeem(max){
   if((S._posRedeemPoints||0)>0){S._posRedeemPoints=0;}
-  else{S._posRedeemPoints=Math.floor(max/100)*100;}
+  else{S._posRedeemPoints=Math.floor(max);}
   updatePOSCart();
 }
 
