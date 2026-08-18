@@ -1995,16 +1995,15 @@ function renderPOS(){
             <button onclick="posRemoveMember()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px">✕</button>
           </div>
           ${(S._posMemberPoints||0)>=100?`
-          <div style="margin-top:6px">
-            <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px">ใช้คะแนน (ขั้นต่ำ 100, 1pt=1฿) มีทั้งหมด ${S._posMemberPoints} pt</label>
-            <div style="display:flex;gap:4px">
-              <input type="number" id="pos-redeem-input" min="100" max="${Math.min(S._posMemberPoints,total||0)}" step="100"
-                value="${S._posRedeemPoints||''}" placeholder="0"
-                style="flex:1;border:1px solid #334155;background:#0f172a;color:#fff;border-radius:6px;padding:4px 8px;font-size:13px;font-family:'Sarabun',sans-serif"
-                oninput="S._posRedeemPoints=Math.min(parseInt(this.value)||0,${S._posMemberPoints});updatePOSCart()">
-              <button onclick="posRedeemMax(${Math.min(S._posMemberPoints,Math.floor(total||0))})" style="padding:4px 10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">ใช้ทั้งหมด</button>
+          <div style="margin-top:8px;background:#0f172a;border:1.5px solid ${(S._posRedeemPoints||0)>0?'#22c55e':'#334155'};border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#fff">⭐ ใช้คะแนนสะสม</div>
+              <div style="font-size:11px;color:#86efac">${S._posMemberPoints} คะแนน = ลด ฿${S._posMemberPoints}</div>
             </div>
-            ${(S._posRedeemPoints||0)>0?`<div style="font-size:11px;color:#22c55e;margin-top:3px">✓ หักจากยอด ${S._posRedeemPoints} บาท</div>`:''}
+            <button onclick="posToggleRedeem(${Math.min(S._posMemberPoints,Math.floor(totalAfterRedeem+(S._posRedeemPoints||0)||0))})"
+              style="background:${(S._posRedeemPoints||0)>0?'#22c55e':'#374151'};color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap">
+              ${(S._posRedeemPoints||0)>0?`✓ -฿${S._posRedeemPoints}`:'ใช้'}
+            </button>
           </div>`:'<div style="margin-top:4px;font-size:11px;color:#aaa">คะแนนไม่ถึง 100 pt (ยังใช้ไม่ได้)</div>'}
           `:`
           <div style="display:flex;gap:4px">
@@ -2230,16 +2229,15 @@ function updatePOSCart(){
         <button onclick="posRemoveMember()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px">✕</button>
       </div>
       ${(S._posMemberPoints||0)>=100?`
-      <div style="margin-top:6px">
-        <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px">ใช้คะแนน (ขั้นต่ำ 100, 1pt=1฿) มีทั้งหมด ${S._posMemberPoints} pt</label>
-        <div style="display:flex;gap:4px">
-          <input type="number" id="pos-redeem-input" min="100" max="${Math.min(S._posMemberPoints,total||0)}" step="100"
-            value="${S._posRedeemPoints||''}" placeholder="0"
-            style="flex:1;border:1px solid #334155;background:#0f172a;color:#fff;border-radius:6px;padding:4px 8px;font-size:13px;font-family:'Sarabun',sans-serif"
-            oninput="S._posRedeemPoints=Math.min(parseInt(this.value)||0,${S._posMemberPoints});updatePOSCart()">
-          <button onclick="posRedeemMax(${Math.min(S._posMemberPoints,Math.floor(total||0))})" style="padding:4px 10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">ใช้ทั้งหมด</button>
+      <div style="margin-top:8px;background:#0f172a;border:1.5px solid ${(S._posRedeemPoints||0)>0?'#22c55e':'#334155'};border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#fff">⭐ ใช้คะแนนสะสม</div>
+          <div style="font-size:11px;color:#86efac">${S._posMemberPoints} คะแนน = ลด ฿${S._posMemberPoints}</div>
         </div>
-        ${(S._posRedeemPoints||0)>0?`<div style="font-size:11px;color:#22c55e;margin-top:3px">✓ หักจากยอด ${S._posRedeemPoints} บาท</div>`:''}
+        <button onclick="posToggleRedeem(${Math.min(S._posMemberPoints,Math.floor(total||0))})"
+          style="background:${(S._posRedeemPoints||0)>0?'#22c55e':'#374151'};color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap">
+          ${(S._posRedeemPoints||0)>0?`✓ -฿${S._posRedeemPoints}`:'ใช้'}
+        </button>
       </div>`:'<div style="margin-top:4px;font-size:11px;color:#aaa">คะแนนไม่ถึง 100 pt (ยังใช้ไม่ได้)</div>'}
       `:`
       <div style="display:flex;gap:4px">
@@ -11881,9 +11879,13 @@ function posRemoveMember(){
 }
 
 function posRedeemMax(max){
-  // round down to nearest 100
   const v=Math.floor(max/100)*100;
   S._posRedeemPoints=v;
+  updatePOSCart();
+}
+function posToggleRedeem(max){
+  if((S._posRedeemPoints||0)>0){S._posRedeemPoints=0;}
+  else{S._posRedeemPoints=Math.floor(max/100)*100;}
   updatePOSCart();
 }
 
