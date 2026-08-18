@@ -2493,6 +2493,7 @@ function showReceiptModal(sale){
         <tr><td colspan="2" style="font-size:12px">ยอดรวม</td><td align="right" style="font-size:12px">${fmtM(sale.subtotal)}</td></tr>
         ${(sale.discount||0)>0?`<tr><td colspan="2" style="font-size:12px">ส่วนลด</td><td align="right" style="font-size:12px;color:red">-${fmtM(sale.discount)}</td></tr>`:''}
         ${(sale.couponDiscount||0)>0?`<tr><td colspan="2" style="font-size:12px">โค้ด ${sale.couponCode||''}</td><td align="right" style="font-size:12px;color:red">-${fmtM(sale.couponDiscount)}</td></tr>`:''}
+        ${(sale.pointsRedeemed||0)>0?`<tr><td colspan="2" style="font-size:12px">⭐ คะแนนสะสม</td><td align="right" style="font-size:12px;color:#16a34a">-${fmtM(sale.pointsRedeemed)}</td></tr>`:''}
         ${vatSection}
         <tr style="font-weight:800;font-size:15px;border-top:1.5px solid #000">
           <td colspan="2" style="padding-top:4px">รวมสุทธิ</td>
