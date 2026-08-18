@@ -738,6 +738,10 @@ function renderPage(key){
     renderInfographic();
   } else if(key==='inventorylots'){
     renderInventoryLots();
+  } else if(key==='members'){
+    renderMembers();
+  } else if(key==='promotions'){
+    renderPromotions();
   } else {
     if(map[key])el.innerHTML=map[key]();
   }
