@@ -2196,7 +2196,8 @@ function updatePOSCart(){
       <div style="font-size:11px;color:var(--muted)">${fmt(total-vatAmt)} + VAT ${fmt(vatAmt)} = ${fmt(total)}</div>`
       :'<div style="font-size:11px;color:var(--muted)">ไม่คิด VAT</div>'}
     </div>
-    <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>${fmt(total)}</span></div>
+    ${(S._posRedeemPoints||0)>0?`<div class="pos-row" style="color:#22c55e;font-weight:700"><span>⭐ ใช้คะแนน</span><span>-${fmt(Math.min(S._posRedeemPoints,total))}</span></div>`:''}
+    <div class="pos-row" style="font-size:20px;font-weight:700;color:var(--primary);margin:6px 0"><span>ยอดสุทธิ</span><span>${fmt(Math.max(0,total-(Math.min(S._posRedeemPoints||0,total))))}</span></div>
     <div class="pos-row" style="color:#10b981;font-weight:700;margin-bottom:8px"><span>กำไรขั้นต้น</span><span>${fmt(afterDisc-totalCost)}</span></div>
     <div style="margin-bottom:8px">
       <label class="fl">วันที่ขาย</label>
