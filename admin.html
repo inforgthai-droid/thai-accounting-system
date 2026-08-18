@@ -11826,7 +11826,10 @@ async function posLookupMember(){
   S._posMember=m;
   S._posMemberPoints=pts;
   S._posRedeemPoints=0;
+  S.posNote=m.name||'';
   updatePOSCart();
+  const noteEl=document.querySelector('input[onchange="S.posNote=this.value"]');
+  if(noteEl) noteEl.value=m.name||'';
   toast('พบสมาชิก: '+m.name+' | คะแนน: '+pts+' pt','success');
 }
 
