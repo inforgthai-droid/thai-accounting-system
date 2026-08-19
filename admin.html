@@ -837,7 +837,10 @@ function renderDashboard(){
   const totalAllRev=allRev+onlineRev+rentalRev;
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">📊 ภาพรวม — ${todayTH()}</div>
+  <div style="display:flex;gap:6px">
   <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ภาพรวม</button>
+  <button class="btn btn-sm" style="background:#10b981;color:#fff" onclick="exportDashboardXLSX()">📥 Export Excel</button>
+  </div>
   </div>
   <div class="stat-grid">
     ${sc('ยอดขายวันนี้',''+fmt(todTotal),'#0ea5e9',todSales.length+' รายการ')}
@@ -11527,6 +11530,67 @@ function printStockReport(mode,valMode){
   pw.document.write('<script>window.onload=function(){window.print();}<\/script>');
   pw.document.write('</body></html>');
   pw.document.close();
+}
+
+function exportDashboardXLSX(){
+  // รวมยอดขาย POS + Online แยกตามเดือน
+  const byMonth={};
+  const addMonth=(date,rev,cost,profit,ch)=>{
+    if(!date)return;
+    const mon=date.slice(0,7);
+    if(!byMonth[mon])byMonth[mon]={mon,posRev:0,onlineRev:0,rentalRev:0,cost:0,profit:0,bills:0};
+    const m=byMonth[mon];
+    if(ch==='pos'){m.posRev+=rev;m.cost+=cost;m.profit+=profit;m.bills++;}
+    else if(ch==='online'){m.onlineRev+=rev;m.cost+=cost;m.profit+=rev-cost;m.bills++;}
+  };
+  S.sales.filter(s=>s.status!=='ยกเลิก').forEach(s=>{
+    const rev=s.subtotal||s.total||0;
+    const cost=s.totalCost||0;
+    const p=calcNetProfit(s.total||rev,cost,s.payMethod,s.shopeeRate||null);
+    addMonth(s.date,rev,cost,p,'pos');
+  });
+  S.onlineOrders.filter(o=>o.status!=='ยกเลิก').forEach(o=>{
+    addMonth(o.date,o.total||0,o.totalCost||0,0,'online');
+  });
+  _rentals.filter(r=>r.status==='returned').forEach(r=>{
+    const mon=(r.rentalDate||r.returnDate||'').slice(0,7);
+    if(!mon)return;
+    const fee=(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0);
+    if(!byMonth[mon])byMonth[mon]={mon,posRev:0,onlineRev:0,rentalRev:0,cost:0,profit:0,bills:0};
+    byMonth[mon].rentalRev+=fee;
+    byMonth[mon].profit+=fee;
+  });
+
+  const months=Object.keys(byMonth).sort();
+  const rows=[['เดือน','รายได้ POS','รายได้ Online','รายได้เช่า','รายได้รวม','ต้นทุน','กำไรขั้นต้น','จำนวนบิล']];
+  let totPos=0,totOnl=0,totRen=0,totCost=0,totProfit=0,totBills=0;
+  months.forEach(mon=>{
+    const m=byMonth[mon];
+    const totalRev=m.posRev+m.onlineRev+m.rentalRev;
+    rows.push([mon,m.posRev,m.onlineRev,m.rentalRev,totalRev,m.cost,m.profit,m.bills]);
+    totPos+=m.posRev;totOnl+=m.onlineRev;totRen+=m.rentalRev;totCost+=m.cost;totProfit+=m.profit;totBills+=m.bills;
+  });
+  rows.push(['รวมทั้งหมด',totPos,totOnl,totRen,totPos+totOnl+totRen,totCost,totProfit,totBills]);
+
+  // สรุปภาพรวม
+  const sumRows=[
+    ['รายการ','มูลค่า (บาท)'],
+    ['รายได้ POS รวม',totPos],
+    ['รายได้ Online รวม',totOnl],
+    ['รายได้เช่า รวม',totRen],
+    ['รายได้รวมทั้งหมด',totPos+totOnl+totRen],
+    ['ต้นทุนรวม',totCost],
+    ['กำไรขั้นต้นรวม',totProfit],
+    ['จำนวนบิลทั้งหมด',totBills],
+  ];
+
+  const wb=XLSX.utils.book_new();
+  const ws1=XLSX.utils.aoa_to_sheet(rows);
+  ws1['!cols']=[{wch:12},{wch:14},{wch:14},{wch:12},{wch:14},{wch:12},{wch:14},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws1,'รายได้รายเดือน');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sumRows),'สรุปภาพรวม');
+  XLSX.writeFile(wb,`RacingGarage_Revenue_${todayISO()}.xlsx`);
+  toast('Export สำเร็จ ✓','success');
 }
 
 function printPage(){
