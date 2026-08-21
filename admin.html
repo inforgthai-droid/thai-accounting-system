@@ -4393,8 +4393,8 @@ function prodForm(p={}){
   </select></div>
   <div class="fm"><label class="fl">ราคาต้นทุน ()</label><input type="number" class="fc" id="pCost" value="${p.cost||''}" min="0"></div>
   <div class="fm"><label class="fl">ราคาขาย ()</label><input type="number" class="fc" id="pPrice" value="${p.price||''}" min="0"></div>
-  <div class="fm"><label class="fl">จำนวนสต็อก</label><input type="number" class="fc" id="pStock" value="${p.stock||0}" min="0"></div>
-  <div class="fm"><label class="fl">สต็อกขั้นต่ำ</label><input type="number" class="fc" id="pMin" value="${p.minStock||5}" min="0"></div>
+  <div class="fm"><label class="fl">จำนวนสต็อก</label><select class="fc" id="pStock" style="font-size:13px">${[...Array(10)].map((_,i)=>`<option value="${i+1}"${(p.stock||1)===(i+1)?' selected':''}>${i+1}</option>`).join('')}</select></div>
+  <div class="fm"><label class="fl">สต็อกขั้นต่ำ</label><select class="fc" id="pMin" style="font-size:13px">${[...Array(10)].map((_,i)=>`<option value="${i+1}"${(p.minStock||1)===(i+1)?' selected':''}>${i+1}</option>`).join('')}</select></div>
   <div class="fm" style="grid-column:1/-1">
     <label class="fl">รูปภาพสินค้า (สูงสุด 6 รูป — อัปโหลด หรือ ใส่ URL)</label>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
