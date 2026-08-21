@@ -4388,7 +4388,9 @@ function prodForm(p={}){
       <option value="0" ${p.visible===false?'selected':''}>ไม่แสดงใน shop</option>
     </select>
   </div>
-  <div class="fm"><label class="fl">หน่วยนับ</label><input class="fc" id="pUnit" value="${p.unit||''}" placeholder="เช่น ชิ้น, คู่, อัน"></div>
+  <div class="fm"><label class="fl">หน่วยนับ</label><select class="fc" id="pUnit" style="font-size:13px">
+    ${(()=>{const units=['ชิ้น','คู่','อัน','ชุด','กล่อง','แพ็ค','ม้วน','เมตร','กิโลกรัม'];const cur=p.unit||'ชิ้น';if(!units.includes(cur))units.push(cur);return units.map(u=>`<option value="${u}"${cur===u?' selected':''}>${u}</option>`).join('');})()}
+  </select></div>
   <div class="fm"><label class="fl">ราคาต้นทุน ()</label><input type="number" class="fc" id="pCost" value="${p.cost||''}" min="0"></div>
   <div class="fm"><label class="fl">ราคาขาย ()</label><input type="number" class="fc" id="pPrice" value="${p.price||''}" min="0"></div>
   <div class="fm"><label class="fl">จำนวนสต็อก</label><input type="number" class="fc" id="pStock" value="${p.stock||0}" min="0"></div>
