@@ -1099,6 +1099,8 @@ function _showNewRentalModal(){
       <select class="fc" id="r-pay"><option value="cash">💵 เงินสด</option><option value="transfer">📱 โอนเงิน</option></select>
     </div>
     <div class="fm"><label class="fl">หมายเหตุ</label><input class="fc" id="r-note" placeholder="เช่น งานแข่ง..."></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">ที่อยู่</label><input class="fc" id="r-addr" placeholder="บ้านเลขที่ ถนน แขวง เขต จังหวัด รหัสไปษณีย์"></div>
+    <div class="fm"><label class="fl">เลขผู้เสียภาษี</label><input class="fc" id="r-taxid" placeholder="0-0000-00000-00-0" maxlength="17"></div>
   </div>
   <div style="margin-top:12px;background:var(--surface2);border-radius:8px;padding:12px">
     <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px">รายการอุปกรณ์</div>
@@ -1161,12 +1163,15 @@ async function _saveNewRental(){
   const ret=document.getElementById('r-return')?.value;
   const pay=document.getElementById('r-pay')?.value;
   const note=document.getElementById('r-note')?.value;
+  const addr=document.getElementById('r-addr')?.value?.trim()||'';
+  const taxId=document.getElementById('r-taxid')?.value?.trim()||'';
   if(!name||!phone||!date||!ret){toast('กรุณากรอกข้อมูลให้ครบ','danger');return;}
   if(!window.__rItems?.length){toast('กรุณาเพิ่มอุปกรณ์อย่างน้อย 1 รายการ','danger');return;}
   const num=String(_rentals.length+1).padStart(4,'0');
   const contractNo='RNT-'+date.replace(/-/g,'').slice(2)+'-'+num;
   await db.collection('rental_contracts').add({
     contractNo,renterName:name,renterPhone:phone,
+    renterAddress:addr,renterTaxId:taxId,
     rentalDate:date,returnDate:ret,depositPayMethod:pay,note,
     items:window.__rItems,status:'active',createdAt:ts()
   });
