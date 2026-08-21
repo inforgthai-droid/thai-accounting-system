@@ -3342,7 +3342,7 @@ async function saveSaleEdit(id){
     customerName:customer,
     items:items.map(i=>({...i,subtotal:i.price*i.qty})),
     subtotal,discount,vat,total,totalCost,
-    profit:afterDisc-totalCost,
+    profit:calcNetProfit(total,totalCost,s.payMethod,s.shopeeRate||null,s.installMonth||null),
     editedAt:ts()
   };
 
@@ -9889,6 +9889,8 @@ async function saveCat(id){
       toast('แก้ไขหมวดหมู่แล้ว ✓','success');
     } else {
       const snap=await db.collection('categories').get();
+      const dupCheck=snap.docs.find(d=>d.data().name===name);
+      if(dupCheck){toast('หมวดหมู่ "'+name+'" มีอยู่แล้ว','error');return;}
       data.order=snap.size;
       data.createdAt=ts();
       await addFB('categories',data);
