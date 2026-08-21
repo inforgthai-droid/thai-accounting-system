@@ -826,7 +826,7 @@ function renderDashboard(){
   const todTotal=todSales.reduce((a,b)=>a+(b.total||0),0);
   const allRev=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,b)=>a+(b.subtotal||0),0);
   const allCost=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,b)=>a+(b.totalCost||0),0);
-  const profit=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const profit=S.sales.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0);
   const lowStock=S.products.filter(p=>(p.stock||0)<=(p.minStock||5)&&p.stock>0);
   const outStock=S.products.filter(p=>p.stock<=0);
   const pendingOrders=S.onlineOrders.filter(o=>o.status==='รอยืนยัน');
@@ -2995,7 +2995,7 @@ function renderSales(){
   const totalRev=salesOnly.reduce((a,b)=>a+(b.total??0),0);
   const totalSub=activeAll.reduce((a,b)=>a+(b.subtotal||0),0);
   const totalCost=activeAll.reduce((a,b)=>a+(b.totalCost||0),0);
-  const totalProfit=activeAll.filter(s=>s._ch==='pos').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0)
+  const totalProfit=activeAll.filter(s=>s._ch==='pos').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0)
     + activeAll.filter(s=>s._ch==='rental').reduce((a,s)=>a+(s.rentalFee||0),0)
     + activeAll.filter(s=>s._ch==='online').reduce((a,s)=>a+((s.total||0)-(s.totalCost||0)),0);
   const posCount=activeAll.filter(s=>s._ch==='pos').length;
@@ -3017,7 +3017,7 @@ function renderSales(){
       ?`<span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-weight:700">เช่า</span>`
       :`<span style="font-size:10px;background:#d1fae5;color:#065f46;border-radius:4px;padding:1px 6px;font-weight:700">Online</span>`;
     const cancelBadge=isCancelled?`<span style="font-size:10px;background:#fef2f2;color:var(--danger);border-radius:4px;padding:1px 6px;font-weight:700;margin-left:3px">ยกเลิก</span>`:'';
-    const profit=isCancelled?0:(s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):s._ch==='rental'?s.rentalFee||0:(s.total||0)-(s.totalCost||0));
+    const profit=isCancelled?0:(s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null):s._ch==='rental'?s.rentalFee||0:(s.total||0)-(s.totalCost||0));
     const displaySub=s._ch==='rental'?(isCancelled?`<s style="color:#aaa">${fmt(s.rentalFee||0)}</s>`:fmt(s.rentalFee||0)):(isCancelled?`<s style="color:#aaa">${fmt(s.subtotal||s.total)}</s>`:''+fmt(s.subtotal||s.total));
     const displayTotal=s._ch==='rental'
       ?(isCancelled?`<s style="color:#aaa">${fmt(s.rentalFee||0)}</s>`:`${fmt(s.rentalFee||0)}<span style="font-size:10px;color:#92400e;margin-left:4px">+มัดจำ ${fmt(s.rentalDeposit||0)}</span>`)
@@ -3163,7 +3163,7 @@ function viewSale(id){
       ${(s.discount||0)>0?`<div>ส่วนลด: <b style="color:var(--danger)">-${fmt(s.discount)}</b></div>`:''}
       ${(s.vat||0)>0?`<div>VAT: <b>${fmt(s.vat)}</b></div>`:''}
       <div style="font-size:16px;font-weight:700;color:var(--primary)">ยอดสุทธิ: ${fmt(s.total)}</div>
-      <div style="color:#10b981;font-weight:700">กำไรขั้นต้น: ${fmt(calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null))}</div>
+      <div style="color:#10b981;font-weight:700">กำไรขั้นต้น: ${fmt(calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null))}</div>
     </div>
     ${isCancelled?`<div style="background:#fef2f2;border-left:3px solid var(--danger);padding:8px 12px;border-radius:6px;font-size:12px;color:var(--danger);margin-top:8px">รายการนี้ถูกยกเลิกแล้ว ${s.cancelNote?'('+s.cancelNote+')':''}</div>`:''}`,
   `<div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -3645,7 +3645,7 @@ function printMonthlySales(){
   if(!all.length){ toast('ไม่มีข้อมูลในเดือนนี้','info'); return; }
 
   const totalRev=all.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+(s.total||0),0);
-  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0);
   const totalDisc=all.reduce((a,s)=>a+(s.discount||0),0);
   const rentalMonthList=_rentals.filter(r=>r.status!=='cancelled'&&(r.rentalDate||'').slice(0,7)===mon);
   const rentalMonthRev=rentalMonthList.reduce((s,r)=>s+(r.items||[]).reduce((a,i)=>a+(i.rentalFee||0),0),0);
@@ -3660,7 +3660,7 @@ function printMonthlySales(){
     if(!byDay[d]) byDay[d]={count:0,rev:0,profit:0};
     byDay[d].count++;
     byDay[d].rev+=s.total||0;
-    byDay[d].profit+=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):0;
+    byDay[d].profit+=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null):0;
   });
 
   const html=`<!DOCTYPE html>
@@ -3730,7 +3730,7 @@ tr:nth-child(even) td{background:#f8fafc}
       const ds=byDay[d];
       rows+=`<tr class="day-hdr"><td colspan="5" style="padding:5px 8px">${d} — ${daySales.length} บิล</td><td></td><td style="text-align:right;padding:5px 8px">${fmt(ds.rev)}</td><td></td><td></td><td style="text-align:right;padding:5px 8px;color:#10b981">${fmt(ds.profit)}</td></tr>`;
       daySales.forEach((s,i)=>{
-        const profit=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):0;
+        const profit=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null):0;
         rows+=`<tr>
           <td style="color:#888">${i+1}</td>
           <td style="font-weight:600">${s.docNo||'-'}</td>
@@ -3793,7 +3793,7 @@ function printDailySales(){
   if(dt) all=all.filter(s=>(s.date||'')<=dt);
 
   const totalRev=all.filter(s=>s.status!=='ยกเลิก').reduce((a,s)=>a+(s.total||0),0);
-  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const totalProfit=all.filter(s=>s._ch==='pos'&&s.status!=='ยกเลิก').reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0);
   const dateLabel=df===dt?df:df+' ถึง '+dt;
 
   const html=`<!DOCTYPE html>
@@ -3855,7 +3855,7 @@ tr:nth-child(even){background:#f8fafc}
   </tr></thead>
   <tbody>
     ${all.map((s,i)=>{
-      const profit=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null):0;
+      const profit=s._ch==='pos'?calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null):0;
       return`<tr>
         <td style="color:#888">${i+1}</td>
         <td style="font-weight:600">${s.docNo||'-'}</td>
@@ -10483,16 +10483,16 @@ function renderInfographic(){
   const mOnline=online.filter(o=>(o.date||'').startsWith(thisMonth));
   const mRent=rentals.filter(r=>(r.startDate||'').startsWith(thisMonth));
   const mRev=mSales.reduce((a,s)=>a+(s.subtotal||0),0)+mOnline.reduce((a,o)=>a+(o.total||0),0);
-  const mProfit=mSales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const mProfit=mSales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0);
   const mRentRev=mRent.reduce((a,r)=>a+(r.items||[]).reduce((b,i)=>b+(i.rentalFee||0),0),0);
   const mTotal=mRev+mRentRev;
   const lSales=sales.filter(s=>s.date&&s.date.startsWith(lastMonth));
   const lOnline=online.filter(o=>(o.date||'').startsWith(lastMonth));
   const lRev=lSales.reduce((a,s)=>a+(s.subtotal||0),0)+lOnline.reduce((a,o)=>a+(o.total||0),0);
-  const lProfit=lSales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const lProfit=lSales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0);
   const todSales=sales.filter(s=>s.date===today);
   const todRev=todSales.reduce((a,s)=>a+(s.subtotal||0),0);
-  const todProfit=todSales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+  const todProfit=todSales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0);
   const outStock=prods.filter(p=>(p.stock||0)<=0).length;
   const lowStock=prods.filter(p=>(p.stock||0)>0&&(p.stock||0)<=(p.minStock||5)).length;
   const stockVal=prods.filter(p=>p.countStock!=='ไม่นับมูลค่าสต็อก').reduce((a,p)=>a+(p.cost||0)*(p.stock||0),0);
@@ -10505,7 +10505,7 @@ function renderInfographic(){
     const ms=sales.filter(s=>s.date&&s.date.startsWith(m));
     const mo=online.filter(o=>(o.date||'').startsWith(m));
     const rev=ms.reduce((a,s)=>a+(s.subtotal||0),0)+mo.reduce((a,o)=>a+(o.total||0),0);
-    const profit=ms.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0);
+    const profit=ms.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0);
     return{m:m.slice(5),rev,profit};
   });
   const maxRev=Math.max.apply(null,m6data.map(d=>d.rev).concat([1]));
@@ -10532,7 +10532,7 @@ function renderInfographic(){
   const sumRows=[
     {l:'ยอดขาย POS รวม',v:fmtK(sales.reduce((a,s)=>a+(s.subtotal||0),0)),c:'#10b981'},
     {l:'ยอดขายออนไลน์รวม',v:fmtK(online.reduce((a,o)=>a+(o.total||0),0)),c:'#0ea5e9'},
-    {l:'กำไรขั้นต้นรวม',v:fmtK(sales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null),0)),c:'#a78bfa'},
+    {l:'กำไรขั้นต้นรวม',v:fmtK(sales.reduce((a,s)=>a+calcNetProfit(s.total||s.subtotal||0,s.totalCost||0,s.payMethod,s.shopeeRate||null,s.installMonth||null),0)),c:'#a78bfa'},
     {l:'บิลทั้งหมด',v:(sales.length+online.length)+' รายการ',c:'#f59e0b'},
     {l:'ลูกค้าทั้งหมด',v:(S.customers||[]).length+' ราย',c:'#ec4899'},
     {l:'ซัพพลายเออร์',v:(S.suppliers||[]).length+' ราย',c:'#f97316'},
