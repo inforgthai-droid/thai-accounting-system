@@ -3285,6 +3285,8 @@ function editSale(id){
         <input class="fc" id="es-customer" value="${s.customerName||''}"></div>
       <div class="fm"><label class="fl">ส่วนลด ()</label>
         <input type="number" class="fc" id="es-discount" value="${s.discount||0}" min="0"></div>
+      <div class="fm"><label class="fl">กำไรปรับแก้ (ไม่บังคับ)</label>
+        <input type="number" class="fc" id="es-profit-override" value="${s.profitOverride!=null?s.profitOverride:''}" placeholder="ปล่อยว่าง = คำนวณอัตโนมัติ"></div>
     </div>
     <div style="font-weight:700;color:var(--primary);margin:12px 0 6px;font-size:13px">รายการสินค้า</div>
     <div id="es-items-wrap">
@@ -3345,11 +3347,15 @@ async function saveSaleEdit(id){
     else{vat=Math.round(afterDisc*vatR/100);total=afterDisc+vat;}
   }
 
+  const profitOverrideRaw=document.getElementById('es-profit-override')?.value.trim();
+  const profitOverride=profitOverrideRaw!==''?parseFloat(profitOverrideRaw):null;
+  const profit=profitOverride!=null?profitOverride:calcNetProfit(total,totalCost,s.payMethod,s.shopeeRate||null,s.installMonth||null);
   const updated={
     customerName:customer,
     items:items.map(i=>({...i,subtotal:i.price*i.qty})),
     subtotal,discount,vat,total,totalCost,
-    profit:calcNetProfit(total,totalCost,s.payMethod,s.shopeeRate||null,s.installMonth||null),
+    profit,
+    ...(profitOverride!=null?{profitOverride}:{profitOverride:firebase.firestore.FieldValue.delete()}),
     editedAt:ts()
   };
 
