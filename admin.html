@@ -1542,6 +1542,8 @@ function _printRentalInvoiceA4(id){
   <table style="margin-bottom:18px">
     <tr><td style="color:#666;width:130px;padding:5px 0">ผู้เช่า</td><td style="font-weight:700">${r.renterName}</td></tr>
     <tr><td style="color:#666;padding:5px 0">โทรศัพท์</td><td>${r.renterPhone}</td></tr>
+    ${r.renterAddress?`<tr><td style="color:#666;padding:5px 0">ที่อยู่</td><td>${r.renterAddress}</td></tr>`:''}
+    ${r.renterTaxId?`<tr><td style="color:#666;padding:5px 0">เลขผู้เสียภาษี</td><td>${r.renterTaxId}</td></tr>`:''}
     <tr><td style="color:#666;padding:5px 0">วันที่เช่า</td><td>${r.rentalDate}</td></tr>
     <tr><td style="color:#666;padding:5px 0">วันที่คืน</td><td style="font-weight:700;color:#c2410c">${r.returnDate}</td></tr>
     <tr><td style="color:#666;padding:5px 0">ชำระโดย</td><td>${r.depositPayMethod==='cash'?'💵 เงินสด':'📱 โอนเงิน'}</td></tr>
