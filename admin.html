@@ -2141,11 +2141,32 @@ function renderPOS(){
             ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.040*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
           </div>`}
         </div>
+        ${(S.posPayMode==='full'&&(S.posPayMethod==='cash'))?`
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:8px">
+          <label class="fl" style="margin:0;white-space:nowrap">เงินรับมา</label>
+          <input type="number" class="fc" id="pos-cash-received" style="font-size:14px;font-weight:700;text-align:right"
+            value="${S.posCashReceived||''}" placeholder="0" min="0"
+            oninput="S.posCashReceived=parseFloat(this.value)||0;updatePOSChange(${totalAfterRedeem})">
+          <div style="min-width:90px;text-align:right;font-weight:900;font-size:15px;color:${(S.posCashReceived||0)>=totalAfterRedeem&&S.posCashReceived?'#16a34a':'var(--muted)'}" id="pos-change-display">
+            ${(S.posCashReceived||0)>0?'ทอน '+fmt(Math.max(0,(S.posCashReceived||0)-totalAfterRedeem)):''}
+          </div>
+        </div>`:''}
+        <button onclick="openCustomerDisplay()" style="width:100%;padding:8px;margin-bottom:6px;border-radius:8px;background:#1e293b;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">🖥️ เปิดจอลูกค้า</button>
         <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
           onclick="checkout()" ${S.cart.length&&(S.posPayMode==='full'||S.posSplit1Amt>0)?'':'disabled'}>💳 ชำระเงิน ${fmt(total)}</button>
       </div>
     </div>
   </div>`;
+}
+function updatePOSChange(total){
+  const el=document.getElementById('pos-change-display');
+  if(!el)return;
+  const recv=S.posCashReceived||0;
+  if(recv>0){
+    const chg=Math.max(0,recv-total);
+    el.textContent = 'ทอน '+fmt(chg);
+    el.style.color = (recv>=total)?'#16a34a':'#dc2626';
+  } else el.textContent='';
 }
 function addToCart(pid){
   const p=S.products.find(x=>x.id===pid);if(!p||p.stock<=0)return;
@@ -2163,7 +2184,7 @@ function cartSetPrice(i,v){
   updatePOSCart();
 }
 function cartRemove(i){S.cart.splice(i,1);updatePOSCart();}
-function cartClear(){S.cart=[];S.posDiscount=0;S.posNote='';S.posPayMethod='cash';S.posPayMode='full';S.posInstallMonth=3;S.posSplit1Amt=0;S._posCouponCode='';S._posCouponInfo=null;S._posMember=null;S._posMemberPoints=0;S._posRedeemPoints=0;updatePOSCart();}
+function cartClear(){S.cart=[];S.posDiscount=0;S.posNote='';S.posPayMethod='cash';S.posPayMode='full';S.posInstallMonth=3;S.posSplit1Amt=0;S.posCashReceived=0;S._posCouponCode='';S._posCouponInfo=null;S._posMember=null;S._posMemberPoints=0;S._posRedeemPoints=0;updatePOSCart();}
 
 function updatePOSCart(){
   // อัปเดตเฉพาะ cart panel ไม่ re-render ทั้งหน้า POS
@@ -2187,9 +2208,12 @@ function updatePOSCart(){
     if(vatIncl){vatAmt=Math.round(afterDisc*(vatR/(100+vatR)));total=afterDisc;}
     else{vatAmt=Math.round(afterDisc*vatR/100);total=afterDisc+vatAmt;}
   }
+  const redeemAmt=Math.min(S._posRedeemPoints||0,total);
+  const totalAfterRedeem=Math.max(0,total-redeemAmt);
 
   if(cartHeaderEl) cartHeaderEl.innerHTML=`<span>🛒 ตะกร้า (${S.cart.length} รายการ)</span>
     <button class="btn btn-danger btn-xs" onclick="cartClear()">ล้าง</button>`;
+  cdPushCart();
 
   cartItemsEl.innerHTML=S.cart.length?S.cart.map((item,i)=>`
     <div class="cart-item" style="gap:8px">
@@ -2375,12 +2399,56 @@ function updatePOSCart(){
         ${(()=>{if(S.posPayMethod!=='credit_installment')return '';const _t=S.cart.reduce((a,b)=>a+b.price*b.qty,0)-(parseFloat(S.posDiscount)||0);const _m=S.posInstallMonth||3;const _int=Math.round(_t*0.008*_m*100)/100;const _fee=Math.round(_t*0.040*100)/100;const _vat=Math.round((_int+_fee)*0.07*100)/100;const _net=Math.round((_t-_int-_fee-_vat)*100)/100;return '<div style="grid-column:1/-1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px;font-size:11px;font-family:\'Sarabun\',sans-serif;color:#1e40af">💳 ผ่อน '+_m+' เดือน | ลูกค้าจ่าย '+fmt(Math.round(_t/_m))+' บาท/เดือน | ร้านได้รับ <b style="color:#16a34a">'+fmt(_net)+'</b> บาท<br><span style="color:#64748b">หักค่าธรรมเนียม+ดอกเบี้ย+VAT: '+fmt(Math.round((_int+_fee+_vat)*100)/100)+' บาท</span></div>'})()}
       </div>`}
     </div>
+    ${(S.posPayMode==='full'&&S.posPayMethod==='cash')?`
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:8px">
+      <label class="fl" style="margin:0;white-space:nowrap">เงินรับมา</label>
+      <input type="number" class="fc" id="pos-cash-received" style="font-size:14px;font-weight:700;text-align:right"
+        value="${S.posCashReceived||''}" placeholder="0" min="0"
+        oninput="S.posCashReceived=parseFloat(this.value)||0;updatePOSChange(${totalAfterRedeem})">
+      <div style="min-width:90px;text-align:right;font-weight:900;font-size:15px;color:${(S.posCashReceived||0)>=totalAfterRedeem&&S.posCashReceived?'#16a34a':'var(--muted)'}" id="pos-change-display">
+        ${(S.posCashReceived||0)>0?'ทอน '+fmt(Math.max(0,(S.posCashReceived||0)-totalAfterRedeem)):''}
+      </div>
+    </div>`:''}
+    <button onclick="openCustomerDisplay()" style="width:100%;padding:8px;margin-bottom:6px;border-radius:8px;background:#1e293b;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">🖥️ เปิดจอลูกค้า</button>
     <button class="btn btn-success" style="width:100%;font-size:15px;padding:12px;border-radius:10px"
       onclick="checkout()" ${S.cart.length&&(S.posPayMode==='full'||S.posSplit1Amt>0)?'':'disabled'}>💳 ชำระเงิน ${fmt(total)}</button>
     ${S.cart.length?`
     <button onclick="openFullReceipt()" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;background:#eff6ff;color:var(--accent);border:1.5px solid var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">ใบเสร็จเต็มรูปแบบ / ใบกำกับภาษี</button>
     <button onclick="openShippingLabel({itemsText:S.cart.map(i=>i.name+' x'+i.qty).join(', ')})" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif">จัดส่งสินค้า</button>`:''}`;
   if(document.body.classList.contains('dark'))setTimeout(applyDarkStyles,80);
+}
+const CD_PAY_LABEL={cash:'💵 เงินสด/โอน',credit:'💳 บัตรเครดิต',credit_installment:'💳 ผ่อนบัตร 0%',shopee_pay:'🟠 Shopee Pay',shopee_spaylater:'🟠 SPayLater',shopee_cc:'🟠 บัตรเครดิต Shopee',shopee_cc_install:'🟠 ผ่อน Shopee',shopee_mobile_banking:'🟠 Shopee Banking',shopee_qr_promptpay:'🟠 Shopee QR'};
+function cdBroadcast(payload){
+  try{ localStorage.setItem('rg_customer_display', JSON.stringify({...payload, ts:Date.now()})); }catch(e){}
+}
+function cdPushCart(){
+  // ส่งสถานะตะกร้าปัจจุบันไปจอลูกค้า (เรียกจาก updatePOSCart)
+  if(!S.cart || !S.cart.length){ cdBroadcast({status:'idle'}); return; }
+  const sub=S.cart.reduce((a,b)=>a+b.price*b.qty,0);
+  const disc=parseFloat(S.posDiscount)||0;
+  const discAmt=disc>0?(disc<=100?sub*disc/100:disc):0;
+  const couponDisc=(S._posCouponInfo?.valid)?S._posCouponInfo.discount||0:0;
+  const couponAmt=couponDisc>0?Math.round((sub-discAmt)*couponDisc/100):0;
+  const afterDisc=sub-discAmt-couponAmt;
+  const vatR=S.company.vatRate??7;
+  const vatIncl=S.posVatMode!=='exclusive';
+  const applyVat=S.posApplyVat!==false&&vatR>0;
+  let vatAmt=0,total=afterDisc;
+  if(applyVat){
+    if(vatIncl){vatAmt=Math.round(afterDisc*(vatR/(100+vatR)));total=afterDisc;}
+    else{vatAmt=Math.round(afterDisc*vatR/100);total=afterDisc+vatAmt;}
+  }
+  const redeemAmt=Math.min(S._posRedeemPoints||0,total);
+  const totalFinal=Math.max(0,total-redeemAmt);
+  cdBroadcast({
+    status:'cart',
+    items:S.cart.map(it=>({name:it.name,imageUrl:it.imageUrl||'',price:it.price,qty:it.qty})),
+    subtotal:sub, discount:discAmt+couponAmt+redeemAmt, vat:vatAmt, total:totalFinal
+  });
+}
+function openCustomerDisplay(){
+  window.open('customer-display.html','rg_customer_display','width=1000,height=700');
+  cdPushCart();
 }
 function calcNetProfit(total, totalCost, payMethod, shopeeRate, installMonth){
   if(payMethod==='credit_installment'){
@@ -2428,6 +2496,9 @@ async function checkout(){
     subtotal:sub,discount:discAmt,couponCode:S._posCouponInfo?.valid?S._posCouponInfo.code:null,couponDiscount:couponAmt||null,
     pointsRedeemed:redeemAmt||null,memberId:S._posMember?.id||null,memberName:S._posMember?.name||null,
     vat:vatAmt,vatMode:vatIncl?'inclusive':'exclusive',applyVat,total:totalFinal,totalCost,profit:calcNetProfit(totalFinal,totalCost,payMethod,shopeeRate,installMonth)};
+  const cashReceived=(!isSplit&&payMethod==='cash')?(S.posCashReceived||0):null;
+  const changeDue=(cashReceived&&cashReceived>totalFinal)?Math.round((cashReceived-totalFinal)*100)/100:0;
+  cdBroadcast({status:'paid',total:totalFinal,payMethodLabel:CD_PAY_LABEL[payMethod]||(isSplit?'ชำระหลายช่องทาง':payMethod),cashReceived,change:changeDue});
   try{
     const batch=db.batch();
     const sRef=db.collection('sales').doc();

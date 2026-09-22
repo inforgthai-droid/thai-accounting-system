@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Racing Garage — จอลูกค้า</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Sarabun',sans-serif}
+  html,body{height:100%;background:#0b1220;color:#fff;overflow:hidden}
+  #app{height:100vh;display:flex;flex-direction:column}
+
+  /* ===== Header ===== */
+  .hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 34px;background:#111827;border-bottom:2px solid #1f2937}
+  .logo{font-size:26px;font-weight:900;font-style:italic}
+  .logo span{color:#e8172c}
+  .clock{font-size:20px;font-weight:700;color:#94a3b8}
+
+  /* ===== IDLE / PROMO SCREEN ===== */
+  #idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
+  #idle .big{font-size:56px;font-weight:900;font-style:italic}
+  #idle .big span{color:#e8172c}
+  #idle .sub{font-size:22px;color:#94a3b8;font-weight:700}
+  #idle .promo{margin-top:30px;font-size:17px;color:#64748b;max-width:640px;line-height:1.7}
+
+  /* ===== CART SCREEN ===== */
+  #cart{flex:1;display:none;flex-direction:column;min-height:0}
+  .items{flex:1;overflow-y:auto;padding:20px 34px}
+  .item{display:flex;align-items:center;gap:18px;padding:14px 0;border-bottom:1px solid #1f2937}
+  .item img{width:70px;height:70px;border-radius:10px;object-fit:cover;background:#fff;flex-shrink:0}
+  .item .ph{width:70px;height:70px;border-radius:10px;background:#1f2937;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;color:#475569}
+  .item .info{flex:1;min-width:0}
+  .item .name{font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .meta{font-size:15px;color:#94a3b8;margin-top:3px}
+  .item .lt{font-size:24px;font-weight:900;color:#22c55e;white-space:nowrap}
+
+  .summary{background:#111827;border-top:2px solid #1f2937;padding:22px 34px}
+  .srow{display:flex;justify-content:space-between;font-size:19px;color:#94a3b8;margin-bottom:6px}
+  .srow.total{font-size:40px;font-weight:900;color:#fff;margin-top:10px;padding-top:14px;border-top:2px dashed #334155}
+  .srow.total span:last-child{color:#22c55e}
+  .pay-badge{display:inline-block;margin-top:10px;padding:8px 18px;border-radius:30px;background:#1e40af;font-size:16px;font-weight:700}
+
+  /* ===== PAID SCREEN ===== */
+  #paid{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;background:#052e1e}
+  #paid .check{font-size:90px}
+  #paid .thanks{font-size:46px;font-weight:900}
+  #paid .amt{font-size:30px;color:#94a3b8;margin-top:6px}
+  #paid .change-box{margin-top:22px;background:#0b1220;border-radius:18px;padding:24px 60px}
+  #paid .change-label{font-size:18px;color:#94a3b8;font-weight:700}
+  #paid .change-val{font-size:64px;font-weight:900;color:#fbbf24}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hdr">
+    <div class="logo">Racing <span>Garage</span></div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+
+  <div id="idle">
+    <div class="big">Racing <span>Garage</span></div>
+    <div class="sub">อุปกรณ์มอเตอร์สปอร์ตแท้ 100%</div>
+    <div class="promo">ยินดีต้อนรับครับ — สินค้าของท่านจะแสดงที่หน้าจอนี้ระหว่างชำระเงิน</div>
+  </div>
+
+  <div id="cart">
+    <div class="items" id="items"></div>
+    <div class="summary">
+      <div class="srow" id="row-sub"><span>ยอดรวม</span><span>0</span></div>
+      <div class="srow" id="row-disc" style="display:none"><span>ส่วนลด</span><span>0</span></div>
+      <div class="srow" id="row-vat" style="display:none"><span>VAT</span><span>0</span></div>
+      <div class="srow total"><span>ยอดสุทธิ</span><span id="row-total">0</span></div>
+    </div>
+  </div>
+
+  <div id="paid">
+    <div class="check">✅</div>
+    <div class="thanks">ขอบคุณครับ</div>
+    <div class="amt" id="paid-amt"></div>
+    <div class="pay-badge" id="paid-method"></div>
+    <div class="change-box" id="change-box" style="display:none">
+      <div class="change-label">เงินทอน</div>
+      <div class="change-val" id="change-val">0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='rg_customer_display';
+const fmt=n=>Math.round(n||0).toLocaleString('th-TH');
+
+function setClock(){
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(setClock,1000); setClock();
+
+function show(id){
+  ['idle','cart','paid'].forEach(x=>{
+    document.getElementById(x).style.display = (x===id) ? 'flex' : 'none';
+  });
+}
+
+let paidTimer=null;
+
+function render(data){
+  if(!data || data.status==='idle' || !data.items || !data.items.length){
+    show('idle');
+    return;
+  }
+  if(data.status==='paid'){
+    clearTimeout(paidTimer);
+    document.getElementById('paid-amt').textContent='ยอดชำระ '+fmt(data.total)+' บาท';
+    document.getElementById('paid-method').textContent=data.payMethodLabel||'';
+    const cb=document.getElementById('change-box');
+    if(data.change!=null && data.change>0){
+      cb.style.display='block';
+      document.getElementById('change-val').textContent=fmt(data.change)+' บาท';
+    }else{
+      cb.style.display='none';
+    }
+    show('paid');
+    paidTimer=setTimeout(()=>{ show('idle'); },8000);
+    return;
+  }
+  // status === 'cart'
+  clearTimeout(paidTimer);
+  const itemsEl=document.getElementById('items');
+  itemsEl.innerHTML=data.items.map(it=>`
+    <div class="item">
+      ${it.imageUrl?`<img src="${it.imageUrl}" onerror="this.outerHTML='<div class=ph>🏁</div>'">`:'<div class="ph">🏁</div>'}
+      <div class="info">
+        <div class="name">${it.name}</div>
+        <div class="meta">${fmt(it.price)} บาท × ${it.qty}</div>
+      </div>
+      <div class="lt">${fmt(it.price*it.qty)}</div>
+    </div>`).join('');
+  itemsEl.scrollTop=itemsEl.scrollHeight;
+
+  document.getElementById('row-sub').lastElementChild.textContent=fmt(data.subtotal)+' บาท';
+  const discEl=document.getElementById('row-disc');
+  if(data.discount>0){discEl.style.display='flex';discEl.lastElementChild.textContent='-'+fmt(data.discount)+' บาท';}
+  else discEl.style.display='none';
+  const vatEl=document.getElementById('row-vat');
+  if(data.vat>0){vatEl.style.display='flex';vatEl.lastElementChild.textContent=fmt(data.vat)+' บาท';}
+  else vatEl.style.display='none';
+  document.getElementById('row-total').textContent=fmt(data.total)+' บาท';
+  show('cart');
+}
+
+function readAndRender(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    render(raw?JSON.parse(raw):null);
+  }catch(e){ show('idle'); }
+}
+
+window.addEventListener('storage',e=>{
+  if(e.key===KEY) readAndRender();
+});
+// fallback polling (บาง browser ไม่ fire storage event เมื่อ tab อยู่ background)
+setInterval(readAndRender,1000);
+readAndRender();
+</script>
+</body>
+</html>
