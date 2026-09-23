@@ -4641,21 +4641,23 @@ function openBulkEditGroup(baseName){
   const descVal=(rep.description||rep.desc||'').replace(/"/g,'&quot;');
   const cats=sortCatsByPriority([...new Set(S.products.map(p=>p.category).filter(Boolean))]);
 
-  window._beRows=prods.map(p=>({
-    id:p.id, name:p.name, code:p.code||'',
-    skuDemonTweeks:p.skuDemonTweeks||'',
-    price:p.price||0, cost:p.cost||0,
-    stock:p.stock||0, minStock:p.minStock||p.min||1,
-    imageUrl:p.imageUrl||p.image||'',
-    variations:p.variations||''
-  }));
-
   // helper แยก size/color จาก variations หรือชื่อ
   const getVariant=(p)=>{
     if(p.variations&&p.variations.trim()) return p.variations.trim();
     const m=p.name.match(/\s+((?:XS|S|M|L|XL|XXL|3XL|4XL|\d{2,3})(?:\s*[\/|]\s*\S+)?)\s*$/i);
     return m?m[1]:'';
   };
+
+  window._beBaseName=baseName;
+  window._beRows=prods.map(p=>({
+    id:p.id, isNew:false, name:p.name, code:p.code||'',
+    skuDemonTweeks:p.skuDemonTweeks||'',
+    price:p.price||0, cost:p.cost||0,
+    stock:p.stock||0, minStock:p.minStock||p.min||1,
+    imageUrl:p.imageUrl||p.image||'',
+    variations:p.variations||'',
+    variantLabel:getVariant(p)||p.name.replace(baseName,'').trim()||''
+  }));
 
   openModal(`✏️ แก้ไขกลุ่ม: ${baseName}`,`
     <!-- ข้อมูลหลัก -->
@@ -4740,7 +4742,10 @@ function openBulkEditGroup(baseName){
 
     <!-- ตาราง variant -->
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem">
-      <div style="font-weight:700;color:var(--primary);margin-bottom:10px;font-size:13px">แก้ไขแต่ละ Variant (${prods.length} รายการ)</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:700;color:var(--primary);font-size:13px" id="beVariantCount">แก้ไขแต่ละ Variant (${prods.length} รายการ)</div>
+        <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="beAddRow()">➕ เพิ่มสินค้าเข้ากลุ่ม</button>
+      </div>
       <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead>
@@ -4753,59 +4758,91 @@ function openBulkEditGroup(baseName){
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">สต็อก</th>
               <th style="padding:7px 8px;font-weight:600;text-align:right;white-space:nowrap">Min</th>
               <th style="padding:7px 8px;font-weight:600;white-space:nowrap">รูป</th>
+              <th style="padding:7px 8px"></th>
             </tr>
           </thead>
-          <tbody id="beVariantTbody">
-            ${prods.map((p,i)=>{
-              const varLabel=getVariant(p)||p.name.replace(baseName,'').trim()||'-';
-              const pImg=p.imageUrl||p.image||'';
-              return`<tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:6px 8px;white-space:nowrap">
-                <div style="font-weight:700;font-size:12px;color:var(--primary)">${varLabel}</div>
-                <div style="font-size:10px;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-              </td>
-              <td style="padding:4px 8px">
-                <input type="text" value="${(p.code||'').replace(/"/g,'&quot;')}"
-                  onchange="window._beRows[${i}].code=this.value.trim()" onclick="this.select()"
-                  style="width:110px;padding:4px 7px;border:1.5px solid var(--accent);border-radius:6px;font-size:12px;font-weight:700;color:var(--primary);background:#f0f9ff;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="text" value="${(p.skuDemonTweeks||'').replace(/"/g,'&quot;')}"
-                  onchange="window._beRows[${i}].skuDemonTweeks=this.value.trim()" onclick="this.select()"
-                  style="width:160px;padding:4px 7px;border:1.5px solid #e85d04;border-radius:6px;font-size:12px;font-weight:700;color:#e85d04;background:#fff7ed;font-family:'Sarabun',sans-serif" placeholder="เว้นว่างได้">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="number" value="${p.price||0}"
-                  onchange="window._beRows[${i}].price=parseFloat(this.value)||0" onclick="this.select()"
-                  style="width:80px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="number" value="${p.cost||0}"
-                  onchange="window._beRows[${i}].cost=parseFloat(this.value)||0" onclick="this.select()"
-                  style="width:80px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="number" value="${p.stock||0}"
-                  onchange="window._beRows[${i}].stock=parseInt(this.value)||0" onclick="this.select()"
-                  style="width:65px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                <input type="number" value="${p.minStock||p.min||1}"
-                  onchange="window._beRows[${i}].minStock=parseInt(this.value)||1" onclick="this.select()"
-                  style="width:55px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
-              </td>
-              <td style="padding:4px 8px">
-                ${pImg?`<img src="${pImg}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">`:'<span style="color:var(--muted);font-size:10px">ไม่มีรูป</span>'}
-              </td>
-            </tr>`;}).join('')}
-          </tbody>
+          <tbody id="beVariantTbody">${beVariantRowsHTML()}</tbody>
         </table>
       </div>
     </div>`,
     `<button class="btn btn-gray" onclick="openBulkEdit()">← กลับ</button>
-     <button class="btn" style="background:#065f46;color:#fff" onclick="saveBulkEditGroup()">💾 บันทึกทั้งกลุ่ม (${prods.length} รายการ)</button>`,
+     <button class="btn" style="background:#065f46;color:#fff" onclick="saveBulkEditGroup()" id="beSaveBtn">💾 บันทึกทั้งกลุ่ม (${prods.length} รายการ)</button>`,
     {wide:true}
   );
+}
+
+function beVariantRowsHTML(){
+  const rows=window._beRows||[];
+  return rows.map((r,i)=>`<tr style="border-bottom:1px solid var(--border);${r.isNew?'background:#f0fdf4':''}">
+    <td style="padding:6px 8px;white-space:nowrap">
+      <input type="text" value="${(r.variantLabel||'').replace(/"/g,'&quot;')}"
+        onchange="window._beRows[${i}].variantLabel=this.value.trim()" onclick="this.select()"
+        placeholder="เช่น L / Red"
+        style="width:110px;padding:4px 7px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:700;color:var(--primary);font-family:'Sarabun',sans-serif">
+      ${r.isNew?'<div style="font-size:9px;color:#16a34a;font-weight:700;margin-top:2px">✚ ใหม่</div>':`<div style="font-size:10px;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis">${r.name||''}</div>`}
+    </td>
+    <td style="padding:4px 8px">
+      <input type="text" value="${(r.code||'').replace(/"/g,'&quot;')}"
+        onchange="window._beRows[${i}].code=this.value.trim()" onclick="this.select()"
+        placeholder="รหัส"
+        style="width:110px;padding:4px 7px;border:1.5px solid var(--accent);border-radius:6px;font-size:12px;font-weight:700;color:var(--primary);background:#f0f9ff;font-family:'Sarabun',sans-serif">
+    </td>
+    <td style="padding:4px 8px">
+      <input type="text" value="${(r.skuDemonTweeks||'').replace(/"/g,'&quot;')}"
+        onchange="window._beRows[${i}].skuDemonTweeks=this.value.trim()" onclick="this.select()"
+        style="width:160px;padding:4px 7px;border:1.5px solid #e85d04;border-radius:6px;font-size:12px;font-weight:700;color:#e85d04;background:#fff7ed;font-family:'Sarabun',sans-serif" placeholder="เว้นว่างได้">
+    </td>
+    <td style="padding:4px 8px">
+      <input type="number" value="${r.price||0}"
+        onchange="window._beRows[${i}].price=parseFloat(this.value)||0" onclick="this.select()"
+        style="width:80px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
+    </td>
+    <td style="padding:4px 8px">
+      <input type="number" value="${r.cost||0}"
+        onchange="window._beRows[${i}].cost=parseFloat(this.value)||0" onclick="this.select()"
+        style="width:80px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
+    </td>
+    <td style="padding:4px 8px">
+      <input type="number" value="${r.stock||0}"
+        onchange="window._beRows[${i}].stock=parseInt(this.value)||0" onclick="this.select()"
+        style="width:65px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
+    </td>
+    <td style="padding:4px 8px">
+      <input type="number" value="${r.minStock||1}"
+        onchange="window._beRows[${i}].minStock=parseInt(this.value)||1" onclick="this.select()"
+        style="width:55px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
+    </td>
+    <td style="padding:4px 8px">
+      ${r.imageUrl?`<img src="${r.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">`:'<span style="color:var(--muted);font-size:10px">'+(r.isNew?'ใช้รูปหลัก':'ไม่มีรูป')+'</span>'}
+    </td>
+    <td style="padding:4px 8px">
+      ${r.isNew?`<button onclick="beRemoveRow(${i})" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;color:#ef4444;cursor:pointer;font-size:13px;padding:3px 8px">×</button>`:''}
+    </td>
+  </tr>`).join('');
+}
+
+function beAddRow(){
+  const rows=window._beRows||(window._beRows=[]);
+  const rep=rows[0]||{};
+  rows.push({id:null,isNew:true,name:'',code:'',skuDemonTweeks:'',
+    price:rep.price||0,cost:rep.cost||0,stock:0,minStock:rep.minStock||1,
+    imageUrl:'',variations:'',variantLabel:''});
+  const tbody=document.getElementById('beVariantTbody');
+  if(tbody) tbody.innerHTML=beVariantRowsHTML();
+  const cntEl=document.getElementById('beVariantCount');
+  if(cntEl) cntEl.textContent=`แก้ไขแต่ละ Variant (${rows.length} รายการ)`;
+  const saveBtn=document.getElementById('beSaveBtn');
+  if(saveBtn) saveBtn.textContent=`💾 บันทึกทั้งกลุ่ม (${rows.length} รายการ)`;
+}
+
+function beRemoveRow(i){
+  window._beRows.splice(i,1);
+  const tbody=document.getElementById('beVariantTbody');
+  if(tbody) tbody.innerHTML=beVariantRowsHTML();
+  const cntEl=document.getElementById('beVariantCount');
+  if(cntEl) cntEl.textContent=`แก้ไขแต่ละ Variant (${window._beRows.length} รายการ)`;
+  const saveBtn=document.getElementById('beSaveBtn');
+  if(saveBtn) saveBtn.textContent=`💾 บันทึกทั้งกลุ่ม (${window._beRows.length} รายการ)`;
 }
 
 async function saveBulkEditGroup(){
@@ -4822,12 +4859,27 @@ async function saveBulkEditGroup(){
   const description=document.getElementById('be-desc')?.value||'';
   const masterPrice=parseFloat(document.getElementById('be-price')?.value);
   const masterCost=parseFloat(document.getElementById('be-cost')?.value);
+
+  const existingRows=rows.filter(r=>!r.isNew && r.id);
+  const newRows=rows.filter(r=>r.isNew);
+
+  // ตรวจสอบแถวใหม่: ต้องมี variant/ไซส์ และรหัสสินค้า ครบทุกแถว
+  const badNew=newRows.filter(r=>!r.variantLabel?.trim()||!r.code?.trim());
+  if(badNew.length){toast('กรุณากรอก "สี/ไซส์" และ "รหัสสินค้า" ให้ครบทุกแถวที่เพิ่มใหม่','error');return;}
+  // ตรวจสอบรหัสซ้ำ (ในกลุ่มที่เพิ่มใหม่ และกับสินค้าที่มีอยู่แล้วทั้งร้าน)
+  const allCodesInBatch=rows.map(r=>r.code?.trim()).filter(Boolean);
+  const dupInBatch=allCodesInBatch.filter((c,i)=>allCodesInBatch.indexOf(c)!==i);
+  if(dupInBatch.length){toast('รหัสสินค้าซ้ำกันในกลุ่มนี้: '+[...new Set(dupInBatch)].join(', '),'error');return;}
+  const existingIds=new Set(existingRows.map(r=>r.id));
+  const codeClash=newRows.filter(r=>S.products.some(p=>!existingIds.has(p.id)&&p.code===r.code.trim()));
+  if(codeClash.length){toast('รหัสสินค้าซ้ำกับสินค้าอื่นที่มีอยู่แล้ว: '+codeClash.map(r=>r.code).join(', '),'error');return;}
+
   try{
-    // ตรวจสอบก่อนว่า document มีอยู่จริงใน Firestore
-    const checks=await Promise.all(rows.map(r=>db.collection('products').doc(r.id).get()));
-    const validRows=rows.filter((_,i)=>checks[i].exists);
-    const skipped=rows.length-validRows.length;
-    if(!validRows.length){toast('ไม่พบสินค้าใน Firestore เลย อาจถูกลบไปแล้ว','error');return;}
+    // ตรวจสอบก่อนว่า document เดิมมีอยู่จริงใน Firestore
+    const checks=existingRows.length?await Promise.all(existingRows.map(r=>db.collection('products').doc(r.id).get())):[];
+    const validRows=existingRows.filter((_,i)=>checks[i].exists);
+    const skipped=existingRows.length-validRows.length;
+    if(!validRows.length&&!newRows.length){toast('ไม่พบสินค้าใน Firestore เลย อาจถูกลบไปแล้ว','error');return;}
 
     const batch=db.batch();
     validRows.forEach(r=>{
@@ -4845,6 +4897,28 @@ async function saveBulkEditGroup(){
       if(description) upd.description=description;
       batch.update(db.collection('products').doc(r.id),upd);
     });
+
+    // สร้างสินค้าใหม่ที่เพิ่มเข้ากลุ่ม
+    const newRefs=newRows.map(r=>{
+      const ref=db.collection('products').doc();
+      const finalName=`${masterName||baseName} ${r.variantLabel}`.trim();
+      batch.set(ref,{
+        code:r.code.trim(),
+        name:finalName,
+        category,brand,unit,fia,countStock,visible,
+        price:isNaN(masterPrice)?(r.price||0):masterPrice,
+        cost:isNaN(masterCost)?(r.cost||0):masterCost,
+        stock:r.stock||0,
+        minStock:r.minStock||1,
+        imageUrl:newImage||'',
+        description:description||'',
+        skuDemonTweeks:r.skuDemonTweeks||'',
+        variations:r.variantLabel.trim(),
+        createdAt:ts()
+      });
+      return {ref,r,finalName};
+    });
+
     await batch.commit();
 
     const idMap=Object.fromEntries(validRows.map(r=>[r.id,r]));
@@ -4863,10 +4937,24 @@ async function saveBulkEditGroup(){
         ...(description?{description}:{})
       };
     });
+    newRefs.forEach(({ref,r,finalName})=>{
+      S.products.push({
+        id:ref.id, code:r.code.trim(), name:finalName,
+        category,brand,unit,fia,countStock,visible,
+        price:isNaN(masterPrice)?(r.price||0):masterPrice,
+        cost:isNaN(masterCost)?(r.cost||0):masterCost,
+        stock:r.stock||0, minStock:r.minStock||1,
+        imageUrl:newImage||'', description:description||'',
+        skuDemonTweeks:r.skuDemonTweeks||'', variations:r.variantLabel.trim()
+      });
+    });
+
     closeModal();
-    const msg=skipped>0
-      ?`อัปเดต ${validRows.length} variants สำเร็จ ✓ (ข้าม ${skipped} รายการที่ถูกลบไปแล้ว)`
-      :`อัปเดต ${validRows.length} variants สำเร็จ ✓`;
+    const parts=[];
+    if(validRows.length) parts.push(`อัปเดต ${validRows.length} variants`);
+    if(newRows.length) parts.push(`เพิ่มใหม่ ${newRows.length} variants`);
+    let msg=parts.join(' + ')+' สำเร็จ ✓';
+    if(skipped>0) msg+=` (ข้าม ${skipped} รายการที่ถูกลบไปแล้ว)`;
     toast(msg,'success');
     renderPage('products');
   }catch(e){
