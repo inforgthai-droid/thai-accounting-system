@@ -4812,8 +4812,11 @@ function beVariantRowsHTML(){
         onchange="window._beRows[${i}].minStock=parseInt(this.value)||1" onclick="this.select()"
         style="width:55px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:right;font-family:'Sarabun',sans-serif">
     </td>
-    <td style="padding:4px 8px">
-      ${r.imageUrl?`<img src="${r.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">`:'<span style="color:var(--muted);font-size:10px">'+(r.isNew?'ใช้รูปหลัก':'ไม่มีรูป')+'</span>'}
+    <td style="padding:4px 8px" id="beImgCell${i}">
+      ${r.imageUrl?`<img src="${r.imageUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid var(--border);display:block;margin-bottom:3px">`:''}
+      ${r.isNew?`<input type="file" id="beRowImgFile${i}" accept="image/*" style="display:none" onchange="beUploadRowImage(${i},this)">
+        <button onclick="document.getElementById('beRowImgFile${i}').click()" style="padding:3px 8px;background:#0ea5e9;color:#fff;border:none;border-radius:6px;font-size:10px;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap">📷 ${r.imageUrl?'เปลี่ยนรูป':'เพิ่มรูป'}</button>`
+        :(r.imageUrl?'':'<span style="color:var(--muted);font-size:10px">ไม่มีรูป</span>')}
     </td>
     <td style="padding:4px 8px">
       ${r.isNew?`<button onclick="beRemoveRow(${i})" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;color:#ef4444;cursor:pointer;font-size:13px;padding:3px 8px">×</button>`:''}
@@ -4843,6 +4846,25 @@ function beRemoveRow(i){
   if(cntEl) cntEl.textContent=`แก้ไขแต่ละ Variant (${window._beRows.length} รายการ)`;
   const saveBtn=document.getElementById('beSaveBtn');
   if(saveBtn) saveBtn.textContent=`💾 บันทึกทั้งกลุ่ม (${window._beRows.length} รายการ)`;
+}
+
+async function beUploadRowImage(i,inputEl){
+  const file=inputEl.files[0];
+  if(!file) return;
+  const cell=document.getElementById('beImgCell'+i);
+  const btn=cell?.querySelector('button');
+  if(btn){btn.textContent='⏳ กำลังอัปโหลด...';btn.disabled=true;}
+  try{
+    const url=await uploadWithFallback(file);
+    if(!url) throw new Error('ไม่ได้ URL รูป');
+    window._beRows[i].imageUrl=url;
+    const tbody=document.getElementById('beVariantTbody');
+    if(tbody) tbody.innerHTML=beVariantRowsHTML();
+    toast('อัปโหลดรูปสำเร็จ ✓','success');
+  }catch(e){
+    toast('อัปโหลดรูปไม่สำเร็จ: '+e.message,'error');
+    if(btn){btn.textContent='📷 เพิ่มรูป';btn.disabled=false;}
+  }
 }
 
 async function saveBulkEditGroup(){
@@ -4910,7 +4932,7 @@ async function saveBulkEditGroup(){
         cost:isNaN(masterCost)?(r.cost||0):masterCost,
         stock:r.stock||0,
         minStock:r.minStock||1,
-        imageUrl:newImage||'',
+        imageUrl:r.imageUrl||newImage||'',
         description:description||'',
         skuDemonTweeks:r.skuDemonTweeks||'',
         variations:r.variantLabel.trim(),
@@ -4944,7 +4966,7 @@ async function saveBulkEditGroup(){
         price:isNaN(masterPrice)?(r.price||0):masterPrice,
         cost:isNaN(masterCost)?(r.cost||0):masterCost,
         stock:r.stock||0, minStock:r.minStock||1,
-        imageUrl:newImage||'', description:description||'',
+        imageUrl:r.imageUrl||newImage||'', description:description||'',
         skuDemonTweeks:r.skuDemonTweeks||'', variations:r.variantLabel.trim()
       });
     });
