@@ -4923,7 +4923,7 @@ async function saveBulkEditGroup(){
     // สร้างสินค้าใหม่ที่เพิ่มเข้ากลุ่ม
     const newRefs=newRows.map(r=>{
       const ref=db.collection('products').doc();
-      const finalName=`${masterName||baseName} ${r.variantLabel}`.trim();
+      const finalName=`${masterName||window._beBaseName||''} ${r.variantLabel}`.trim();
       batch.set(ref,{
         code:r.code.trim(),
         name:finalName,
