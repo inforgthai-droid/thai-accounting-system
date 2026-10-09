@@ -6922,12 +6922,22 @@ function qtForm(q={}){
         <tbody id="qt-tbody">${rows}</tbody>
       </table>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-top:10px;flex-wrap:wrap">
       <button onclick="qtAddRow()" style="background:var(--primary);color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:12px;font-family:'Sarabun',sans-serif">+ เพิ่มรายการ / Add Item</button>
-      <div style="padding:8px 14px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
-        <span style="color:var(--muted);font-size:13px">รวมทั้งสิ้น / Grand Total: </span>
-        <span id="qt-total" style="font-size:20px;font-weight:900;color:#10b981;margin-left:6px">0</span>
-        <span style="font-size:13px;color:var(--muted)"> บาท / THB</span>
+      <div style="min-width:300px;padding:10px 14px;background:var(--card);border-radius:6px;border:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">ภาษีมูลค่าเพิ่ม (VAT) ${(S.company.vatRate??7)}%</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px" id="qt-vat-btns">
+          ${[['none','ไม่คิด VAT'],['inclusive','รวมในราคา'],['exclusive','เพิ่มจากราคา']].map(([v,l])=>`
+          <button type="button" data-vat="${v}" onclick="qtSetVat('${v}')"
+            style="flex:1;padding:6px 4px;font-size:12px;border-radius:6px;cursor:pointer;font-family:'Sarabun',sans-serif;border:1.5px solid ${(q.vatMode||'none')===v?'var(--accent)':'var(--border)'};background:${(q.vatMode||'none')===v?'#eff6ff':'transparent'};color:${(q.vatMode||'none')===v?'#1d4ed8':'var(--text)'};font-weight:${(q.vatMode||'none')===v?700:400}">${l}</button>`).join('')}
+        </div>
+        <input type="hidden" id="qt-vatMode" value="${q.vatMode||'none'}">
+        <div id="qt-vat-detail" style="font-size:12px;color:var(--muted);line-height:1.7"></div>
+        <div style="margin-top:4px;border-top:1px dashed var(--border);padding-top:6px;text-align:right">
+          <span style="color:var(--muted);font-size:13px">รวมทั้งสิ้น / Grand Total: </span>
+          <span id="qt-total" style="font-size:20px;font-weight:900;color:#10b981;margin-left:6px">0</span>
+          <span style="font-size:13px;color:var(--muted)"> บาท / THB</span>
+        </div>
       </div>
     </div>
   </div>
@@ -6986,18 +6996,53 @@ document.addEventListener('click',function(e){
     document.querySelectorAll('[id^="qt-drop-"]').forEach(d=>d.style.display='none');
   }
 });
+// คำนวณ VAT ใบเสนอราคา: mode = 'none' | 'inclusive' (รวมในราคา) | 'exclusive' (เพิ่มจากราคา)
+function qtVatCalc(subtotal,mode){
+  const r=(S.company.vatRate??7);
+  if(mode==='inclusive'&&r>0){
+    const vat=Math.round(subtotal*r/(100+r)*100)/100;
+    return{subtotal,vat,base:subtotal-vat,total:subtotal};
+  }
+  if(mode==='exclusive'&&r>0){
+    const vat=Math.round(subtotal*r)/100;
+    return{subtotal,vat,base:subtotal,total:subtotal+vat};
+  }
+  return{subtotal,vat:0,base:subtotal,total:subtotal};
+}
+function qtSetVat(mode){
+  const h=document.getElementById('qt-vatMode');
+  if(h) h.value=mode;
+  document.querySelectorAll('#qt-vat-btns button').forEach(b=>{
+    const on=b.dataset.vat===mode;
+    b.style.borderColor=on?'var(--accent)':'var(--border)';
+    b.style.background=on?'#eff6ff':'transparent';
+    b.style.color=on?'#1d4ed8':'var(--text)';
+    b.style.fontWeight=on?'700':'400';
+  });
+  qtCalc();
+}
 function qtCalc(){
   const rows=document.querySelectorAll('#qt-tbody tr');
-  let total=0;
+  let sum=0;
   rows.forEach((tr,i)=>{
     const qty=parseFloat(document.getElementById('qt-qty-'+i)?.value)||0;
     const price=parseFloat(document.getElementById('qt-price-'+i)?.value)||0;
-    const sub=qty*price; total+=sub;
+    const sub=qty*price; sum+=sub;
     const el=document.getElementById('qt-subtotal-'+i);
     if(el) el.textContent=fmt(sub);
   });
+  const mode=document.getElementById('qt-vatMode')?.value||'none';
+  const v=qtVatCalc(sum,mode);
   const el=document.getElementById('qt-total');
-  if(el) el.textContent=fmt(total);
+  if(el) el.textContent=fmt(v.total);
+  const d=document.getElementById('qt-vat-detail');
+  if(d){
+    const r=(S.company.vatRate??7);
+    d.innerHTML=mode==='none'
+      ?`<div>ไม่คิด VAT — ยอดรวม ${fmt(v.subtotal)} บาท</div>`
+      :`<div style="display:flex;justify-content:space-between"><span>${mode==='inclusive'?'ราคาก่อน VAT':'ยอดรวมสินค้า'}</span><span>${fmt(v.base)}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>VAT ${r}%${mode==='inclusive'?' (รวมอยู่ในราคาแล้ว)':''}</span><span>${fmt(v.vat)}</span></div>`;
+  }
 }
 function qtAddRow(){
   const tbody=document.getElementById('qt-tbody');
@@ -7051,7 +7096,10 @@ function editQuotation(id){
 }
 async function saveQuotation(id){
   const items=qtReadItems();
-  const total=items.reduce((a,b)=>a+b.qty*b.price,0);
+  const itemsSum=items.reduce((a,b)=>a+b.qty*b.price,0);
+  const vatMode=document.getElementById('qt-vatMode')?.value||'none';
+  const vc=qtVatCalc(itemsSum,vatMode);
+  const total=vc.total;
   const data={
     no:document.getElementById('qt-no')?.value?.trim()||qtNextNo(),
     date:document.getElementById('qt-date')?.value||todayISO(),
@@ -7064,6 +7112,7 @@ async function saveQuotation(id){
     addressEn:document.getElementById('qt-addrEn')?.value?.trim()||'',
     remark:document.getElementById('qt-remark')?.value?.trim()||'',
     items,total,
+    subtotal:itemsSum,vatMode,vatRate:(S.company.vatRate??7),vat:vc.vat,
     status:id?(S.quotations.find(x=>x.id===id)?.status||'รอการอนุมัติ'):'รอการอนุมัติ',
     updatedAt:ts(),
     ...(id?{}:{createdAt:ts()})
@@ -7168,7 +7217,10 @@ async function confirmPayQuotation(id){
       customerName:q.customerName||'ลูกค้าทั่วไป',
       payMethod,shopeeRate:null,installMonth:null,netRevenue:total,
       items:itemsWithCost,
-      subtotal:total,discount:0,vat:0,vatMode:'exclusive',applyVat:false,
+      subtotal:q.subtotal??total,discount:0,
+      vat:q.vat||0,
+      vatMode:(q.vatMode==='inclusive'||q.vatMode==='exclusive')?q.vatMode:'exclusive',
+      applyVat:(q.vatMode==='inclusive'||q.vatMode==='exclusive')&&(q.vat||0)>0,
       total,totalCost,
       shippingCost,
       profit:calcNetProfit(total,totalCost,payMethod,null),
@@ -7306,7 +7358,18 @@ ${remarkStr}
 <div style="margin-top:28px">
   <!-- ยอดรวม ขวา -->
   <div style="text-align:right;margin-bottom:32px">
+    ${(()=>{
+      const mode=q.vatMode||'none';
+      if(mode==='none'||!(q.vat>0)) return '';
+      const r=q.vatRate??7;
+      const base=mode==='inclusive'?(q.total-q.vat):(q.subtotal??(q.total-q.vat));
+      return `<div style="font-size:13px;color:#374151;line-height:1.8;margin-bottom:6px">
+        <div>${mode==='inclusive'?'ราคาก่อนภาษี / Before VAT':'รวมเป็นเงิน / Subtotal'}: ${fmt(base)} บาท</div>
+        <div>ภาษีมูลค่าเพิ่ม ${r}% / VAT ${r}%${mode==='inclusive'?' (รวมในราคาแล้ว / included)':''}: ${fmt(q.vat)} บาท</div>
+      </div>`;
+    })()}
     <div style="font-size:16px;font-weight:700">รวมทั้งสิ้น / Grand Total: <span style="font-weight:900">${fmt(q.total||0)} บาท / THB</span></div>
+    ${(q.vatMode&&q.vatMode!=='none'&&q.vat>0)?`<div style="font-size:11px;color:#6b7280;margin-top:2px">${q.vatMode==='inclusive'?'ราคานี้รวมภาษีมูลค่าเพิ่มแล้ว / Price includes VAT':'ราคานี้ได้บวกภาษีมูลค่าเพิ่มแล้ว / VAT added'}</div>`:''}
   </div>
 
   <!-- ลายเซ็น 1 ช่อง -->
@@ -7359,6 +7422,7 @@ function shareQuotationLine(id){
     `─────────────────────`,
     ...q.items.map(it=>`• ${it.nameTh||it.nameEn} (${it.code||'-'}) x${it.qty} ${it.unit} = ${fmt(it.qty*it.price)} บาท`),
     `─────────────────────`,
+    (q.vatMode&&q.vatMode!=='none'&&q.vat>0)?`ภาษีมูลค่าเพิ่ม ${q.vatRate??7}%: ${fmt(q.vat)} บาท ${q.vatMode==='inclusive'?'(รวมในราคาแล้ว)':'(บวกเพิ่ม)'}`:'',
     `💰 รวมทั้งสิ้น: ${fmt(q.total||0)} บาท`,
     q.remark?`📝 ${q.remark}`:'',
     ``,
