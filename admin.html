@@ -1093,6 +1093,7 @@ function _showNewRentalModal(){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <div class="fm"><label class="fl">ชื่อผู้เช่า *</label><input class="fc" id="r-name" placeholder="ชื่อ-นามสกุล"></div>
     <div class="fm"><label class="fl">โทรศัพท์ *</label><input class="fc" id="r-phone" placeholder="08x-xxx-xxxx"></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">ชื่อร้าน / บริษัท (ผู้เช่า)</label><input class="fc" id="r-shop" placeholder="เช่น ทีมแข่ง ABC Racing / บริษัท ABC จำกัด (เว้นว่างได้)"></div>
     <div class="fm"><label class="fl">วันที่เช่า *</label><input class="fc" id="r-date" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
     <div class="fm"><label class="fl">วันที่คืน *</label><input class="fc" id="r-return" type="date"></div>
     <div class="fm"><label class="fl">ชำระมัดจำโดย</label>
@@ -1101,6 +1102,17 @@ function _showNewRentalModal(){
     <div class="fm"><label class="fl">หมายเหตุ</label><input class="fc" id="r-note" placeholder="เช่น งานแข่ง..."></div>
     <div class="fm" style="grid-column:1/-1"><label class="fl">ที่อยู่</label><input class="fc" id="r-addr" placeholder="บ้านเลขที่ ถนน แขวง เขต จังหวัด รหัสไปษณีย์"></div>
     <div class="fm"><label class="fl">เลขผู้เสียภาษี</label><input class="fc" id="r-taxid" placeholder="0-0000-00000-00-0" maxlength="17"></div>
+  </div>
+  <div style="margin-top:12px;background:var(--surface2);border-radius:8px;padding:12px">
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px">ข้อมูลร้านค้า / หัวใบเสร็จ (ร้านเรา)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fm" style="grid-column:1/-1"><label class="fl">ชื่อร้านค้า</label><input class="fc" id="r-shopName" value="${(S.company.name||'').replace(/"/g,'&quot;')}"></div>
+      <div class="fm" style="grid-column:1/-1"><label class="fl">ที่อยู่ร้าน</label><textarea class="fc" id="r-shopAddr" rows="2" style="resize:vertical">${S.company.address||''}</textarea></div>
+      <div class="fm"><label class="fl">เบอร์โทรร้าน</label><input class="fc" id="r-shopTel" value="${(S.company.tel||'').replace(/"/g,'&quot;')}"></div>
+      <div class="fm"><label class="fl">เลขประจำตัวผู้เสียภาษีร้าน</label><input class="fc" id="r-shopTaxId" value="${(S.company.taxId||'').replace(/"/g,'&quot;')}"></div>
+      <div style="grid-column:1/-1"><label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="r-shopShowTaxId" ${S.company.showTaxIdInQuotation?'checked':''} style="width:16px;height:16px;cursor:pointer"> แสดงเลขประจำตัวผู้เสียภาษีของร้านในใบเสร็จ</label></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">💡 ข้อมูลร้านเป็นค่ากลางของระบบ (ใช้ร่วมกับใบเสนอราคา) แก้ที่นี่มีผลกับทุกใบ</div>
   </div>
   <div style="margin-top:12px;background:var(--surface2);border-radius:8px;padding:12px">
     <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px">รายการอุปกรณ์</div>
@@ -1165,12 +1177,26 @@ async function _saveNewRental(){
   const note=document.getElementById('r-note')?.value;
   const addr=document.getElementById('r-addr')?.value?.trim()||'';
   const taxId=document.getElementById('r-taxid')?.value?.trim()||'';
+  const shopNameRenter=document.getElementById('r-shop')?.value?.trim()||'';
   if(!name||!phone||!date||!ret){toast('กรุณากรอกข้อมูลให้ครบ','danger');return;}
   if(!window.__rItems?.length){toast('กรุณาเพิ่มอุปกรณ์อย่างน้อย 1 รายการ','danger');return;}
+  // บันทึกข้อมูลร้านเรา (หัวใบ) — ค่ากลางของระบบ เหมือนใบเสนอราคา
+  if(document.getElementById('r-shopName')){
+    const shopData={
+      name:document.getElementById('r-shopName').value.trim()||S.company.name,
+      address:document.getElementById('r-shopAddr')?.value||'',
+      tel:document.getElementById('r-shopTel')?.value?.trim()||'',
+      taxId:document.getElementById('r-shopTaxId')?.value?.trim()||'',
+      showTaxIdInQuotation:document.getElementById('r-shopShowTaxId')?.checked||false
+    };
+    Object.assign(S.company,shopData);
+    updateFB('settings','company',shopData).catch(e=>console.warn('save shop warn:',e));
+  }
   const num=String(_rentals.length+1).padStart(4,'0');
   const contractNo='RNT-'+date.replace(/-/g,'').slice(2)+'-'+num;
   await db.collection('rental_contracts').add({
     contractNo,renterName:name,renterPhone:phone,
+    renterShopName:shopNameRenter,
     renterAddress:addr,renterTaxId:taxId,
     rentalDate:date,returnDate:ret,depositPayMethod:pay,note,
     items:window.__rItems,status:'active',createdAt:ts()
@@ -1307,12 +1333,17 @@ function _printRentalReceipt(id){
     @media print{.no-print{display:none}}
   </style></head><body>
   <div style="text-align:center;margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:12px">
-    <div style="font-size:22px;font-weight:700">🏎️ Racing Garage</div>
+    <div style="font-size:22px;font-weight:700">🏎️ ${S.company.name||'Racing Garage'}</div>
+    ${S.company.address?`<div style="font-size:11px;color:#555;margin-top:3px">${S.company.address.split('\n').filter(Boolean).join(' ')}</div>`:''}
+    <div style="font-size:11px;color:#555">${S.company.tel?'โทร: '+S.company.tel:''}${(S.company.showTaxIdInQuotation&&S.company.taxId)?'  |  เลขประจำตัวผู้เสียภาษี: '+S.company.taxId:''}</div>
     <div style="font-size:14px;color:#444;margin-top:4px">ใบรับมัดจำการเช่าอุปกรณ์</div>
     <div style="font-size:12px;color:#888;margin-top:2px">เลขที่: ${r.contractNo}</div>
   </div>
   <table style="margin-bottom:14px">
     <tr><td style="color:#666;width:110px;padding:4px 0">ผู้เช่า</td><td style="font-weight:700">${r.renterName}</td></tr>
+    ${r.renterShopName?`<tr><td style="color:#666;padding:4px 0">ร้าน / บริษัท</td><td>${r.renterShopName}</td></tr>`:''}
+    ${r.renterAddress?`<tr><td style="color:#666;padding:4px 0">ที่อยู่</td><td>${r.renterAddress}</td></tr>`:''}
+    ${r.renterTaxId?`<tr><td style="color:#666;padding:4px 0">เลขผู้เสียภาษี</td><td>${r.renterTaxId}</td></tr>`:''}
     <tr><td style="color:#666;padding:4px 0">โทรศัพท์</td><td>${r.renterPhone}</td></tr>
     <tr><td style="color:#666;padding:4px 0">วันที่เช่า</td><td>${r.rentalDate}</td></tr>
     <tr><td style="color:#666;padding:4px 0">วันที่คืน</td><td style="font-weight:700;color:#c2410c">${r.returnDate}</td></tr>
@@ -1534,13 +1565,14 @@ function _printRentalInvoiceA4(id){
   </style></head><body>
   <div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:16px">
     <div style="font-size:26px;font-weight:700">${co.name||'Racing Garage'}</div>
-    <div style="font-size:12px;color:#555;margin-top:4px">${co.address||''}</div>
-    <div style="font-size:12px;color:#555">โทร: ${co.tel||'089-140-0606'}</div>
+    <div style="font-size:12px;color:#555;margin-top:4px">${(co.address||'').split('\n').filter(Boolean).join(' ')}</div>
+    <div style="font-size:12px;color:#555">โทร: ${co.tel||'089-140-0606'}${(co.showTaxIdInQuotation&&co.taxId)?'  |  เลขประจำตัวผู้เสียภาษี: '+co.taxId:''}</div>
     <div style="font-size:18px;font-weight:700;margin-top:10px">ใบเสร็จรับเงิน / RECEIPT</div>
     <div style="font-size:13px;color:#888;margin-top:2px">เลขที่: ${r.contractNo}</div>
   </div>
   <table style="margin-bottom:18px">
     <tr><td style="color:#666;width:130px;padding:5px 0">ผู้เช่า</td><td style="font-weight:700">${r.renterName}</td></tr>
+    ${r.renterShopName?`<tr><td style="color:#666;padding:5px 0">ร้าน / บริษัท</td><td>${r.renterShopName}</td></tr>`:''}
     <tr><td style="color:#666;padding:5px 0">โทรศัพท์</td><td>${r.renterPhone}</td></tr>
     ${r.renterAddress?`<tr><td style="color:#666;padding:5px 0">ที่อยู่</td><td>${r.renterAddress}</td></tr>`:''}
     ${r.renterTaxId?`<tr><td style="color:#666;padding:5px 0">เลขผู้เสียภาษี</td><td>${r.renterTaxId}</td></tr>`:''}
