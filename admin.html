@@ -6985,7 +6985,8 @@ function renderQuotation(){
     `<button class="btn btn-primary btn-xs" onclick="editQuotation('${q.id}')">แก้ไข</button>
      <button class="btn btn-xs" style="background:#0e7490;color:#fff" onclick="printQuotation('${q.id}')">พิมพ์</button>
      <button class="btn btn-xs" style="background:#16a34a;color:#fff" onclick="shareQuotationLine('${q.id}')">LINE</button>
-     ${q.status!=='ชำระแล้ว'&&q.status!=='ยกเลิก'?`<button class="btn btn-xs" style="background:#7c3aed;color:#fff" onclick="payQuotation('${q.id}')">💳 ชำระแล้ว</button>`:''}
+     ${q.status!=='ยกเลิก'?`<button class="btn btn-xs" style="background:#f59e0b;color:#fff" onclick="quotationToInvoice('${q.id}')">📄 ใบแจ้งหนี้${q.invoiceNo?' ('+q.invoiceNo+')':''}</button>`:''}
+     ${q.status!=='ยกเลิก'?`<button class="btn btn-xs" style="background:#7c3aed;color:#fff" onclick="quotationToReceipt('${q.id}')">🧾 ใบเสร็จ</button>`:''}
      <button class="btn btn-danger btn-xs" onclick="deleteQuotation('${q.id}')">ลบ</button>`
   ]);
   return`<div class="sec-title">📋 ใบเสนอราคา / Quotation</div>
@@ -6993,6 +6994,57 @@ function renderQuotation(){
     <button class="btn" onclick="editQuotation()">+ สร้างใบเสนอราคา</button>
   </div>
   ${tbl(['เลขที่','วันที่','ลูกค้า (TH)','Customer (EN)','รวม','สถานะ',''],rows)}`;
+}
+
+// ── ใบเสนอราคา → ใบแจ้งหนี้ / ใบเสร็จ (กรณีลูกค้าออก PO มาแล้ว) ──
+function invNextNo(){
+  const nums=S.invoices.map(i=>/^INV-/.test(i.no||'')?(parseInt((i.no||'').replace(/[^0-9]/g,''))||0):0);
+  return'INV-'+String(Math.max(0,...nums)+1).padStart(7,'0');
+}
+function quotationToInvoice(id){
+  const q=S.quotations.find(x=>x.id===id);
+  if(!q) return;
+  if(q.invoiceId){ // มีใบแจ้งหนี้แล้ว → เปิดพิมพ์
+    printQuotation(id,'invoice');return;
+  }
+  openModal('📄 สร้างใบแจ้งหนี้จาก '+(q.no||''),`
+  <div style="margin-bottom:10px;color:var(--muted);font-size:13px">ลูกค้า: ${q.customerName||'-'} — ยอดรวม <b style="color:#10b981">${fmt(q.total||0)}</b> บาท</div>
+  <div class="fm"><label class="fl">เลขที่ PO ของลูกค้า</label><input class="fc" id="qi-po" value="${(q.poNo||'').replace(/"/g,'&quot;')}" placeholder="เช่น PO-2026-0123"></div>
+  <div class="fm" style="margin-top:8px"><label class="fl">วันที่ใบแจ้งหนี้</label><input type="date" class="fc" id="qi-date" value="${todayISO()}"></div>
+  <div class="fm" style="margin-top:8px"><label class="fl">ครบกำหนดชำระ (ถ้ามี)</label><input type="date" class="fc" id="qi-due" value=""></div>
+  <div style="font-size:11px;color:var(--muted);margin-top:8px">ระบบจะบันทึกในเมนู "ใบแจ้งหนี้" (สถานะรอชำระ) และเปิดหน้าพิมพ์ให้</div>`,
+  `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
+   <button class="btn btn-primary" onclick="confirmQuotationInvoice('${id}')">✅ สร้างและพิมพ์</button>`);
+}
+async function confirmQuotationInvoice(id){
+  const q=S.quotations.find(x=>x.id===id);
+  if(!q) return;
+  const poNo=document.getElementById('qi-po')?.value?.trim()||'';
+  const date=document.getElementById('qi-date')?.value||todayISO();
+  const due=document.getElementById('qi-due')?.value||'';
+  closeModal();
+  try{
+    const no=invNextNo();
+    const total=q.total||0,vat=q.vat||0;
+    const amount=q.vatMode==='exclusive'?(q.subtotal??(total-vat)):(vat>0?total-vat:total);
+    const desc=(q.items||[]).map(i=>(i.nameTh||i.nameEn||i.name||'')+' x'+(i.qty||1)).join(', ').slice(0,200);
+    const inv={no,date,customer:q.customerName||'',desc,amount,vat,total,status:'รอชำระ',
+      quotationId:id,quotationRef:q.no||'',poNo,dueDate:due,createdAt:ts()};
+    const nid=await addFB('invoices',inv);
+    S.invoices.push({id:nid,...inv});
+    const upd={invoiceId:nid,invoiceNo:no,invoiceDate:date,invoiceDue:due,poNo};
+    await updateFB('quotations',id,upd);
+    Object.assign(q,upd);
+    toast('สร้างใบแจ้งหนี้ '+no+' สำเร็จ ✓','success');
+    renderPage('quotation');
+    printQuotation(id,'invoice');
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+function quotationToReceipt(id){
+  const q=S.quotations.find(x=>x.id===id);
+  if(!q) return;
+  if(q.status==='ชำระแล้ว'){printQuotation(id);return;} // พิมพ์ใบเสร็จซ้ำ
+  payQuotation(id); // บันทึกรับชำระ → ออกใบเสร็จ
 }
 
 function qtNextNo(){
@@ -7027,6 +7079,7 @@ function qtForm(q={}){
       <div><label class="fl">เลขที่ / No.</label><input class="fc" id="qt-no" value="${q.no||qtNextNo()}"></div>
       <div><label class="fl">วันที่ / Date</label><input type="date" class="fc" id="qt-date" value="${q.date||todayISO()}"></div>
       <div><label class="fl">วันหมดอายุ / Valid Until</label><input type="date" class="fc" id="qt-validUntil" value="${q.validUntil||''}"></div>
+      <div style="grid-column:1/-1"><label class="fl">เลขที่ PO ของลูกค้า (ถ้ามี)</label><input class="fc" id="qt-poNo" value="${(q.poNo||'').replace(/"/g,'&quot;')}" placeholder="เช่น PO-2026-0123"></div>
     </div>
   </div>
 
@@ -7256,6 +7309,7 @@ async function saveQuotation(id){
     no:document.getElementById('qt-no')?.value?.trim()||qtNextNo(),
     date:document.getElementById('qt-date')?.value||todayISO(),
     validUntil:document.getElementById('qt-validUntil')?.value||'',
+    poNo:document.getElementById('qt-poNo')?.value?.trim()||'',
     customerName:document.getElementById('qt-custTh')?.value?.trim()||'',
     customerNameEn:document.getElementById('qt-custEn')?.value?.trim()||'',
     customerTel:document.getElementById('qt-tel')?.value?.trim()||'',
@@ -7380,6 +7434,7 @@ async function confirmPayQuotation(id){
       customerTaxId:q.customerTaxId||'',
       customerTel:q.customerTel||'',
       quotationRef:q.no||id,
+      customerPO:q.poNo||'',
     };
     const sRef=db.collection('sales').doc();
     await sRef.set({...saleData,createdAt:ts()});
@@ -7387,19 +7442,25 @@ async function confirmPayQuotation(id){
     await updateFB('quotations',id,{status:'ชำระแล้ว'});
     const qi=S.quotations.findIndex(x=>x.id===id);
     if(qi>=0) S.quotations[qi].status='ชำระแล้ว';
+    if(q.invoiceId){ // ปิดใบแจ้งหนี้ที่ผูกกับใบเสนอราคานี้
+      try{await updateFB('invoices',q.invoiceId,{status:'ชำระแล้ว'});const iv=S.invoices.find(x=>x.id===q.invoiceId);if(iv)iv.status='ชำระแล้ว';}catch(e){console.warn(e);}
+    }
     toast('บันทึกการชำระ '+docNo+' สำเร็จ ✓','success');
     renderPage('quotation');
     showReceiptModal({id:sRef.id,...saleData});
   }catch(e){toast('Error: '+e.message,'error');}
 }
-function printQuotation(id){
+function printQuotation(id,mode){
   const q=S.quotations.find(x=>x.id===id);
   if(!q) return;
   const co=S.company;
-  const isPaid=q.status==='ชำระแล้ว';
-  const docTitle=isPaid?'ใบเสร็จรับเงิน':'ใบเสนอราคา';
-  const docSubtitle=isPaid?'RECEIPT':'QUOTATION';
-  const docLabel=isPaid?'เลขที่ใบเสร็จ / Receipt No.':'เลขที่ใบเสนอราคา / Quotation No.';
+  const isInv=mode==='invoice';
+  const isPaid=!isInv&&q.status==='ชำระแล้ว';
+  const docTitle=isInv?'ใบแจ้งหนี้':isPaid?'ใบเสร็จรับเงิน':'ใบเสนอราคา';
+  const docSubtitle=isInv?'INVOICE':isPaid?'RECEIPT':'QUOTATION';
+  const docLabel=isInv?'เลขที่ใบแจ้งหนี้ / Invoice No.':isPaid?'เลขที่ใบเสร็จ / Receipt No.':'เลขที่ใบเสนอราคา / Quotation No.';
+  const docNo=isInv?(q.invoiceNo||q.no):q.no;
+  const docDate=isInv?(q.invoiceDate||q.date):q.date;
 
   // barcode (Code128 via CSS bars — ใช้ text แทน library)
   function barcodeHtml(text){
@@ -7426,14 +7487,21 @@ function printQuotation(id){
       <td style="padding:7px 6px;text-align:right;font-weight:700">${fmt(it.qty*it.price)}</td>
     </tr>`).join('');
 
-  const validStr=(!isPaid&&q.validUntil)?`<tr><td style="color:#6b7280;padding:2px 8px 2px 0">วันหมดอายุ / Valid Until:</td><td style="font-weight:700">${q.validUntil}</td></tr>`:'';
+  const validStr=(isInv
+      ?`${q.poNo?`<tr><td style="color:#6b7280;text-align:right;padding-right:10px">PO ลูกค้า / PO No.:</td><td style="font-weight:700">${q.poNo}</td></tr>`:''}
+        <tr><td style="color:#6b7280;text-align:right;padding-right:10px">อ้างอิงใบเสนอราคา:</td><td>${q.no}</td></tr>
+        ${q.invoiceDue?`<tr><td style="color:#6b7280;text-align:right;padding-right:10px">ครบกำหนด / Due:</td><td style="font-weight:700">${q.invoiceDue}</td></tr>`:''}`
+      :isPaid
+      ?`${q.poNo?`<tr><td style="color:#6b7280;text-align:right;padding-right:10px">PO ลูกค้า / PO No.:</td><td style="font-weight:700">${q.poNo}</td></tr>`:''}
+        <tr><td style="color:#6b7280;text-align:right;padding-right:10px">อ้างอิงใบเสนอราคา:</td><td>${q.no}</td></tr>`
+      :(q.validUntil?`<tr><td style="color:#6b7280;padding:2px 8px 2px 0">วันหมดอายุ / Valid Until:</td><td style="font-weight:700">${q.validUntil}</td></tr>`:''));
   const taxIdStr=q.customerTaxId?`<div style="font-size:11px;color:#111;margin-top:2px">เลขผู้เสียภาษี / Tax ID: ${q.customerTaxId}</div>`:'';
   const remarkStr=q.remark?`<div style="margin-top:10px;padding:8px 10px;background:#f9fafb;border-left:3px solid #111;font-size:12px"><b>หมายเหตุ / Remark:</b> ${q.remark}</div>`:'';
 
   const LOGO_B64=RG_LOGO;
 
   const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
-<title>${docTitle} ${q.no}</title>
+<title>${docTitle} ${docNo}</title>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700;900&family=Noto+Sans:wght@400;700;900&display=swap');
@@ -7472,8 +7540,8 @@ table.items td{font-size:12px}
     <div style="font-size:22px;font-weight:900;letter-spacing:.5px">${docTitle}</div>
     <div style="font-size:14px;color:#6b7280;letter-spacing:2px;margin-bottom:8px">${docSubtitle}</div>
     <table style="margin-left:auto;font-size:12px;border-collapse:collapse">
-      <tr><td style="color:#6b7280;padding:2px 10px 2px 0;text-align:right">เลขที่ / No.:</td><td style="font-weight:900;font-size:14px">${q.no}</td></tr>
-      <tr><td style="color:#6b7280;text-align:right">วันที่ / Date:</td><td style="font-weight:700">${q.date}</td></tr>
+      <tr><td style="color:#6b7280;padding:2px 10px 2px 0;text-align:right">เลขที่ / No.:</td><td style="font-weight:900;font-size:14px">${docNo}</td></tr>
+      <tr><td style="color:#6b7280;text-align:right">วันที่ / Date:</td><td style="font-weight:700">${docDate}</td></tr>
       ${validStr}
     </table>
   </div>
@@ -7528,7 +7596,7 @@ ${remarkStr}
   <div style="display:flex;justify-content:center;margin-top:8px">
     <div style="text-align:center;min-width:220px">
       <div style="border-top:1px solid #111;padding-top:8px;margin-top:40px">
-        <div>${isPaid?'ผู้รับเงิน':'ผู้เสนอราคา / Prepared by'}</div>
+        <div>${isInv?'ผู้ออกใบแจ้งหนี้ / Issued by':isPaid?'ผู้รับเงิน':'ผู้เสนอราคา / Prepared by'}</div>
         <div style="margin-top:4px;color:#6b7280;font-size:12px">(${co.name||'Racing Garage'})</div>
       </div>
     </div>
@@ -7540,7 +7608,7 @@ ${remarkStr}
   <div style="text-align:center">
     <div style="font-size:10px;color:#6b7280;margin-bottom:4px">${docLabel}</div>
     <svg id="qt-bc-print" style="display:block;margin:0 auto"></svg>
-    <div style="font-size:10px;font-family:monospace;letter-spacing:3px;margin-top:2px">${q.no}</div>
+    <div style="font-size:10px;font-family:monospace;letter-spacing:3px;margin-top:2px">${docNo}</div>
   </div>
   <div style="text-align:center">
     <div style="font-size:10px;color:#6b7280;margin-bottom:4px">สั่งซื้อออนไลน์ / Order Online</div>
@@ -7551,7 +7619,7 @@ ${remarkStr}
 
 
 </body></html>`;
-  const qtNo=q.no;
+  const qtNo=docNo;
   const win=window.open('','_blank','width=900,height=750');
   win.document.write(html);win.document.close();
   setTimeout(function(){
@@ -7586,7 +7654,7 @@ function shareQuotationLine(id){
 
 function renderInvoice(){
   const rows=[...S.invoices].reverse().map(inv=>[inv.no||'',inv.date||'',inv.customer||'',''+fmt(inv.amount),''+fmt(inv.vat),''+fmt(inv.total),badge(inv.status,inv.status==='ชำระแล้ว'?'green':'amber'),
-    `<button class="btn btn-primary btn-xs" onclick="editInvoice('${inv.id}')">แก้ไข</button> ${inv.status!=='ชำระแล้ว'?`<button class="btn btn-success btn-xs" onclick="payInvoice('${inv.id}')">รับชำระ</button> `:''}<button class="btn btn-danger btn-xs" onclick="deleteInvoice('${inv.id}')">ลบ</button>`]);
+    `<button class="btn btn-primary btn-xs" onclick="editInvoice('${inv.id}')">แก้ไข</button> ${inv.quotationId?`<button class="btn btn-xs" style="background:#0e7490;color:#fff" onclick="printQuotation('${inv.quotationId}','invoice')">พิมพ์</button> `:''}${inv.status!=='ชำระแล้ว'?`<button class="btn btn-success btn-xs" onclick="payInvoice('${inv.id}')">รับชำระ</button> `:''}<button class="btn btn-danger btn-xs" onclick="deleteInvoice('${inv.id}')">ลบ</button>`]);
   return`<div class="sec-title">🧾 ใบแจ้งหนี้ / ใบกำกับภาษี</div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:1rem">
     <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์รายการ</button>
