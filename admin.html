@@ -6230,6 +6230,15 @@ async function doAdj(id){
 }
 
 // ===== PURCHASES =====
+function purchaseToVat(id){
+  const p=S.purchases.find(x=>x.id===id);
+  if(!p) return;
+  const rate=parseFloat(S.company.vatRate)||7;
+  const base=p.total||0; // ยอดซื้อในระบบ = ก่อน VAT (แก้ได้ในฟอร์ม)
+  openVatPurchaseModal({page:'purchases',source:'purchase',sourceKey:'purchase:'+id,
+    date:p.date,supplier:p.supplierName||'',docNo:p.docNo||'',amount:base,
+    vat:Math.round(base*rate)/100,note:'ใบสั่งซื้อ '+(p.docNo||'')});
+}
 function renderPurchases(){
   const supOpts=S.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
   const prodOpts=S.products.map(p=>`<option value="${p.id}">${p.code} - ${p.name} (คงเหลือ ${p.stock} ${p.unit})</option>`).join('');
@@ -6242,7 +6251,7 @@ function renderPurchases(){
   </tr>`).join('');
   const total=PI.reduce((a,b)=>a+b.qty*b.cost,0);
   const rows=[...S.purchases].reverse().map(p=>[p.docNo||'',p.date||'',p.supplierName||'-',p.items?p.items.length+' รายการ':'-',''+fmt(p.total),badge('เสร็จสิ้น','green'),
-    `<button class="btn btn-primary btn-xs" onclick="viewPurchase('${p.id}')">ดู</button> <button class="btn btn-gray btn-xs" onclick="managePODocs('${p.id}','${p.docNo||''}')">📎 เอกสาร</button> <button class="btn btn-danger btn-xs" onclick="deletePurchase('${p.id}')">ลบ</button>`]);
+    `<button class="btn btn-primary btn-xs" onclick="viewPurchase('${p.id}')">ดู</button> <button class="btn btn-gray btn-xs" onclick="managePODocs('${p.id}','${p.docNo||''}')">📎 เอกสาร</button> <button class="btn btn-xs" style="background:${vpFind('purchase:'+p.id)?'#16a34a':'#0ea5e9'};color:#fff" onclick="purchaseToVat('${p.id}')">${vpFind('purchase:'+p.id)?'✓ ภาษีซื้อ':'🧾 ภาษีซื้อ'}</button><button class="btn btn-danger btn-xs" onclick="deletePurchase('${p.id}')">ลบ</button>`]);
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">🚚 ซื้อสินค้าเข้า</div>
   <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ประวัติการซื้อ</button>
@@ -6703,6 +6712,7 @@ function renderExpenses(){
     e.hasVat?fmt(e.vatAmount||0):'-',
     e.slipUrl?`<a href="${e.slipUrl}" target="_blank"><img src="${e.slipUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer"></a>`:'<span style="color:var(--muted)">ไม่มี</span>',
     `<button class="btn btn-primary btn-xs" onclick="editExpense('${e.id}')">แก้ไข</button>
+     ${e.hasVat?`<button class="btn btn-xs" style="background:${vpFind('expense:'+e.id)?'#16a34a':'#0ea5e9'};color:#fff" onclick="expenseToVat('${e.id}')">${vpFind('expense:'+e.id)?'✓ ภาษีซื้อแล้ว':'🧾 บันทึกภาษีซื้อ'}</button>`:''}
      <button class="btn btn-danger btn-xs" onclick="deleteExpense('${e.id}')">ลบ</button>`
   ]);
 
@@ -6718,6 +6728,15 @@ function renderExpenses(){
     ${sc('ภาษีซื้อ (VAT)',''+fmt(totalVat),'#0ea5e9','บาท')}
   </div>
   ${tbl(['วันที่','หมวด','รายละเอียด','จำนวนเงิน','VAT ซื้อ','ใบเสร็จ',''],rows)}`;
+}
+
+function expenseToVat(id){
+  const e=S.expenses.find(x=>x.id===id);
+  if(!e) return;
+  const vat=e.vatAmount||0;
+  openVatPurchaseModal({page:'expenses',source:'expense',sourceKey:'expense:'+id,
+    date:e.date,supplier:'',docNo:'',amount:Math.round(((e.amount||0)-vat)*100)/100,vat,
+    note:(e.category||'')+(e.note?' — '+e.note:'')});
 }
 
 function editExpense(id){
@@ -7684,10 +7703,71 @@ async function saveInvoice(id){
 async function payInvoice(id){await updateFB('invoices',id,{status:'ชำระแล้ว'});const inv=S.invoices.find(x=>x.id===id);if(inv)inv.status='ชำระแล้ว';renderPage('invoice');toast('รับชำระสำเร็จ ✓','success');}
 async function deleteInvoice(id){if(!confirm('ลบ?'))return;await deleteFB('invoices',id);S.invoices=S.invoices.filter(x=>x.id!==id);renderPage('invoice');toast('ลบแล้ว','info');}
 
+// ===== ภาษีซื้อ (Input VAT) =====
+// รายการใน S.vatPurchase: {date,docNo,supplier,amount(ฐาน),vat,creditable,source,sourceKey,note}
+function vpList(){return (S.vatPurchase||[]).filter(x=>x.creditable!==false);}
+function vpFind(key){return key?(S.vatPurchase||[]).find(x=>x.sourceKey===key):null;}
+function openVatPurchaseModal(o){
+  o=o||{};
+  const ex=o.id?S.vatPurchase.find(x=>x.id===o.id):vpFind(o.sourceKey);
+  const v=ex||o;
+  window._vpCtx={id:ex?.id||'',sourceKey:o.sourceKey||ex?.sourceKey||'',source:o.source||ex?.source||'manual',page:o.page||'vat'};
+  const esc=x=>String(x==null?'':x).replace(/"/g,'&quot;');
+  const rate=parseFloat(S.company.vatRate)||7;
+  window._vpRate=rate;
+  openModal(ex?'✏️ แก้ไขภาษีซื้อ':'🧾 บันทึกเป็นภาษีซื้อ',`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="fm"><label class="fl">วันที่ใบกำกับภาษี</label><input type="date" class="fc" id="vp-date" value="${v.date||todayISO()}"></div>
+    <div class="fm"><label class="fl">เลขที่ใบกำกับภาษี</label><input class="fc" id="vp-doc" value="${esc(v.docNo)}"></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">ชื่อผู้ขาย</label><input class="fc" id="vp-sup" value="${esc(v.supplier)}"></div>
+    <div class="fm"><label class="fl">มูลค่าก่อน VAT (ฐานภาษี)</label><input type="number" step="0.01" class="fc" id="vp-base" value="${v.amount||''}" oninput="document.getElementById('vp-vat').value=(Math.round((parseFloat(this.value)||0)*window._vpRate)/100).toFixed(2)"></div>
+    <div class="fm"><label class="fl">VAT ${rate}% (บาท)</label><input type="number" step="0.01" class="fc" id="vp-vat" value="${v.vat||''}"></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">หมายเหตุ</label><input class="fc" id="vp-note" value="${esc(v.note)}"></div>
+    <div style="grid-column:1/-1"><label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="vp-cred" ${v.creditable===false?'':'checked'} style="width:16px;height:16px"> ขอเครดิตภาษีซื้อได้ (ใบกำกับภาษีเต็มรูปแบบ ในชื่อบริษัทที่จด VAT แล้ว)</label></div>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:8px">ถ้าไม่ติ๊ก ระบบจะเก็บรายการไว้แต่ไม่นำไปหักใน ภ.พ.30 (เช่น ค่ารับรอง ใบกำกับภาษีก่อนจด VAT ใบกำกับในชื่อบุคคล)</div>`,
+  `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button>
+   <button class="btn btn-primary" onclick="saveVatPurchase()">💾 บันทึก</button>`);
+}
+async function saveVatPurchase(){
+  const c=window._vpCtx||{};
+  const vat=parseFloat(document.getElementById('vp-vat')?.value)||0;
+  const amount=parseFloat(document.getElementById('vp-base')?.value)||0;
+  if(vat<=0){toast('กรุณากรอก VAT','error');return;}
+  const data={
+    date:document.getElementById('vp-date')?.value||todayISO(),
+    docNo:document.getElementById('vp-doc')?.value?.trim()||'',
+    supplier:document.getElementById('vp-sup')?.value?.trim()||'',
+    amount,vat,
+    note:document.getElementById('vp-note')?.value?.trim()||'',
+    creditable:!!document.getElementById('vp-cred')?.checked,
+    source:c.source||'manual',sourceKey:c.sourceKey||'',
+    updatedAt:ts()
+  };
+  try{
+    if(c.id){
+      await updateFB('vatPurchase',c.id,data);
+      const i=S.vatPurchase.findIndex(x=>x.id===c.id);
+      if(i>=0)S.vatPurchase[i]={...S.vatPurchase[i],...data};
+    }else{
+      const nid=await addFB('vatPurchase',{...data,createdAt:ts()});
+      S.vatPurchase.push({id:nid,...data});
+    }
+    closeModal();renderPage(c.page||'vat');toast('บันทึกภาษีซื้อสำเร็จ ✓','success');
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+async function deleteVatPurchase(id){
+  if(!confirm('ลบรายการภาษีซื้อนี้?'))return;
+  await deleteFB('vatPurchase',id);
+  S.vatPurchase=S.vatPurchase.filter(x=>x.id!==id);
+  renderPage('vat');toast('ลบแล้ว','info');
+}
+function _vpSrcLabel(s){return({import:'นำเข้า',expense:'ค่าใช้จ่าย',purchase:'ซื้อสินค้า'})[s]||'กรอกเอง';}
+
 // ===== VAT =====
 function renderVat(){
   const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
-  const vb=S.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+  const vb=vpList().reduce((a,b)=>a+(b.vat||0),0);
   return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
   <div class="sec-title" style="margin-bottom:0">📋 ภาษีมูลค่าเพิ่ม (VAT)</div>
   <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ ภ.พ.30</button>
@@ -7698,9 +7778,19 @@ function renderVat(){
   </div>
   <div class="card" style="background:#f0fdf4">
     <div style="font-weight:700;color:var(--primary);margin-bottom:10px">สรุป ภ.พ.30</div>
-    ${[['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีขาย (Output Tax)',vs],['มูลค่าฐานภาษีซื้อ',S.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีซื้อ (Input Tax)',vb],['ภาษีสุทธิที่ต้องนำส่ง',vs-vb]]
+    ${[['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีขาย (Output Tax)',vs],['มูลค่าฐานภาษีซื้อ',vpList().reduce((a,b)=>a+(b.amount||0),0)],['ภาษีซื้อ (Input Tax)',vb],['ภาษีสุทธิที่ต้องนำส่ง',vs-vb]]
       .map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #d1fae5;font-size:14px${i===4?';font-weight:700':''}"><span style="color:var(--muted)">${k}</span><span style="color:${i===4?'var(--danger)':'var(--primary)'};font-weight:700">${fmtM(v)}</span></div>`).join('')}
-  </div>`;
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:1.2rem 0 .5rem">
+    <div class="sec-title" style="margin-bottom:0">🧾 รายการภาษีซื้อ (Input Tax)</div>
+    <button class="btn btn-sm" onclick="openVatPurchaseModal({page:'vat'})">+ เพิ่มภาษีซื้อ</button>
+  </div>
+  ${tbl(['วันที่','เลขที่ใบกำกับ','ผู้ขาย','ฐานภาษี','VAT','ที่มา','เครดิต',''],
+    [...S.vatPurchase].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(p=>[
+      p.date||'-',p.docNo||'-',p.supplier||'-',''+fmt(p.amount||0),''+fmt(p.vat||0),_vpSrcLabel(p.source),
+      p.creditable===false?badge('ไม่ขอเครดิต','amber'):badge('ขอเครดิต','green'),
+      `<button class="btn btn-primary btn-xs" onclick="openVatPurchaseModal({id:'${p.id}',page:'vat'})">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteVatPurchase('${p.id}')">ลบ</button>`
+    ]),'ยังไม่มีรายการภาษีซื้อ')}`;
 }
 
 // ===== PAYROLL =====
@@ -7778,7 +7868,7 @@ function renderFinancial(){
 // ===== TAX FORMS =====
 function renderTaxForms(){
   const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
-  const vb=S.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+  const vb=vpList().reduce((a,b)=>a+(b.vat||0),0);
   const tt=S.employees.reduce((a,b)=>a+(b.tax||0),0);
   const rev=S.sales.reduce((a,b)=>a+(b.subtotal||0),0)+S.invoices.reduce((a,b)=>a+(b.amount||0),0);
   const exp=S.employees.reduce((a,b)=>a+(b.salary||0),0)*2+40000;
@@ -8849,10 +8939,10 @@ function getPageData(){
   }
   else if(currentPage==='vat'){
     const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
-    const vb=S.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+    const vb=vpList().reduce((a,b)=>a+(b.vat||0),0);
     headers=['รายการ','จำนวนเงิน ()'];
     rows=[['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],
-      ['ภาษีขาย (Output Tax)',vs],['มูลค่าฐานภาษีซื้อ',S.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)],
+      ['ภาษีขาย (Output Tax)',vs],['มูลค่าฐานภาษีซื้อ',vpList().reduce((a,b)=>a+(b.amount||0),0)],
       ['ภาษีซื้อ (Input Tax)',vb],['ภาษีสุทธิ',vs-vb]];
   }
   else if(currentPage==='payroll'){
@@ -8874,7 +8964,7 @@ function getPageData(){
   }
   else if(currentPage==='taxforms'){
     const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
-    const vb=S.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+    const vb=vpList().reduce((a,b)=>a+(b.vat||0),0);
     const tt=S.employees.reduce((a,b)=>a+(b.tax||0),0);
     const rev=S.sales.reduce((a,b)=>a+(b.subtotal||0),0)+S.invoices.reduce((a,b)=>a+(b.amount||0),0);
     const exp=S.employees.reduce((a,b)=>a+(b.salary||0),0)*2+40000;
@@ -9180,6 +9270,8 @@ function exportCSV(){
 
 // ===== คำนวณภาษีนำเข้า =====
 let _itax={duty:0,vat:0,items:[]};
+function _itaxVatC(d){return d.vatMode==='credit'?0:(d.vat||0);}
+function _itaxProcC(d){return (d.proc||0)+(d.vatMode==='credit'?0:(d.procVat||0));}
 function renderImportTax(){
   const d=_itax;
   const totalUSD=d.items.reduce((a,i)=>a+(i.qty||0)*(i.unit||0),0);
@@ -9190,15 +9282,15 @@ function renderImportTax(){
   const freightTotalTHB=d.items.filter(isFreight).reduce((a,i)=>{
     const s=(i.qty||0)*(i.unit||0);
     const p=totalUSD>0?s/totalUSD:0;
-    return a+s*(d.fx||1)+(d.duty||0)*p+(d.vat||0)*p+((d.proc||0)+(d.procVat||0))*p;
+    return a+s*(d.fx||1)+(d.duty||0)*p+_itaxVatC(d)*p+_itaxProcC(d)*p;
   },0);
   const rowsHtml=d.items.map((it,idx)=>{
     const sum=(it.qty||0)*(it.unit||0);
     const pct=totalUSD>0?sum/totalUSD:0;
     const duty=(d.duty||0)*pct;
     const vat=(d.vat||0)*pct;
-    const proc=((d.proc||0)+(d.procVat||0))*pct;
-    const totalTax=duty+vat+proc;
+    const proc=_itaxProcC(d)*pct;
+    const totalTax=duty+_itaxVatC(d)*pct+proc;
     // กระจายค่าส่งลงสินค้า (ไม่รวม freight row เอง)
     const freightShare=(!isFreight(it)&&productUSD>0)?freightTotalTHB*(sum/productUSD):0;
     const costPerUnit=(it.unit||0)*(d.fx||1)+totalTax/(it.qty||1)+freightShare/(it.qty||1);
@@ -9218,7 +9310,7 @@ function renderImportTax(){
       <td style="padding:5px 8px;border-bottom:1px solid #eee;text-align:center"><button onclick="_itax.items.splice(${idx},1);refreshImportTax()" style="background:none;border:none;cursor:pointer;color:#e24b4a;font-size:14px">✕</button></td>
     </tr>`;
   }).join('');
-  const tDuty=(d.duty||0),tVat=(d.vat||0),tProc=(d.proc||0)+(d.procVat||0);
+  const tDuty=(d.duty||0),tVat=(d.vat||0),tProc=_itaxProcC(d);
   return`
   <div class="sec-title">🧮 คำนวณภาษีนำเข้า (Import Duty & VAT)</div>
   <div class="card" style="margin-bottom:1rem;padding:1rem 1.2rem;border:2px dashed #0ea5e9;background:#f0f9ff">
@@ -9253,6 +9345,13 @@ function renderImportTax(){
       <div>
         <div style="font-size:12px;color:#666;margin-bottom:4px">VAT (THB) <span style="color:#e34948;font-size:11px">จากใบ DHL/ศุลกากร</span></div>
         <input id="itax-vat" type="number" min="0" step="0.01" placeholder="0.00" value="${d.vat||''}" onchange="_itax.vat=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:150px;text-align:right">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">การรับรู้ VAT นำเข้า <span style="color:#16a34a;font-size:11px">ภาษีซื้อ vs ต้นทุน</span></div>
+        <select id="itax-vatmode" onchange="_itax.vatMode=this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:260px">
+          <option value="cost" ${d.vatMode!=='credit'?'selected':''}>รวมเป็นต้นทุนสินค้า (ไม่ขอเครดิต)</option>
+          <option value="credit" ${d.vatMode==='credit'?'selected':''}>ขอเครดิตเป็นภาษีซื้อ (ไม่รวมต้นทุน)</option>
+        </select>
       </div>
       <div>
         <div style="font-size:12px;color:#666;margin-bottom:4px">ค่าดำเนินการ DHL (THB) <span style="color:#7c3aed;font-size:11px">DUTY TAX PROCESSING</span></div>
@@ -9309,7 +9408,7 @@ function renderImportTax(){
           <td style="padding:8px;border-top:2px solid #ddd;text-align:right;color:#d95926">${tDuty.toFixed(2)}</td>
           <td style="padding:8px;border-top:2px solid #ddd;text-align:right;color:#e34948">${tVat.toFixed(2)}</td>
           <td style="padding:8px;border-top:2px solid #ddd;text-align:right;color:#7c3aed">${tProc.toFixed(2)}</td>
-          <td style="padding:8px;border-top:2px solid #ddd;text-align:right">${(tDuty+tVat+tProc).toFixed(2)}</td>
+          <td style="padding:8px;border-top:2px solid #ddd;text-align:right">${(tDuty+_itaxVatC(d)+tProc).toFixed(2)}</td>
           <td style="border-top:2px solid #ddd"></td>
           <td style="border-top:2px solid #ddd"></td>
         </tr>
@@ -9479,7 +9578,7 @@ async function importTaxToStock(){
   const freightTotalTHB=d.items.filter(_isFreight).reduce((a,i)=>{
     const s=(i.qty||0)*(i.unit||0);
     const p=totalUSD>0?s/totalUSD:0;
-    return a+s*fx+(d.duty||0)*p+(d.vat||0)*p+((d.proc||0)+(d.procVat||0))*p;
+    return a+s*fx+(d.duty||0)*p+_itaxVatC(d)*p+_itaxProcC(d)*p;
   },0);
   // คำนวณต้นทุน/ชิ้น รวมอากร+VAT+ค่าส่ง
   const calcs=productItems.map(i=>{
@@ -9487,8 +9586,8 @@ async function importTaxToStock(){
     const pct=totalUSD>0?sumUSD/totalUSD:0;
     const thb=sumUSD*fx;
     const dutyShare=(d.duty||0)*pct;
-    const vatShare=(d.vat||0)*pct;
-    const procShare=((d.proc||0)+(d.procVat||0))*pct;
+    const vatShare=_itaxVatC(d)*pct;
+    const procShare=_itaxProcC(d)*pct;
     const freightShare=productOnlyUSD>0?freightTotalTHB*(sumUSD/productOnlyUSD):0;
     const totalCost=thb+dutyShare+vatShare+procShare+freightShare;
     const costPer=totalCost/(i.qty||1);
@@ -9571,6 +9670,21 @@ async function confirmImportTaxToStock(matched,newItems){
       done++;
     }catch(e){errors++;console.error(e);}
   }
+  // ลงภาษีซื้อ (VAT นำเข้า) อัตโนมัติ เมื่อเลือก "ขอเครดิตเป็นภาษีซื้อ"
+  if(d.vatMode==='credit'&&((d.vat||0)+(d.procVat||0))>0){
+    try{
+      const vatT=Math.round(((d.vat||0)+(d.procVat||0))*100)/100;
+      const rate=parseFloat(S.company.vatRate)||7;
+      const key='import:'+(d.invoiceNo||importDate);
+      const rec={date:importDate,docNo:d.invoiceNo||'',supplier:'ศุลกากร/DHL'+(d.supplier?' — '+d.supplier:''),
+        amount:Math.round(vatT*100/rate*100)/100,vat:vatT,creditable:true,source:'import',sourceKey:key,
+        note:'VAT นำเข้า (ฐานคำนวณย้อนจาก VAT ที่ชำระจริง) — ตรวจกับใบขนสินค้า/ใบเสร็จศุลกากรอีกครั้ง',updatedAt:ts()};
+      const ex=vpFind(key);
+      if(ex){await updateFB('vatPurchase',ex.id,rec);Object.assign(ex,rec);}
+      else{const nid=await addFB('vatPurchase',{...rec,createdAt:ts()});S.vatPurchase.push({id:nid,...rec});}
+      toast('ลงภาษีซื้อ '+fmt(vatT)+' บาท แล้ว ✓','success');
+    }catch(e){console.error(e);toast('ลงภาษีซื้อไม่สำเร็จ: '+e.message,'error');}
+  }
   if(errors) toast(`นำเข้าเสร็จ ${done} รายการ (ผิดพลาด ${errors} รายการ)`,'warning');
   else toast(`นำเข้า Stock สำเร็จ ${done} รายการ ✓ (สร้าง lot FIFO แล้ว)`,'success');
   refreshImportTax();
@@ -9605,6 +9719,7 @@ async function saveImportRecord(){
       vat:d.vat||0,
       proc:d.proc||0,
       procVat:d.procVat||0,
+      vatMode:d.vatMode||'cost',
       fx:d.fx||0,
       totalUSD,
       totalItems,
@@ -9697,6 +9812,7 @@ function loadImportRecord(r){
   _itax.vat=r.vat||0;
   _itax.proc=r.proc||0;
   _itax.procVat=r.procVat||0;
+  _itax.vatMode=r.vatMode||'cost';
   _itax.fx=r.fx||0;
   _itax.items=(r.items||[]).map(i=>({code:i.code||'',name:i.name||'',qty:+i.qty||1,unit:+i.unit||0}));
   _itax._pendingFiles=[];
@@ -12148,12 +12264,12 @@ function printPage(){
   }
   else if(currentPage==='vat'){
     const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
-    const vb=S.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+    const vb=vpList().reduce((a,b)=>a+(b.vat||0),0);
     const net=vs-vb;
     body=pStats([['ภาษีขาย',''+fmt(vs),'#10b981'],['ภาษีซื้อ',''+fmt(vb),'#f59e0b'],['ภาษีสุทธิ',''+fmt(net),net>0?'#ef4444':'#10b981']]);
     body+=`<div style="border:2px solid #1a3a5c;border-radius:8px;padding:1rem">`;
     body+=`<div style="font-weight:700;font-size:14px;color:#1a3a5c;text-align:center;margin-bottom:12px">แบบ ภ.พ.30</div>`;
-    [['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีขาย',vs],['มูลค่าฐานภาษีซื้อ',S.vatPurchase.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีซื้อ',vb],['ภาษีสุทธิ',net]].forEach(([k,v],i)=>{
+    [['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีขาย',vs],['มูลค่าฐานภาษีซื้อ',vpList().reduce((a,b)=>a+(b.amount||0),0)],['ภาษีซื้อ',vb],['ภาษีสุทธิ',net]].forEach(([k,v],i)=>{
       body+=`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;${i===4?'font-weight:700;font-size:14px':''}"><span>${k}</span><span style="color:${i===4?'#ef4444':'#1a3a5c'}">${fmtM(v)}</span></div>`;
     });
     body+=`</div>`;
@@ -12190,7 +12306,7 @@ function printPage(){
   }
   else if(currentPage==='taxforms'){
     const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
-    const vb=S.vatPurchase.reduce((a,b)=>a+(b.vat||0),0);
+    const vb=vpList().reduce((a,b)=>a+(b.vat||0),0);
     const tt=S.employees.reduce((a,b)=>a+(b.tax||0),0);
     const rev=S.sales.reduce((a,b)=>a+(b.subtotal||0),0)+S.invoices.reduce((a,b)=>a+(b.amount||0),0);
     const exp=S.employees.reduce((a,b)=>a+(b.salary||0),0)*2+40000;
