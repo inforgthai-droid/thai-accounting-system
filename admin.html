@@ -7456,8 +7456,8 @@ function printQuotation(id,mode){
   const co=S.company;
   const isInv=mode==='invoice';
   const isPaid=!isInv&&q.status==='ชำระแล้ว';
-  const docTitle=isInv?'ใบแจ้งหนี้':isPaid?'ใบเสร็จรับเงิน':'ใบเสนอราคา';
-  const docSubtitle=isInv?'INVOICE':isPaid?'RECEIPT':'QUOTATION';
+  const docTitle=isInv?'ใบแจ้งหนี้':isPaid?'ใบเสร็จรับเงิน/ใบกำกับภาษี':'ใบเสนอราคา';
+  const docSubtitle=isInv?'INVOICE':isPaid?'RECEIPT / TAX INVOICE':'QUOTATION';
   const docLabel=isInv?'เลขที่ใบแจ้งหนี้ / Invoice No.':isPaid?'เลขที่ใบเสร็จ / Receipt No.':'เลขที่ใบเสนอราคา / Quotation No.';
   const docNo=isInv?(q.invoiceNo||q.no):q.no;
   const docDate=isInv?(q.invoiceDate||q.date):q.date;
@@ -7531,8 +7531,8 @@ table.items td{font-size:12px}
     <div style="font-size:12px;color:#444;line-height:1.7">
       ${co.name?`<div style="font-weight:700;color:#111">${co.name}</div>`:''}
       ${(co.address||'').split('\n').filter(Boolean).map(l=>`<div>${l}</div>`).join('')||'<div>29 ซอย รามอินทรา 39 แยก 3</div><div>แขวงอนุสาวรีย์ เขตบางเขน</div><div>กรุงเทพมหานคร 10220</div>'}
-      <div>โทร / Tel: ${co.tel||'089-140-0606'}</div>
-      ${(co.showTaxIdInQuotation&&co.taxId)?`<div>เลขประจำตัวผู้เสียภาษี / Tax ID: ${co.taxId}</div>`:''}
+      <div>โทร / Tel: ${_telClean(co.tel)||'089-140-0606'}</div>
+      ${((co.showTaxIdInQuotation||isPaid)&&co.taxId)?`<div>เลขประจำตัวผู้เสียภาษี / Tax ID: ${co.taxId}</div>`:''}
     </div>
   </div>
   <!-- เลขที่ใบเสนอ ขวา -->
