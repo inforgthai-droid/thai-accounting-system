@@ -7805,7 +7805,7 @@ async function confirmVatPullImports(){
     const r=recs[i];
     const vatT=Math.round(((r.vat||0)+(r.procVat||0))*100)/100;
     const key='import:'+(r.invoiceNo||r.id);
-    const rec={date:document.getElementById('vpi-d-'+i)?.value||todayISO(),docNo:r.invoiceNo||'',supplier:'ศุลกากร/DHL'+(r.supplier?' — '+r.supplier:''),
+    const rec={date:document.getElementById('vpi-d-'+i)?.value||todayISO(),docNo:r.customsEntryNo||r.invoiceNo||'',supplier:r.issuerName||('ศุลกากร/DHL'+(r.supplier?' — '+r.supplier:'')),supplierTaxId:r.issuerTaxId||'',supplierBranch:'',
       amount:Math.round(vatT*100/rate*100)/100,vat:vatT,creditable:true,source:'import',sourceKey:key,
       note:'VAT นำเข้า (ฐานคำนวณย้อนจาก VAT ที่ชำระจริง) — ตรวจกับใบขนสินค้า/ใบเสร็จศุลกากร และเติมเลขที่ใบกำกับ',updatedAt:ts()};
     try{const nid=await addFB('vatPurchase',{...rec,createdAt:ts()});S.vatPurchase.push({id:nid,...rec});n++;}catch(e){console.error(e);}
@@ -9509,6 +9509,18 @@ function renderImportTax(){
         </select>
       </div>
       <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">เลขที่ใบขนสินค้า/ใบเสร็จศุลกากร <span style="color:#16a34a;font-size:11px">ใช้เป็นเลขใบกำกับภาษีซื้อ</span></div>
+        <input id="itax-entry" type="text" placeholder="เช่น ENT / เลขใบขนฯ" value="${(d.customsEntryNo||'').replace(/"/g,'&quot;')}" onchange="_itax.customsEntryNo=this.value" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:220px">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">ผู้ออกเอกสาร (ผู้ขายฝั่งภาษีซื้อ)</div>
+        <input id="itax-issuer" type="text" placeholder="เช่น กรมศุลกากร / DHL" value="${(d.issuerName||'').replace(/"/g,'&quot;')}" onchange="_itax.issuerName=this.value" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:200px">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">เลขผู้เสียภาษีของผู้ออกเอกสาร</div>
+        <input id="itax-issuertax" type="text" maxlength="17" placeholder="13 หลัก" value="${(d.issuerTaxId||'').replace(/"/g,'&quot;')}" onchange="_itax.issuerTaxId=this.value" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:170px">
+      </div>
+      <div>
         <div style="font-size:12px;color:#666;margin-bottom:4px">ค่าดำเนินการ DHL (THB) <span style="color:#7c3aed;font-size:11px">DUTY TAX PROCESSING</span></div>
         <input id="itax-proc" type="number" min="0" step="0.01" placeholder="0.00" value="${d.proc||''}" onchange="_itax.proc=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:150px;text-align:right">
       </div>
@@ -9667,6 +9679,9 @@ async function itaxHandleFiles(files){
   "proc": ตัวเลขค่าดำเนินการ DHL NET เป็นบาท (DUTY TAX PROCESSING ช่อง NET) ไม่มีให้ใส่ 0,
   "procVat": ตัวเลข VAT ของค่าดำเนินการ DHL เป็นบาท (DUTY TAX PROCESSING ช่อง VAT) ไม่มีให้ใส่ 0,
   "fx": อัตราแลกเปลี่ยน THB ต่อ 1 USD ไม่มีให้ใส่ 0,
+  "customsEntryNo": "เลขที่ใบขนสินค้าขาเข้า / เลขที่ใบเสร็จรับเงินศุลกากร / Entry No. (ENT) ตามเอกสารศุลกากร ไม่มีให้ใส่ว่าง",
+  "issuerName": "ชื่อผู้ออกเอกสารภาษีนำเข้า (เช่น กรมศุลกากร หรือบริษัทขนส่งที่ออกใบกำกับภาษี) ไม่มีให้ใส่ว่าง",
+  "issuerTaxId": "เลขประจำตัวผู้เสียภาษี 13 หลักของผู้ออกเอกสารนั้น ตัวเลขล้วน ไม่มีให้ใส่ว่าง",
   "importerName": "ชื่อผู้นำเข้า/ผู้รับของ (Consignee / Importer of record) ตามใบ DHL/ศุลกากร ไม่มีให้ใส่ว่าง",
   "importerTaxId": "เลขประจำตัวผู้เสียภาษีของผู้นำเข้า (Tax ID/VAT No. ของผู้รับของ) ตัวเลขล้วน ไม่มีให้ใส่ว่าง",
   "items": [
@@ -9701,6 +9716,9 @@ async function itaxHandleFiles(files){
     if(+d.proc>0)_itax.proc=+d.proc;
     if(+d.procVat>0)_itax.procVat=+d.procVat;
     if(+d.fx>0)_itax.fx=+d.fx;
+    if(d.customsEntryNo)_itax.customsEntryNo=String(d.customsEntryNo);
+    if(d.issuerName)_itax.issuerName=String(d.issuerName);
+    if(d.issuerTaxId)_itax.issuerTaxId=String(d.issuerTaxId).replace(/\D/g,'');
     // เลือกการรับรู้ VAT อัตโนมัติ: ขอเครดิตได้เมื่อผู้นำเข้าในเอกสารคือบริษัทเรา (เลขผู้เสียภาษีตรงกัน)
     const _digits=x=>String(x||'').replace(/\D/g,'');
     const coTax=_digits(S.company.taxId), impTax=_digits(d.importerTaxId);
@@ -9841,7 +9859,7 @@ async function confirmImportTaxToStock(matched,newItems){
       const vatT=Math.round(((d.vat||0)+(d.procVat||0))*100)/100;
       const rate=parseFloat(S.company.vatRate)||7;
       const key='import:'+(d.invoiceNo||importDate);
-      const rec={date:importDate,docNo:d.invoiceNo||'',supplier:'ศุลกากร/DHL'+(d.supplier?' — '+d.supplier:''),
+      const rec={date:importDate,docNo:d.customsEntryNo||d.invoiceNo||'',supplier:d.issuerName||('ศุลกากร/DHL'+(d.supplier?' — '+d.supplier:'')),supplierTaxId:d.issuerTaxId||'',supplierBranch:'',
         amount:Math.round(vatT*100/rate*100)/100,vat:vatT,creditable:true,source:'import',sourceKey:key,
         note:'VAT นำเข้า (ฐานคำนวณย้อนจาก VAT ที่ชำระจริง) — ตรวจกับใบขนสินค้า/ใบเสร็จศุลกากรอีกครั้ง',updatedAt:ts()};
       const ex=vpFind(key);
@@ -9885,6 +9903,9 @@ async function saveImportRecord(){
       proc:d.proc||0,
       procVat:d.procVat||0,
       vatMode:d.vatMode||'cost',
+      customsEntryNo:d.customsEntryNo||'',
+      issuerName:d.issuerName||'',
+      issuerTaxId:d.issuerTaxId||'',
       fx:d.fx||0,
       totalUSD,
       totalItems,
@@ -9978,6 +9999,9 @@ function loadImportRecord(r){
   _itax.proc=r.proc||0;
   _itax.procVat=r.procVat||0;
   _itax.vatMode=r.vatMode||'cost';
+  _itax.customsEntryNo=r.customsEntryNo||'';
+  _itax.issuerName=r.issuerName||'';
+  _itax.issuerTaxId=r.issuerTaxId||'';
   _itax.fx=r.fx||0;
   _itax.items=(r.items||[]).map(i=>({code:i.code||'',name:i.name||'',qty:+i.qty||1,unit:+i.unit||0}));
   _itax._pendingFiles=[];
