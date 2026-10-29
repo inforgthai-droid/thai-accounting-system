@@ -7768,6 +7768,53 @@ async function deleteVatPurchase(id){
 }
 function _vpSrcLabel(s){return({import:'นำเข้า',expense:'ค่าใช้จ่าย',purchase:'ซื้อสินค้า'})[s]||'กรอกเอง';}
 
+// ดึงภาษีซื้อจากประวัติการนำเข้า (importRecords) — เลือกรายการ/วันที่ได้เอง
+function _vpLocalDate(ts0){try{const d=ts0.toDate();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}catch(e){return todayISO();}}
+async function vatPullImports(){
+  openModal('📥 ดึงภาษีซื้อจากประวัติการนำเข้า','<div style="text-align:center;padding:20px;color:#666">⏳ กำลังโหลด...</div>','',{wide:true});
+  try{
+    const snap=await db.collection('importRecords').orderBy('createdAt','desc').limit(100).get();
+    const recs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>((r.vat||0)+(r.procVat||0))>0);
+    window._vpImp=recs;
+    const body=document.getElementById('modal-body'),foot=document.getElementById('modal-footer');
+    if(!recs.length){body.innerHTML='<div style="padding:16px;color:#666">ไม่พบประวัติการนำเข้าที่มี VAT</div>';foot.innerHTML='<button class="btn btn-gray" onclick="closeModal()">ปิด</button>';return;}
+    const rows=recs.map((r,i)=>{
+      const key='import:'+(r.invoiceNo||r.id);
+      const done=!!vpFind(key);
+      const vatT=Math.round(((r.vat||0)+(r.procVat||0))*100)/100;
+      return`<tr style="border-bottom:1px solid #eee">
+        <td style="padding:8px;text-align:center"><input type="checkbox" id="vpi-c-${i}" ${done?'disabled':(r.vatMode==='credit'?'checked':'')} style="width:16px;height:16px"></td>
+        <td style="padding:8px"><input type="date" id="vpi-d-${i}" value="${_vpLocalDate(r.createdAt)}" class="fc" style="font-size:12px;width:140px" ${done?'disabled':''}></td>
+        <td style="padding:8px;font-weight:600">${r.invoiceNo||'-'}</td>
+        <td style="padding:8px;font-size:12px">${r.supplier||'-'}</td>
+        <td style="padding:8px;text-align:right">${fmt(vatT)}</td>
+        <td style="padding:8px;font-size:12px">${done?'<span style="color:#16a34a">✓ เพิ่มแล้ว</span>':(r.vatMode==='credit'?'ตั้งไว้: ขอเครดิต':'<span style="color:#f59e0b">ตั้งไว้: รวมต้นทุน</span>')}</td></tr>`;
+    }).join('');
+    body.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">ติ๊กเฉพาะรายการที่ขอเครดิตภาษีซื้อได้ (ใบขนสินค้า/ใบเสร็จศุลกากรในชื่อบริษัทที่จด VAT แล้ว) — รายการที่ตั้งเป็น "รวมต้นทุน" ถูกรวมในต้นทุนสินค้าแล้ว ถ้าลงเป็นภาษีซื้อด้วยจะนับซ้ำ ต้องแก้ต้นทุนเอง</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8fafc;font-size:12px"><th style="padding:8px"></th><th style="padding:8px;text-align:left">วันที่ใบกำกับ</th><th style="padding:8px;text-align:left">Invoice No.</th><th style="padding:8px;text-align:left">ผู้ขาย</th><th style="padding:8px;text-align:right">VAT นำเข้า</th><th style="padding:8px;text-align:left">สถานะ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    foot.innerHTML='<button class="btn btn-gray" onclick="closeModal()">ปิด</button> <button class="btn btn-primary" onclick="confirmVatPullImports()">✅ เพิ่มเป็นภาษีซื้อ</button>';
+  }catch(e){document.getElementById('modal-body').innerHTML='<div style="color:red;padding:16px">โหลดไม่สำเร็จ: '+e.message+'</div>';}
+}
+async function confirmVatPullImports(){
+  const recs=window._vpImp||[];
+  const rate=parseFloat(S.company.vatRate)||7;
+  let n=0;
+  for(let i=0;i<recs.length;i++){
+    const chk=document.getElementById('vpi-c-'+i);
+    if(!chk||chk.disabled||!chk.checked)continue;
+    const r=recs[i];
+    const vatT=Math.round(((r.vat||0)+(r.procVat||0))*100)/100;
+    const key='import:'+(r.invoiceNo||r.id);
+    const rec={date:document.getElementById('vpi-d-'+i)?.value||todayISO(),docNo:r.invoiceNo||'',supplier:'ศุลกากร/DHL'+(r.supplier?' — '+r.supplier:''),
+      amount:Math.round(vatT*100/rate*100)/100,vat:vatT,creditable:true,source:'import',sourceKey:key,
+      note:'VAT นำเข้า (ฐานคำนวณย้อนจาก VAT ที่ชำระจริง) — ตรวจกับใบขนสินค้า/ใบเสร็จศุลกากร และเติมเลขที่ใบกำกับ',updatedAt:ts()};
+    try{const nid=await addFB('vatPurchase',{...rec,createdAt:ts()});S.vatPurchase.push({id:nid,...rec});n++;}catch(e){console.error(e);}
+  }
+  closeModal();
+  if(n){S._vatMonth=undefined;toast('เพิ่มภาษีซื้อ '+n+' รายการ ✓','success');}else toast('ไม่ได้เลือกรายการ','info');
+  renderPage('vat');
+}
+
 // ===== รายงานภาษีซื้อ / ภาษีขาย รายเดือน =====
 function _vatMonth(){return S._vatMonth||new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');}
 function _vatMonthLabel(m){return new Date(m+'-01T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'long'});}
@@ -7892,7 +7939,7 @@ function renderVat(){
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin:1.2rem 0 .5rem;flex-wrap:wrap;gap:8px">
     <div class="sec-title" style="margin-bottom:0">📥 รายงานภาษีซื้อ (${pRows.length} รายการ${incompleteP?` • <span style="color:#f59e0b">ข้อมูลไม่ครบ ${incompleteP}</span>`:''})</div>
-    <div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="openVatPurchaseModal({page:'vat'})">+ เพิ่มภาษีซื้อ</button><button class="btn btn-gray btn-sm" onclick="vatReportPrint('purchase')">🖨️ พิมพ์</button><button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="vatReportExcel('purchase')">📊 Excel</button></div>
+    <div style="display:flex;gap:6px"><button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="vatPullImports()">📥 ดึงจากประวัตินำเข้า</button><button class="btn btn-sm" onclick="openVatPurchaseModal({page:'vat'})">+ เพิ่มภาษีซื้อ</button><button class="btn btn-gray btn-sm" onclick="vatReportPrint('purchase')">🖨️ พิมพ์</button><button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="vatReportExcel('purchase')">📊 Excel</button></div>
   </div>
   ${tbl(['วันที่','เลขที่ใบกำกับ','ผู้ขาย','เลขผู้เสียภาษี','มูลค่า','VAT','ที่มา',''],
     pRows.map(r=>[r.date||'-',r.docNo||badge('ไม่มีเลขที่','amber'),r.name||'-',r.taxId||badge('ไม่มีเลขภาษี','amber'),''+fmt(r.base),''+fmt(r.vat),r.src,
