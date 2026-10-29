@@ -7720,6 +7720,8 @@ function openVatPurchaseModal(o){
     <div class="fm"><label class="fl">วันที่ใบกำกับภาษี</label><input type="date" class="fc" id="vp-date" value="${v.date||todayISO()}"></div>
     <div class="fm"><label class="fl">เลขที่ใบกำกับภาษี</label><input class="fc" id="vp-doc" value="${esc(v.docNo)}"></div>
     <div class="fm" style="grid-column:1/-1"><label class="fl">ชื่อผู้ขาย</label><input class="fc" id="vp-sup" value="${esc(v.supplier)}"></div>
+    <div class="fm"><label class="fl">เลขประจำตัวผู้เสียภาษีผู้ขาย</label><input class="fc" id="vp-taxid" value="${esc(v.supplierTaxId)}" maxlength="17"></div>
+    <div class="fm"><label class="fl">สถานประกอบการ</label><input class="fc" id="vp-branch" value="${esc(v.supplierBranch||'สำนักงานใหญ่')}" placeholder="สำนักงานใหญ่ / สาขา 00001"></div>
     <div class="fm"><label class="fl">มูลค่าก่อน VAT (ฐานภาษี)</label><input type="number" step="0.01" class="fc" id="vp-base" value="${v.amount||''}" oninput="document.getElementById('vp-vat').value=(Math.round((parseFloat(this.value)||0)*window._vpRate)/100).toFixed(2)"></div>
     <div class="fm"><label class="fl">VAT ${rate}% (บาท)</label><input type="number" step="0.01" class="fc" id="vp-vat" value="${v.vat||''}"></div>
     <div class="fm" style="grid-column:1/-1"><label class="fl">หมายเหตุ</label><input class="fc" id="vp-note" value="${esc(v.note)}"></div>
@@ -7738,6 +7740,8 @@ async function saveVatPurchase(){
     date:document.getElementById('vp-date')?.value||todayISO(),
     docNo:document.getElementById('vp-doc')?.value?.trim()||'',
     supplier:document.getElementById('vp-sup')?.value?.trim()||'',
+    supplierTaxId:document.getElementById('vp-taxid')?.value?.trim()||'',
+    supplierBranch:document.getElementById('vp-branch')?.value?.trim()||'',
     amount,vat,
     note:document.getElementById('vp-note')?.value?.trim()||'',
     creditable:!!document.getElementById('vp-cred')?.checked,
@@ -7764,33 +7768,137 @@ async function deleteVatPurchase(id){
 }
 function _vpSrcLabel(s){return({import:'นำเข้า',expense:'ค่าใช้จ่าย',purchase:'ซื้อสินค้า'})[s]||'กรอกเอง';}
 
+// ===== รายงานภาษีซื้อ / ภาษีขาย รายเดือน =====
+function _vatMonth(){return S._vatMonth||new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');}
+function _vatMonthLabel(m){return new Date(m+'-01T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'long'});}
+function vatSalesRows(month){
+  const rows=[];
+  const inM=d=>(d||'').slice(0,7)===month;
+  const r2=n=>Math.round((n||0)*100)/100;
+  // ใบเสร็จ/ใบกำกับจากการขาย (POS + ใบเสนอราคาที่ชำระแล้ว) ที่เปิด VAT
+  (S.sales||[]).filter(s=>s.status!=='ยกเลิก'&&s.applyVat&&(s.vat||0)>0&&inM(s.date)).forEach(s=>{
+    rows.push({date:s.date,docNo:s.docNo||'',name:s.customerName||'ลูกค้าทั่วไป',taxId:s.customerTaxId||'',branch:s.customerBranch||'',base:r2((s.total||0)-(s.vat||0)),vat:r2(s.vat),src:'ขาย'});
+  });
+  // ใบแจ้งหนี้ที่ชำระแล้ว (ไม่นับซ้ำกับใบที่ชำระผ่านใบเสนอราคา)
+  (S.invoices||[]).filter(i=>i.status==='ชำระแล้ว'&&(i.vat||0)>0&&inM(i.date)).forEach(i=>{
+    if(i.quotationId){const q=(S.quotations||[]).find(x=>x.id===i.quotationId);if(q&&q.status==='ชำระแล้ว')return;}
+    const c=(S.customers||[]).find(x=>x.name===i.customer)||{};
+    rows.push({date:i.date,docNo:i.no||'',name:i.customer||'',taxId:c.taxId||c.taxid||'',branch:'',base:r2(i.amount),vat:r2(i.vat),src:'ใบแจ้งหนี้'});
+  });
+  // ค่าเช่า (เฉพาะค่าเช่า ไม่รวมมัดจำ)
+  (typeof _rentals!=='undefined'?_rentals:[]).filter(r=>r.status!=='cancelled'&&r.status!=='ยกเลิก'&&r.vatMode&&r.vatMode!=='none').forEach(r=>{
+    const d=r.docDate||r.rentalDate||'';
+    if(!inM(d))return;
+    const v=_rentalVat(r);
+    rows.push({date:d,docNo:r.contractNo||'',name:r.renterShopName||r.renterName||'',taxId:r.renterTaxId||'',branch:'',base:r2(v.feeNet),vat:r2(v.vat),src:'ค่าเช่า'});
+  });
+  return rows.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.docNo||'').localeCompare(b.docNo||''));
+}
+function vatPurchRows(month){
+  return vpList().filter(p=>(p.date||'').slice(0,7)===month).map(p=>({id:p.id,date:p.date||'',docNo:p.docNo||'',name:p.supplier||'',taxId:p.supplierTaxId||'',branch:p.supplierBranch||'',base:p.amount||0,vat:p.vat||0,src:_vpSrcLabel(p.source)}))
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.docNo||'').localeCompare(b.docNo||''));
+}
+function _vatRowIncomplete(kind,r){return kind==='purchase'?(!r.docNo||!r.taxId):!r.docNo;}
+function vatReportExcel(kind){
+  const m=_vatMonth();
+  const rows=kind==='sales'?vatSalesRows(m):vatPurchRows(m);
+  const c=S.company;
+  const title=kind==='sales'?'รายงานภาษีขาย':'รายงานภาษีซื้อ';
+  const who=kind==='sales'?'ชื่อผู้ซื้อ':'ชื่อผู้ขาย';
+  const data=[
+    [title],['เดือนภาษี: '+_vatMonthLabel(m)],
+    ['ชื่อผู้ประกอบการ: '+(c.name||'')],['เลขประจำตัวผู้เสียภาษี: '+(c.taxId||'')+'   สถานประกอบการ: สำนักงานใหญ่'],[],
+    ['ลำดับ','วัน/เดือน/ปี','เลขที่ใบกำกับภาษี',who,'เลขประจำตัวผู้เสียภาษี','สถานประกอบการ (สนญ./สาขา)','มูลค่าสินค้า/บริการ','ภาษีมูลค่าเพิ่ม','ที่มา','หมายเหตุ']
+  ];
+  rows.forEach((r,i)=>data.push([i+1,r.date,r.docNo,r.name,r.taxId,r.branch||'',r.base,r.vat,r.src,_vatRowIncomplete(kind==='sales'?'sales':'purchase',r)?'ข้อมูลไม่ครบ':'']));
+  data.push([]);
+  data.push(['','','','','','รวม',rows.reduce((a,r)=>a+r.base,0),rows.reduce((a,r)=>a+r.vat,0)]);
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!cols']=[{wch:7},{wch:12},{wch:20},{wch:34},{wch:18},{wch:22},{wch:16},{wch:16},{wch:12},{wch:14}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,kind==='sales'?'ภาษีขาย':'ภาษีซื้อ');
+  XLSX.writeFile(wb,(kind==='sales'?'รายงานภาษีขาย_':'รายงานภาษีซื้อ_')+m+'.xlsx');
+  toast('ส่งออก'+title+' สำเร็จ ✓','success');
+}
+function vatReportPrint(kind){
+  const m=_vatMonth();
+  const rows=kind==='sales'?vatSalesRows(m):vatPurchRows(m);
+  const c=S.company;
+  const title=kind==='sales'?'รายงานภาษีขาย':'รายงานภาษีซื้อ';
+  const who=kind==='sales'?'ชื่อผู้ซื้อ':'ชื่อผู้ขาย';
+  const tb=rows.reduce((a,r)=>a+r.base,0),tv=rows.reduce((a,r)=>a+r.vat,0);
+  const trs=rows.map((r,i)=>`<tr><td class="c">${i+1}</td><td class="c">${r.date}</td><td>${r.docNo||'-'}</td><td>${r.name||'-'}</td><td>${r.taxId||'-'}</td><td class="c">${r.branch||'-'}</td><td class="r">${fmtM(r.base)}</td><td class="r">${fmtM(r.vat)}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${title} ${m}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;font-size:11px;color:#000;padding:14mm}
+h1{font-size:18px;text-align:center}.sub{text-align:center;font-size:12px;margin-top:4px}.meta{margin:12px 0;font-size:12px;line-height:1.7}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #444;padding:5px 6px}th{background:#eee;font-size:10.5px}
+.r{text-align:right}.c{text-align:center}tfoot td{font-weight:700;background:#f5f5f5}
+@media print{@page{size:A4 landscape;margin:10mm}.np{display:none}}</style></head><body>
+<div class="np" style="margin-bottom:10px"><button onclick="window.print()" style="padding:8px 20px;font-family:inherit;font-weight:700;cursor:pointer">🖨️ พิมพ์</button></div>
+<h1>${title}</h1><div class="sub">เดือนภาษี ${_vatMonthLabel(m)}</div>
+<div class="meta">ชื่อผู้ประกอบการ: <b>${c.name||''}</b><br>เลขประจำตัวผู้เสียภาษี: <b>${c.taxId||'-'}</b> &nbsp; สถานประกอบการ: สำนักงานใหญ่<br>ที่อยู่: ${(c.address||'').split('\n').filter(Boolean).join(' ')}</div>
+<table><thead><tr><th>ลำดับ</th><th>วัน/เดือน/ปี</th><th>เลขที่ใบกำกับภาษี</th><th>${who}</th><th>เลขประจำตัวผู้เสียภาษี</th><th>สถานประกอบการ</th><th>มูลค่าสินค้า/บริการ</th><th>ภาษีมูลค่าเพิ่ม</th></tr></thead>
+<tbody>${trs||'<tr><td colspan="8" class="c">ไม่มีรายการ</td></tr>'}</tbody>
+<tfoot><tr><td colspan="6" class="r">รวมทั้งสิ้น</td><td class="r">${fmtM(tb)}</td><td class="r">${fmtM(tv)}</td></tr></tfoot></table>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.target='_blank';a.rel='noopener';
+  document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);},1000);
+}
+
 // ===== VAT =====
 function renderVat(){
-  const vs=S.invoices.reduce((a,b)=>a+(b.vat||0),0);
-  const vb=vpList().reduce((a,b)=>a+(b.vat||0),0);
-  return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-  <div class="sec-title" style="margin-bottom:0">📋 ภาษีมูลค่าเพิ่ม (VAT)</div>
-  <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ ภ.พ.30</button>
-  </div>
+  if(typeof _rentals!=='undefined'&&_rentals.length===0&&!window._vatRentLoaded){
+    window._vatRentLoaded=true;
+    try{loadRentals().then(()=>renderPage('vat')).catch(()=>{});}catch(e){}
+  }
+  const m=_vatMonth();
+  const sRows=vatSalesRows(m),pRows=vatPurchRows(m);
+  const vs=sRows.reduce((a,r)=>a+r.vat,0),vb=pRows.reduce((a,r)=>a+r.vat,0);
+  const bs=sRows.reduce((a,r)=>a+r.base,0),bb=pRows.reduce((a,r)=>a+r.base,0);
+  const net=vs-vb;
+  const now=new Date();
+  const monthOpts=[];
+  for(let i=0;i<24;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const v=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    monthOpts.push(`<option value="${v}" ${v===m?'selected':''}>${d.toLocaleDateString('th-TH',{year:'numeric',month:'long'})}</option>`);
+  }
+  const incompleteP=pRows.filter(r=>_vatRowIncomplete('purchase',r)).length;
+  return`<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:.8rem">
+  <div class="sec-title" style="margin-bottom:0">📋 ภาษีมูลค่าเพิ่ม (VAT) — ${_vatMonthLabel(m)}</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <select class="fc" style="width:auto" onchange="S._vatMonth=this.value;renderPage('vat')">${monthOpts.join('')}</select>
+    <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์ ภ.พ.30</button>
+  </div></div>
   <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
     ${sc('ภาษีขาย',''+fmt(vs),'#10b981')}${sc('ภาษีซื้อ',''+fmt(vb),'#f59e0b')}
-    ${sc('ภาษีสุทธิ',''+fmt(vs-vb),vs-vb>0?'#ef4444':'#10b981',vs-vb>0?'ต้องชำระ':'ขอคืน')}
+    ${sc('ภาษีสุทธิ',''+fmt(Math.abs(net)),net>0?'#ef4444':'#10b981',net>0?'ต้องชำระ':(net<0?'ภาษีซื้อเกิน (ยกไป/ขอคืน)':'-'))}
   </div>
   <div class="card" style="background:#f0fdf4">
-    <div style="font-weight:700;color:var(--primary);margin-bottom:10px">สรุป ภ.พ.30</div>
-    ${[['มูลค่าฐานภาษีขาย',S.invoices.reduce((a,b)=>a+(b.amount||0),0)],['ภาษีขาย (Output Tax)',vs],['มูลค่าฐานภาษีซื้อ',vpList().reduce((a,b)=>a+(b.amount||0),0)],['ภาษีซื้อ (Input Tax)',vb],['ภาษีสุทธิที่ต้องนำส่ง',vs-vb]]
+    <div style="font-weight:700;color:var(--primary);margin-bottom:10px">สรุป ภ.พ.30 — ${_vatMonthLabel(m)}</div>
+    ${[['มูลค่าฐานภาษีขาย',bs],['ภาษีขาย (Output Tax)',vs],['มูลค่าฐานภาษีซื้อ',bb],['ภาษีซื้อ (Input Tax)',vb],[net>=0?'ภาษีสุทธิที่ต้องนำส่ง':'ภาษีซื้อเกิน (ยกไปเดือนถัดไป/ขอคืน)',Math.abs(net)]]
       .map(([k,v],i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #d1fae5;font-size:14px${i===4?';font-weight:700':''}"><span style="color:var(--muted)">${k}</span><span style="color:${i===4?'var(--danger)':'var(--primary)'};font-weight:700">${fmtM(v)}</span></div>`).join('')}
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">ภาษีขายนับจาก: ใบเสร็จ/ใบกำกับที่เปิด VAT, ใบแจ้งหนี้ที่ชำระแล้ว, ค่าเช่าที่เลือก VAT (ไม่รวมมัดจำ) • ภาษีซื้อนับเฉพาะรายการที่ขอเครดิต</div>
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin:1.2rem 0 .5rem">
-    <div class="sec-title" style="margin-bottom:0">🧾 รายการภาษีซื้อ (Input Tax)</div>
-    <button class="btn btn-sm" onclick="openVatPurchaseModal({page:'vat'})">+ เพิ่มภาษีซื้อ</button>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:1.2rem 0 .5rem;flex-wrap:wrap;gap:8px">
+    <div class="sec-title" style="margin-bottom:0">📤 รายงานภาษีขาย (${sRows.length} รายการ)</div>
+    <div style="display:flex;gap:6px"><button class="btn btn-gray btn-sm" onclick="vatReportPrint('sales')">🖨️ พิมพ์</button><button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="vatReportExcel('sales')">📊 Excel</button></div>
   </div>
-  ${tbl(['วันที่','เลขที่ใบกำกับ','ผู้ขาย','ฐานภาษี','VAT','ที่มา','เครดิต',''],
-    [...S.vatPurchase].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(p=>[
-      p.date||'-',p.docNo||'-',p.supplier||'-',''+fmt(p.amount||0),''+fmt(p.vat||0),_vpSrcLabel(p.source),
-      p.creditable===false?badge('ไม่ขอเครดิต','amber'):badge('ขอเครดิต','green'),
-      `<button class="btn btn-primary btn-xs" onclick="openVatPurchaseModal({id:'${p.id}',page:'vat'})">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteVatPurchase('${p.id}')">ลบ</button>`
-    ]),'ยังไม่มีรายการภาษีซื้อ')}`;
+  ${tbl(['วันที่','เลขที่ใบกำกับ','ผู้ซื้อ','เลขผู้เสียภาษี','มูลค่า','VAT','ที่มา'],
+    sRows.map(r=>[r.date,r.docNo||badge('ไม่มีเลขที่','amber'),r.name||'-',r.taxId||'-',''+fmt(r.base),''+fmt(r.vat),r.src]),'ไม่มีรายการภาษีขายในเดือนนี้')}
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:1.2rem 0 .5rem;flex-wrap:wrap;gap:8px">
+    <div class="sec-title" style="margin-bottom:0">📥 รายงานภาษีซื้อ (${pRows.length} รายการ${incompleteP?` • <span style="color:#f59e0b">ข้อมูลไม่ครบ ${incompleteP}</span>`:''})</div>
+    <div style="display:flex;gap:6px"><button class="btn btn-sm" onclick="openVatPurchaseModal({page:'vat'})">+ เพิ่มภาษีซื้อ</button><button class="btn btn-gray btn-sm" onclick="vatReportPrint('purchase')">🖨️ พิมพ์</button><button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="vatReportExcel('purchase')">📊 Excel</button></div>
+  </div>
+  ${tbl(['วันที่','เลขที่ใบกำกับ','ผู้ขาย','เลขผู้เสียภาษี','มูลค่า','VAT','ที่มา',''],
+    pRows.map(r=>[r.date||'-',r.docNo||badge('ไม่มีเลขที่','amber'),r.name||'-',r.taxId||badge('ไม่มีเลขภาษี','amber'),''+fmt(r.base),''+fmt(r.vat),r.src,
+      `<button class="btn btn-primary btn-xs" onclick="openVatPurchaseModal({id:'${r.id}',page:'vat'})">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteVatPurchase('${r.id}')">ลบ</button>`]),'ไม่มีรายการภาษีซื้อในเดือนนี้')}
+
+  <div style="font-size:12px;color:var(--muted);margin-top:1rem">รายการภาษีซื้อที่ไม่ขอเครดิต (ถ้ามี) จะไม่แสดงที่นี่ — ดู/แก้ไขได้โดยเปิดฟอร์มจากหน้าค่าใช้จ่าย/ซื้อสินค้าเข้า/นำเข้า</div>`;
 }
 
 // ===== PAYROLL =====
@@ -9512,6 +9620,8 @@ async function itaxHandleFiles(files){
   "proc": ตัวเลขค่าดำเนินการ DHL NET เป็นบาท (DUTY TAX PROCESSING ช่อง NET) ไม่มีให้ใส่ 0,
   "procVat": ตัวเลข VAT ของค่าดำเนินการ DHL เป็นบาท (DUTY TAX PROCESSING ช่อง VAT) ไม่มีให้ใส่ 0,
   "fx": อัตราแลกเปลี่ยน THB ต่อ 1 USD ไม่มีให้ใส่ 0,
+  "importerName": "ชื่อผู้นำเข้า/ผู้รับของ (Consignee / Importer of record) ตามใบ DHL/ศุลกากร ไม่มีให้ใส่ว่าง",
+  "importerTaxId": "เลขประจำตัวผู้เสียภาษีของผู้นำเข้า (Tax ID/VAT No. ของผู้รับของ) ตัวเลขล้วน ไม่มีให้ใส่ว่าง",
   "items": [
     {"code":"รหัสสินค้า","name":"ชื่อ/รายละเอียดสินค้า","qty":จำนวน,"unit":ราคาต่อชิ้นเป็น USD}
   ]
@@ -9544,12 +9654,20 @@ async function itaxHandleFiles(files){
     if(+d.proc>0)_itax.proc=+d.proc;
     if(+d.procVat>0)_itax.procVat=+d.procVat;
     if(+d.fx>0)_itax.fx=+d.fx;
+    // เลือกการรับรู้ VAT อัตโนมัติ: ขอเครดิตได้เมื่อผู้นำเข้าในเอกสารคือบริษัทเรา (เลขผู้เสียภาษีตรงกัน)
+    const _digits=x=>String(x||'').replace(/\D/g,'');
+    const coTax=_digits(S.company.taxId), impTax=_digits(d.importerTaxId);
+    let vatNote='';
+    if(+d.vat>0||+d.procVat>0){
+      if(coTax&&impTax&&coTax===impTax){_itax.vatMode='credit';vatNote='ผู้นำเข้าตรงกับบริษัท → ตั้งเป็น <b>ขอเครดิตภาษีซื้อ</b>';}
+      else{_itax.vatMode='cost';vatNote='ผู้นำเข้า'+(d.importerName?' ('+String(d.importerName)+')':'')+'ไม่ตรงกับเลขผู้เสียภาษีของบริษัท → ตั้งเป็น <b>รวมเป็นต้นทุน</b> (เปลี่ยนเองได้)';}
+    }
     if(Array.isArray(d.items)&&d.items.length){
       _itax.items=d.items.map(i=>({code:String(i.code||''),name:String(i.name||''),qty:+i.qty||1,unit:+i.unit||0}));
     }
     _itax._pendingFiles=[...(_itax._pendingFiles||[]),...list]; // สะสมทุกไฟล์
     refreshImportTax();
-    itaxStatus('✅ อ่านสำเร็จ — พบ '+(_itax.items.length)+' รายการ | อากร '+(_itax.duty||0).toLocaleString()+' บาท | VAT '+(_itax.vat||0).toLocaleString()+' บาท<br><span style="color:#92400e">⚠️ กรุณาตรวจสอบความถูกต้องก่อนใช้งาน จากนั้นกด 💾 บันทึกการนำเข้า</span>','#15803d');
+    itaxStatus('✅ อ่านสำเร็จ — พบ '+(_itax.items.length)+' รายการ | อากร '+(_itax.duty||0).toLocaleString()+' บาท | VAT '+(_itax.vat||0).toLocaleString()+' บาท | ค่าดำเนินการ '+(_itax.proc||0).toLocaleString()+' + VAT '+(_itax.procVat||0).toLocaleString()+' | อัตราแลกเปลี่ยน '+(_itax.fx||'-')+(vatNote?'<br>'+vatNote:'')+'<br><span style="color:#92400e">⚠️ กรุณาตรวจสอบความถูกต้องก่อนใช้งาน จากนั้นกด 💾 บันทึกการนำเข้า</span>','#15803d');
     toast('AI อ่านเอกสารสำเร็จ ✓','success');
   }catch(e){
     itaxStatus('❌ อ่านไม่สำเร็จ: '+e.message,'#dc2626');
