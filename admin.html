@@ -7769,6 +7769,7 @@ async function deleteVatPurchase(id){
 function _vpSrcLabel(s){return({import:'นำเข้า',expense:'ค่าใช้จ่าย',purchase:'ซื้อสินค้า'})[s]||'กรอกเอง';}
 
 // ภาษีซื้อนำเข้า: แยก 2 รายการตามผู้ออกเอกสาร (1) กรมศุลกากร (2) DHL ค่าบริการ
+const CUSTOMS_DEPT={name:'กรมศุลกากร',taxId:'0105533022910'}; // ผู้ออกใบเสร็จรับเงินศุลกากร (กศก.123) — ตามที่ผู้ใช้ยืนยัน
 function _vpImportEntries(r,date,idKey){
   const rate=parseFloat(S.company.vatRate)||7;
   const cV=(+r.customsVat>0)?+r.customsVat:(+r.vat||0);
@@ -7776,7 +7777,7 @@ function _vpImportEntries(r,date,idKey){
   const out=[];
   const mk=(key,docNo,sup,tax,vat,note)=>({key,rec:{date,docNo,supplier:sup,supplierTaxId:tax,supplierBranch:'',
     amount:Math.round(vat*100/rate*100)/100,vat:Math.round(vat*100)/100,creditable:true,source:'import',sourceKey:key,note,updatedAt:ts()}});
-  if(cV>0)out.push(mk('import:'+idKey,r.customsEntryNo||r.invoiceNo||'',r.issuerName||'กรมศุลกากร',r.issuerTaxId||'',cV,
+  if(cV>0)out.push(mk('import:'+idKey,r.customsEntryNo||r.invoiceNo||'',r.issuerName||CUSTOMS_DEPT.name,r.issuerTaxId||CUSTOMS_DEPT.taxId,cV,
     'VAT ศุลกากร ตามใบเสร็จรับเงิน (กศก.123) — ฐานคำนวณย้อนจาก VAT ที่ชำระจริง'));
   if(dV>0)out.push(mk('import-dhl:'+idKey,r.dhlDocNo||'',r.dhlName||'DHL Express International (Thailand) Ltd.',r.dhlTaxId||'',dV,
     'VAT ค่าบริการ DHL — ต้องใช้ใบกำกับภาษีจริงของ DHL (Proforma ใช้เครดิตไม่ได้)'));
@@ -9853,6 +9854,7 @@ async function itaxHandleFiles(files){
     if(d.issuerName)_itax.issuerName=String(d.issuerName);
     if(d.issuerTaxId)_itax.issuerTaxId=String(d.issuerTaxId).replace(/\D/g,'');
     if(+d.customsVat>0)_itax.customsVat=+d.customsVat;
+    if(+_itax.customsVat>0||_itax.customsEntryNo){if(!_itax.issuerName)_itax.issuerName=CUSTOMS_DEPT.name;if(!_itax.issuerTaxId)_itax.issuerTaxId=CUSTOMS_DEPT.taxId;}
     if(+d.dhlVat>0)_itax.dhlVat=+d.dhlVat;
     if(d.dhlDocNo)_itax.dhlDocNo=String(d.dhlDocNo);
     if(d.dhlName)_itax.dhlName=String(d.dhlName);
