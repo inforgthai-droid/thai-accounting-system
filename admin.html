@@ -317,6 +317,7 @@ tbody tr:hover{background:#f0f9ff}
     <div id="p-quotation" class="page"></div>
     <div id="p-invoice" class="page"></div>
     <div id="p-vat" class="page"></div>
+    <div id="p-vatacc" class="page" style="padding:0"></div>
     <div id="p-payroll" class="page"></div>
     <div id="p-financial" class="page"></div>
     <div id="p-taxforms" class="page"></div>
@@ -727,7 +728,7 @@ const MENU=[
   {g:'สินค้า & คลัง'},{key:'products',label:'รายการสินค้า',icon:'📦',short:'สินค้า'},{key:'categories',label:'หมวดหมู่สินค้า',icon:'🏷️',short:'หมวดหมู่'},{key:'stock',label:'สต็อกสินค้า',icon:'🏭',short:'สต็อก'},{key:'purchases',label:'ซื้อสินค้าเข้า',icon:'🚚',short:'ซื้อเข้า'},{key:'inventorylots',label:'Lot คงเหลือ (FIFO)',icon:'📥',short:'Lot'},
   {g:'ผู้ติดต่อ'},{key:'customers',label:'ลูกค้า',icon:'🏢',short:'ลูกค้า'},{key:'suppliers',label:'ซัพพลายเออร์',icon:'🏗️',short:'ซัพพลาย'},
   {g:'สมาชิก'},{key:'members',label:'จัดการสมาชิก',icon:'👤',short:'สมาชิก'},{key:'promotions',label:'โปรโมชั่น',icon:'🎁',short:'โปรโมชั่น'},
-  {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'expenses',label:'ค่าใช้จ่าย',icon:'💸',short:'ค่าใช้จ่าย'},{key:'monthlyreport',label:'รายงานส่งบัญชี',icon:'📊',short:'ส่งบัญชี'},{key:'quotation',label:'ใบเสนอราคา',icon:'📋',short:'ใบเสนอราคา'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
+  {g:'บัญชี & ภาษี'},{key:'journal',label:'สมุดรายวัน',icon:'📒',short:'รายวัน'},{key:'expenses',label:'ค่าใช้จ่าย',icon:'💸',short:'ค่าใช้จ่าย'},{key:'monthlyreport',label:'รายงานส่งบัญชี',icon:'📊',short:'ส่งบัญชี'},{key:'vatacc',label:'ระบบบัญชี VAT',icon:'🧮',short:'บัญชี VAT'},{key:'quotation',label:'ใบเสนอราคา',icon:'📋',short:'ใบเสนอราคา'},{key:'invoice',label:'ใบแจ้งหนี้',icon:'🧾',short:'ใบแจ้งหนี้'},{key:'vat',label:'ภาษี VAT',icon:'📋',short:'VAT'},{key:'payroll',label:'เงินเดือน',icon:'👥',short:'เงินเดือน'},{key:'financial',label:'งบการเงิน',icon:'📈',short:'งบการเงิน'},{key:'taxforms',label:'แบบฟอร์มภาษี',icon:'🏛️',short:'ภาษี'},
   {g:'ร้านค้าออนไลน์'},{key:'orders',label:'ออเดอร์ออนไลน์',icon:'🛍️',short:'ออเดอร์'},{key:'shipping',label:'จัดส่งสินค้า',icon:'📦',short:'จัดส่ง'},{key:'webdesign',label:'ตกแต่งร้านค้า',icon:'🎨',short:'ตกแต่ง'},
   {g:'วิเคราะห์'},{key:'infographic',label:'อินโฟกราฟิก',icon:'📊',short:'อินโฟ'},{key:'importtax',label:'คำนวณภาษีนำเข้า',icon:'🧮',short:'ภาษีนำเข้า'},
   {g:'ระบบ'},{key:'import',label:'Import Excel',icon:'📂'},{key:'settings',label:'ตั้งค่าระบบ',icon:'⚙️'},
@@ -798,6 +799,8 @@ function renderPage(key){
     }
   } else if(key==='infographic'){
     renderInfographic();
+  } else if(key==='vatacc'){
+    if(!el.querySelector('iframe'))el.innerHTML='<iframe src="vat-accounting.html" style="width:100%;height:calc(100vh - 64px);border:0;display:block" title="VAT"></iframe>';
   } else if(key==='inventorylots'){
     renderInventoryLots();
   } else if(key==='members'){
@@ -2770,7 +2773,6 @@ function showReceiptModal(sale){
         ${logoHtml}
         ${c.address?`<div style="font-size:10px">${c.address}</div>`:''}
         ${c.tel?`<div style="font-size:10px">โทร: ${c.tel}</div>`:''}
-        ${c.taxId?`<div style="font-size:10px">เลขผู้เสียภาษี: ${c.taxId}</div>`:''}
         <div style="font-weight:700;font-size:13px;margin-top:4px">${c.receiptTitle||'ใบเสร็จรับเงิน'}</div>
         <div style="font-size:10px;color:#555">${c.receiptSubtitle||'RECEIPT'}</div>
       </div>
@@ -2780,7 +2782,6 @@ function showReceiptModal(sale){
         <tr><td style="font-weight:700;font-size:12px">วันที่</td><td style="font-size:12px">${sale.date}</td></tr>
         <tr><td style="font-weight:700;font-size:12px">ลูกค้า</td><td style="font-size:12px">${sale.customerName||'ลูกค้าทั่วไป'}</td></tr>
         ${sale.customerAddress?`<tr><td style="font-weight:700;font-size:12px">ที่อยู่</td><td style="font-size:11px">${sale.customerAddress}</td></tr>`:''}
-        ${sale.customerTaxId?`<tr><td style="font-weight:700;font-size:12px">เลขภาษี</td><td style="font-size:11px">${sale.customerTaxId}</td></tr>`:''}
         ${sale.customerTel?`<tr><td style="font-weight:700;font-size:12px">โทร</td><td style="font-size:11px">${sale.customerTel}</td></tr>`:''}
       </table>
       <hr style="border:none;border-top:1px dashed #000;margin:5px 0">
@@ -3034,7 +3035,6 @@ function printReceiptToWindow(sale, pw){
     <div class="bold" style="font-size:15px">${c.name}</div>
     ${c.address?`<div style="font-size:10px">${c.address}</div>`:''}
     ${c.tel?`<div style="font-size:10px">โทร: ${c.tel}</div>`:''}
-    ${c.taxId?`<div style="font-size:10px">เลขผู้เสียภาษี: ${c.taxId}</div>`:''}
     <div class="bold" style="font-size:13px;margin-top:4px">${c.receiptTitle||'ใบเสร็จรับเงิน'}</div>
     <div style="font-size:10px;color:#555">${c.receiptSubtitle||'RECEIPT'}</div>
   </div>
@@ -3046,7 +3046,6 @@ function printReceiptToWindow(sale, pw){
     <tr><td class="bold">วันที่</td><td>${sale.date}</td></tr>
     <tr><td class="bold">ลูกค้า</td><td>${sale.customerName||'ลูกค้าทั่วไป'}</td></tr>
     ${sale.customerAddress?`<tr><td class="bold">ที่อยู่</td><td style="font-size:10px">${sale.customerAddress}</td></tr>`:''}
-    ${sale.customerTaxId?`<tr><td class="bold">เลขภาษี</td><td style="font-size:10px">${sale.customerTaxId}</td></tr>`:''}
     ${sale.customerTel?`<tr><td class="bold">โทร</td><td style="font-size:10px">${sale.customerTel}</td></tr>`:''}
   </table>
   <hr class="dash">
@@ -7770,24 +7769,27 @@ function _vpSrcLabel(s){return({import:'นำเข้า',expense:'ค่า�
 
 // ภาษีซื้อนำเข้า: แยก 2 รายการตามผู้ออกเอกสาร (1) กรมศุลกากร (2) DHL ค่าบริการ
 const CUSTOMS_DEPT={name:'กรมศุลกากร',taxId:'0105533022910'}; // ผู้ออกใบเสร็จรับเงินศุลกากร (กศก.123) — ตามที่ผู้ใช้ยืนยัน
-function _vpImportEntries(r,date,idKey){
+function _vpImportEntries(r,date,idKey,fallback){
   const rate=parseFloat(S.company.vatRate)||7;
   const cV=(+r.customsVat>0)?+r.customsVat:(+r.vat||0);
   const dV=(+r.dhlVat>0)?+r.dhlVat:(+r.procVat||0);
   const out=[];
-  const mk=(key,docNo,sup,tax,vat,note)=>({key,rec:{date,docNo,supplier:sup,supplierTaxId:tax,supplierBranch:'',
+  const dateC=date||r.customsDate||fallback||todayISO();
+  const dateD=date||r.dhlDate||r.customsDate||fallback||todayISO();
+  const mk=(key,docNo,sup,tax,vat,note,date)=>({key,rec:{date,docNo,supplier:sup,supplierTaxId:tax,supplierBranch:'',
     amount:Math.round(vat*100/rate*100)/100,vat:Math.round(vat*100)/100,creditable:true,source:'import',sourceKey:key,note,updatedAt:ts()}});
   if(cV>0)out.push(mk('import:'+idKey,r.customsEntryNo||r.invoiceNo||'',r.issuerName||CUSTOMS_DEPT.name,r.issuerTaxId||CUSTOMS_DEPT.taxId,cV,
-    'VAT ศุลกากร ตามใบเสร็จรับเงิน (กศก.123) — ฐานคำนวณย้อนจาก VAT ที่ชำระจริง'));
+    'VAT ศุลกากร ตามใบเสร็จรับเงิน (กศก.123) — ฐานคำนวณย้อนจาก VAT ที่ชำระจริง',dateC));
   if(dV>0)out.push(mk('import-dhl:'+idKey,r.dhlDocNo||'',r.dhlName||'DHL Express International (Thailand) Ltd.',r.dhlTaxId||'',dV,
-    'VAT ค่าบริการ DHL — ต้องใช้ใบกำกับภาษีจริงของ DHL (Proforma ใช้เครดิตไม่ได้)'));
+    'VAT ค่าบริการ DHL — ต้องใช้ใบกำกับภาษีจริงของ DHL (Proforma ใช้เครดิตไม่ได้)',dateD));
   return out;
 }
-async function _vpUpsert(e){
+async function _vpUpsert(e,force){
   const ex=vpFind(e.key);
-  if(ex){ // ปรับยอด แต่ไม่ทับข้อมูลที่ผู้ใช้เติมไว้
+  if(ex){ // ปรับยอด; ข้อความที่ผู้ใช้เติมไว้ไม่ถูกทับ; วันที่ถูกทับเมื่อ force (ผู้ใช้ติ๊กอัปเดต)
     const rec={...e.rec};
-    ['docNo','supplier','supplierTaxId','supplierBranch','date','note'].forEach(k=>{if(ex[k])rec[k]=ex[k];});
+    ['docNo','supplier','supplierTaxId','supplierBranch','note'].forEach(k=>{if(ex[k])rec[k]=ex[k];});
+    if(!force&&ex.date)rec.date=ex.date;
     await updateFB('vatPurchase',ex.id,rec);Object.assign(ex,rec);
   }else{
     const nid=await addFB('vatPurchase',{...e.rec,createdAt:ts()});S.vatPurchase.push({id:nid,...e.rec});
@@ -7805,16 +7807,18 @@ async function vatPullImports(){
     if(!recs.length){body.innerHTML='<div style="padding:16px;color:#666">ไม่พบประวัติการนำเข้าที่มี VAT</div>';foot.innerHTML='<button class="btn btn-gray" onclick="closeModal()">ปิด</button>';return;}
     const rows=recs.map((r,i)=>{
       const key='import:'+(r.invoiceNo||r.id);
-      const done=!!vpFind(key);
-      const ents=_vpImportEntries(r,'',r.invoiceNo||r.id);
+      const exist=vpFind(key);
+      const done=!!exist;
+      const defDate=r.customsDate||r.dhlDate||_vpLocalDate(r.createdAt);
+      const ents=_vpImportEntries(r,'',r.invoiceNo||r.id,'');
       const vatT=Math.round(ents.reduce((a,e)=>a+e.rec.vat,0)*100)/100;
       return`<tr style="border-bottom:1px solid #eee">
-        <td style="padding:8px;text-align:center"><input type="checkbox" id="vpi-c-${i}" ${done?'disabled':(r.vatMode==='credit'?'checked':'')} style="width:16px;height:16px"></td>
-        <td style="padding:8px"><input type="date" id="vpi-d-${i}" value="${_vpLocalDate(r.createdAt)}" class="fc" style="font-size:12px;width:140px" ${done?'disabled':''}></td>
+        <td style="padding:8px;text-align:center"><input type="checkbox" id="vpi-c-${i}" ${done?'':(r.vatMode==='credit'?'checked':'')} style="width:16px;height:16px"></td>
+        <td style="padding:8px"><input type="date" id="vpi-d-${i}" data-def="${defDate}" value="${defDate}" class="fc" style="font-size:12px;width:140px"></td>
         <td style="padding:8px;font-weight:600">${r.invoiceNo||'-'}</td>
         <td style="padding:8px;font-size:12px">${r.supplier||'-'}</td>
         <td style="padding:8px;text-align:right">${fmt(vatT)}<div style="font-size:10px;color:#888">${ents.map(e=>(e.key.startsWith('import-dhl')?'DHL ':'ศุลกากร ')+fmt(e.rec.vat)).join(' + ')}</div></td>
-        <td style="padding:8px;font-size:12px">${done?'<span style="color:#16a34a">✓ เพิ่มแล้ว</span>':(r.vatMode==='credit'?'ตั้งไว้: ขอเครดิต':'<span style="color:#f59e0b">ตั้งไว้: รวมต้นทุน</span>')}</td></tr>`;
+        <td style="padding:8px;font-size:12px">${done?'<span style="color:#16a34a">✓ เพิ่มแล้ว (ลงวันที่ '+(exist.date||'-')+')</span><div style="font-size:10px;color:#888">ติ๊กเพื่ออัปเดตยอด/วันที่</div>':(r.vatMode==='credit'?'ตั้งไว้: ขอเครดิต':'<span style="color:#f59e0b">ตั้งไว้: รวมต้นทุน</span>')}</td></tr>`;
     }).join('');
     body.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">ติ๊กเฉพาะรายการที่ขอเครดิตภาษีซื้อได้ (ใบขนสินค้า/ใบเสร็จศุลกากรในชื่อบริษัทที่จด VAT แล้ว) — รายการที่ตั้งเป็น "รวมต้นทุน" ถูกรวมในต้นทุนสินค้าแล้ว ถ้าลงเป็นภาษีซื้อด้วยจะนับซ้ำ ต้องแก้ต้นทุนเอง</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f8fafc;font-size:12px"><th style="padding:8px"></th><th style="padding:8px;text-align:left">วันที่ใบกำกับ</th><th style="padding:8px;text-align:left">Invoice No.</th><th style="padding:8px;text-align:left">ผู้ขาย</th><th style="padding:8px;text-align:right">VAT นำเข้า</th><th style="padding:8px;text-align:left">สถานะ</th></tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -7826,11 +7830,12 @@ async function confirmVatPullImports(){
   let n=0;
   for(let i=0;i<recs.length;i++){
     const chk=document.getElementById('vpi-c-'+i);
-    if(!chk||chk.disabled||!chk.checked)continue;
+    if(!chk||!chk.checked)continue;
     const r=recs[i];
-    const date=document.getElementById('vpi-d-'+i)?.value||todayISO();
-    for(const e of _vpImportEntries(r,date,r.invoiceNo||r.id)){
-      try{await _vpUpsert(e);n++;}catch(err){console.error(err);}
+    const dEl=document.getElementById('vpi-d-'+i);
+    const changed=dEl&&dEl.value&&dEl.value!==dEl.dataset.def;
+    for(const e of _vpImportEntries(r,changed?dEl.value:'',r.invoiceNo||r.id,dEl?.dataset.def||todayISO())){
+      try{await _vpUpsert(e,true);n++;}catch(err){console.error(err);}
     }
   }
   closeModal();
@@ -9650,6 +9655,14 @@ function renderImportTax(){
         <input id="itax-dtax" type="text"  placeholder="13 หลัก" value="${d.dhlTaxId||''}" onchange="_itax.dhlTaxId=this.value" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:170px;">
       </div>
       <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">วันที่ใบเสร็จศุลกากร <span style="color:#16a34a;font-size:11px">ใช้เป็นวันที่ภาษีซื้อ</span></div>
+        <input id="itax-cdate" type="date" value="${d.customsDate||''}" onchange="_itax.customsDate=this.value" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:170px">
+      </div>
+      <div>
+        <div style="font-size:12px;color:#666;margin-bottom:4px">วันที่เอกสาร DHL</div>
+        <input id="itax-ddate" type="date" value="${d.dhlDate||''}" onchange="_itax.dhlDate=this.value" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:170px">
+      </div>
+      <div>
         <div style="font-size:12px;color:#666;margin-bottom:4px">ค่าดำเนินการ DHL (THB) <span style="color:#7c3aed;font-size:11px">DUTY TAX PROCESSING</span></div>
         <input id="itax-proc" type="number" min="0" step="0.01" placeholder="0.00" value="${d.proc||''}" onchange="_itax.proc=+this.value;refreshImportTax()" style="font-family:Sarabun,sans-serif;font-size:13px;border:1px solid #ddd;border-radius:6px;padding:6px 10px;width:150px;text-align:right">
       </div>
@@ -9813,6 +9826,8 @@ async function itaxHandleFiles(files){
   "issuerTaxId": "เลขประจำตัวผู้เสียภาษี 13 หลักของผู้ออกเอกสารนั้น ตัวเลขล้วน ไม่มีให้ใส่ว่าง",
   "customsVat": ตัวเลข "ค่าภาษีมูลค่าเพิ่ม" ที่ชำระตามใบเสร็จรับเงินกรมศุลกากร (กศก.123) เป็นบาท ไม่มีให้ใส่ 0,
   "dhlVat": ตัวเลข VAT รวมของค่าบริการ DHL ทุกบรรทัด (ผลรวมช่อง VAT Amount เช่น Duty Tax Processing + Customs Physical Intervention) เป็นบาท ไม่มีให้ใส่ 0,
+  "customsDate": "วันที่ในใบเสร็จรับเงินกรมศุลกากร (วันที่ชำระ/วันที่นำเข้า) รูปแบบ YYYY-MM-DD เป็น ค.ศ. (ถ้าเอกสารเป็น พ.ศ. ให้ลบ 543) ไม่มีให้ใส่ว่าง",
+  "dhlDate": "วันที่ออกเอกสารของ DHL (Invoice Date) รูปแบบ YYYY-MM-DD เป็น ค.ศ. ไม่มีให้ใส่ว่าง",
   "dhlDocNo": "เลขที่เอกสารของ DHL (Proforma Number / Tax Invoice No.) ไม่มีให้ใส่ว่าง",
   "dhlName": "ชื่อบริษัท DHL ผู้ออกเอกสาร ไม่มีให้ใส่ว่าง",
   "dhlTaxId": "เลขประจำตัวผู้เสียภาษี 13 หลักของ DHL ที่ระบุในเอกสารของ DHL (TAX ID) ตัวเลขล้วน ไม่มีให้ใส่ว่าง",
@@ -9856,6 +9871,8 @@ async function itaxHandleFiles(files){
     if(+d.customsVat>0)_itax.customsVat=+d.customsVat;
     if(+_itax.customsVat>0||_itax.customsEntryNo){if(!_itax.issuerName)_itax.issuerName=CUSTOMS_DEPT.name;if(!_itax.issuerTaxId)_itax.issuerTaxId=CUSTOMS_DEPT.taxId;}
     if(+d.dhlVat>0)_itax.dhlVat=+d.dhlVat;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(String(d.customsDate||'')))_itax.customsDate=String(d.customsDate);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(String(d.dhlDate||'')))_itax.dhlDate=String(d.dhlDate);
     if(d.dhlDocNo)_itax.dhlDocNo=String(d.dhlDocNo);
     if(d.dhlName)_itax.dhlName=String(d.dhlName);
     if(d.dhlTaxId)_itax.dhlTaxId=String(d.dhlTaxId).replace(/\D/g,'');
@@ -10003,8 +10020,8 @@ async function confirmImportTaxToStock(matched,newItems){
   // ลงภาษีซื้อ (VAT นำเข้า) อัตโนมัติ เมื่อเลือก "ขอเครดิตเป็นภาษีซื้อ" — แยก 2 รายการ: กรมศุลกากร / DHL
   if(d.vatMode==='credit'){
     try{
-      const ents=_vpImportEntries(d,importDate,d.invoiceNo||importDate);
-      for(const e of ents)await _vpUpsert(e);
+      const ents=_vpImportEntries(d,'',d.invoiceNo||importDate,importDate);
+      for(const e of ents)await _vpUpsert(e,true);
       if(ents.length)toast('ลงภาษีซื้อ '+ents.length+' รายการ รวม '+fmt(ents.reduce((a,e)=>a+e.rec.vat,0))+' บาท ✓','success');
     }catch(e){console.error(e);toast('ลงภาษีซื้อไม่สำเร็จ: '+e.message,'error');}
   }
@@ -10049,6 +10066,8 @@ async function saveImportRecord(){
       dhlDocNo:d.dhlDocNo||'',
       dhlName:d.dhlName||'',
       dhlTaxId:d.dhlTaxId||'',
+      customsDate:d.customsDate||'',
+      dhlDate:d.dhlDate||'',
       issuerName:d.issuerName||'',
       issuerTaxId:d.issuerTaxId||'',
       fx:d.fx||0,
@@ -10150,6 +10169,8 @@ function loadImportRecord(r){
   _itax.dhlDocNo=r.dhlDocNo||'';
   _itax.dhlName=r.dhlName||'';
   _itax.dhlTaxId=r.dhlTaxId||'';
+  _itax.customsDate=r.customsDate||'';
+  _itax.dhlDate=r.dhlDate||'';
   _itax.issuerName=r.issuerName||'';
   _itax.issuerTaxId=r.issuerTaxId||'';
   _itax.fx=r.fx||0;
