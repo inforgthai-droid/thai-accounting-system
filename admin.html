@@ -7676,9 +7676,62 @@ function renderInvoice(){
   return`<div class="sec-title">🧾 ใบแจ้งหนี้ / ใบกำกับภาษี</div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:1rem">
     <button class="btn btn-gray btn-sm" onclick="printPage()">🖨️ พิมพ์รายการ</button>
+    <button class="btn btn-sm" style="background:#0e7490;color:#fff" onclick="openSmemoveExport()">📤 ส่งออก Excel (SMEMOVE)</button>
     <button class="btn" onclick="editInvoice()">+ สร้างใบแจ้งหนี้</button>
   </div>
   ${tbl(['เลขที่','วันที่','ลูกค้า','ก่อน VAT','VAT','รวม','สถานะ',''],rows)}`;
+}
+// ── ส่งออกใบแจ้งหนี้เป็น Excel รูปแบบนำเข้า SMEMOVE (FsInvoiceTemplate: คอลัมน์ A–Y, หัวตาราง 2 แถว) ──
+function openSmemoveExport(){
+  const d=new Date(),first=new Date(d.getFullYear(),d.getMonth(),1);
+  const iso=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+  openModal('📤 ส่งออกใบแจ้งหนี้ → SMEMOVE',`
+  <div class="fg">
+    <div class="fm"><label class="fl">ตั้งแต่วันที่</label><input type="date" class="fc" id="sm-from" value="${iso(first)}"></div>
+    <div class="fm"><label class="fl">ถึงวันที่</label><input type="date" class="fc" id="sm-to" value="${iso(d)}"></div>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7">ได้ไฟล์ .xlsx ตามเทมเพลตของ SMEMOVE · นำไปอัปโหลดที่ SMEMOVE → ใบส่งของ/ใบแจ้งหนี้ → นำเข้าจาก Excel<br>ใบแจ้งหนี้ที่สร้างจากใบเสนอราคาจะแตกเป็นรายการสินค้าตามใบเสนอราคา · ใบที่คีย์เอง จะเป็น 1 รายการ<br>ช่องบังคับของ SMEMOVE (ที่อยู่ / เลขผู้เสียภาษี) ที่ไม่มีข้อมูล จะใส่ "-" และไฟล์จะแจ้งจำนวนที่ไม่ครบ</div>`,
+  `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="smemoveExportInvoices()">📤 ส่งออก</button>`);
+}
+function smemoveExportInvoices(){
+  const from=document.getElementById('sm-from').value,to=document.getElementById('sm-to').value;
+  const dmy=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s||'');return m?m[3]+'/'+m[2]+'/'+m[1]:(s||'');};
+  const list=(S.invoices||[]).filter(i=>(!from||(i.date||'')>=from)&&(!to||(i.date||'')<=to))
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.no||'').localeCompare(b.no||''));
+  if(!list.length){toast('ไม่มีใบแจ้งหนี้ในช่วงวันที่นี้','error');return;}
+  const head1=['ข้อมูลทั่วไป','','','','','','','','','','','','','','','','ข้อมูลการขาย','','','','','หมายเหตุ','','เชื่อมโยงผังบัญชี',''];
+  const head2=['*เลขที่ใบส่งของ/แจ้งหนี้','*วันที่ (วัน/เดือน/ปี)','*ชื่อลูกค้า','*ที่อยู่','*เลขผู้เสียภาษี','*ชื่อสินค้า','*ประเภทสินค้า','รายละเอียดสินค้า','*จำนวน','*ราคาต่อหน่วย','ส่วนลด (บาท)','*อัตราภาษี','*เงื่อนไขภาษี','ชื่อโปรเจค','สกุลเงินต่างประเทศ','อัตราแลกเปลี่ยน','ชื่อผู้ติดต่อ','เบอร์โทร','อีเมล์','รหัสพนักงานขาย','เครดิต (วัน)','หมายเหตุในเอกสาร','หมายเหตุในบริษัท','บัญชีขายสินค้า','บัญชีขายต่างประเทศ'];
+  const data=[head1,head2];
+  let incomplete=0,lines=0;
+  list.forEach(inv=>{
+    const q=inv.quotationId?(S.quotations||[]).find(x=>x.id===inv.quotationId):null;
+    const c=(S.customers||[]).find(x=>x.name===inv.customer)||{};
+    const addr=((q&&q.addressTh)||c.address||'').replace(/\s*\n\s*/g,' ').trim();
+    const taxId=((q&&q.customerTaxId)||c.taxId||'').replace(/\D/g,'');
+    const tel=(q&&q.customerTel)||c.tel||'';
+    if(!addr||!taxId)incomplete++;
+    const rate=(inv.vat||0)>0?(q?.vatRate??S.company.vatRate??7):0;
+    const note=[inv.poNo?('PO '+inv.poNo):'',inv.quotationRef?('อ้างอิง '+inv.quotationRef):''].filter(Boolean).join(' / ');
+    const mk=(name,qty,price,mode)=>{
+      lines++;
+      data.push([inv.no||'',dmy(inv.date),inv.customer||'',addr||'-',taxId||'-',name||'-','สินค้าขายนับสต๊อก','',qty,price,0,
+        rate>0?mode:'ไม่มีภาษี',rate>0?rate:0,'','','','',tel,'','',c.credit||'',note,'','4100-01','4100-05']);
+    };
+    if(q&&(q.items||[]).length){
+      const mode=q.vatMode==='exclusive'?'แยกภาษี':'รวมภาษี';
+      q.items.forEach(it=>mk(it.nameTh||it.nameEn||it.name||it.code,it.qty||1,it.price||0,mode));
+    }else{
+      mk(inv.desc||'ขายสินค้า/บริการ',1,inv.amount||0,'แยกภาษี');
+    }
+  });
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:15}},{s:{r:0,c:16},e:{r:0,c:20}},{s:{r:0,c:21},e:{r:0,c:22}},{s:{r:0,c:23},e:{r:0,c:24}}];
+  ws['!cols']=[16,12,28,40,16,32,18,24,8,12,10,12,12,14,12,12,14,14,18,14,10,22,18,12,14].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+  XLSX.writeFile(wb,'smemove_invoices_'+(from||'all')+'_'+(to||'all')+'.xlsx');
+  closeModal();
+  toast('ส่งออก '+list.length+' ใบ ('+lines+' แถว)'+(incomplete?' · ข้อมูลไม่ครบ '+incomplete+' ใบ (ที่อยู่/เลขภาษี)':'')+' ✓',incomplete?'info':'success');
 }
 function invForm(inv={}){
   const custOpts=S.customers.map(c=>`<option${c.name===inv.customer?' selected':''}>${c.name}</option>`).join('');
