@@ -7757,7 +7757,7 @@ async function deleteInvoice(id){if(!confirm('ลบ?'))return;await deleteFB('i
 
 // ===== ภาษีซื้อ (Input VAT) =====
 // รายการใน S.vatPurchase: {date,docNo,supplier,amount(ฐาน),vat,creditable,source,sourceKey,note}
-function vpList(){return (S.vatPurchase||[]).filter(x=>x.creditable!==false);}
+function vpList(){return (S.vatPurchase||[]).filter(x=>x.creditable!==false&&x.kind!=='sales');}
 function vpFind(key){return key?(S.vatPurchase||[]).find(x=>x.sourceKey===key):null;}
 function openVatPurchaseModal(o){
   o=o||{};
@@ -7928,7 +7928,52 @@ function vatSalesRows(month,withExcluded){
     const v=_rentalVat(r);
     push('rental',r,{date:r.docDate||r.rentalDate||'',docNo:r.contractNo||'',name:r.renterShopName||r.renterName||'',taxId:r.renterTaxId||'',branch:'',base:r2(v.feeNet),vat:r2(v.vat),src:'ค่าเช่า'});
   });
+  // รายการภาษีขายที่กรอกเอง (เก็บใน vatPurchase ด้วย kind:'sales')
+  (S.vatPurchase||[]).filter(x=>x.kind==='sales'&&(x.date||'').slice(0,7)===month).forEach(x=>{
+    rows.push({type:'manual',id:x.id,src:'กรอกเอง',date:x.date||'',docNo:x.docNo||'',name:x.supplier||'',taxId:x.supplierTaxId||'',branch:x.supplierBranch||'',base:x.amount||0,vat:x.vat||0,edited:false,excluded:false});
+  });
   return rows.sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.docNo||'').localeCompare(b.docNo||''));
+}
+// ---- เพิ่ม/แก้ไข/ลบ ภาษีขายที่กรอกเอง ----
+function openVatSalesManual(id){
+  const ex=id?S.vatPurchase.find(x=>x.id===id):null;
+  window._vsmId=ex?.id||'';
+  const rate=parseFloat(S.company.vatRate)||7;window._vpRate=rate;
+  const esc=x=>String(x==null?'':x).replace(/"/g,'&quot;');
+  const m=_vatMonth(),today=todayISO();
+  const dv=ex?.date||(today.slice(0,7)===m?today:m+'-01');
+  openModal(ex?'✏️ แก้ไขภาษีขาย (กรอกเอง)':'🧾 เพิ่มภาษีขาย',`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="fm"><label class="fl">วันที่ใบกำกับภาษี</label><input type="date" class="fc" id="vsm-date" value="${dv}"></div>
+    <div class="fm"><label class="fl">เลขที่ใบกำกับภาษี</label><input class="fc" id="vsm-doc" value="${esc(ex?.docNo)}"></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">ชื่อผู้ซื้อ</label><input class="fc" id="vsm-name" value="${esc(ex?.supplier)}"></div>
+    <div class="fm"><label class="fl">เลขประจำตัวผู้เสียภาษีผู้ซื้อ</label><input class="fc" id="vsm-taxid" value="${esc(ex?.supplierTaxId)}" maxlength="17"></div>
+    <div class="fm"><label class="fl">สถานประกอบการ</label><input class="fc" id="vsm-branch" value="${esc(ex?.supplierBranch||'')}" placeholder="สำนักงานใหญ่ / สาขา 00001"></div>
+    <div class="fm"><label class="fl">มูลค่าก่อน VAT</label><input type="number" step="0.01" class="fc" id="vsm-base" value="${ex?.amount||''}" oninput="document.getElementById('vsm-vat').value=(Math.round((parseFloat(this.value)||0)*window._vpRate)/100).toFixed(2)"></div>
+    <div class="fm"><label class="fl">VAT ${rate}% (บาท)</label><input type="number" step="0.01" class="fc" id="vsm-vat" value="${ex?.vat||''}"></div>
+    <div class="fm" style="grid-column:1/-1"><label class="fl">หมายเหตุ</label><input class="fc" id="vsm-note" value="${esc(ex?.note)}"></div>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:8px">ใช้กับรายการที่ไม่ได้ออกผ่านระบบนี้ เช่น ใบกำกับภาษีที่ออกด้วยมือ/ระบบอื่น รายการนี้จะรวมใน ภ.พ.30 และรายงานภาษีขาย</div>`,
+  `<button class="btn btn-gray" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="saveVatSalesManual()">💾 บันทึก</button>`);
+}
+async function saveVatSalesManual(){
+  const g=k=>document.getElementById(k)?.value?.trim()||'';
+  const vat=parseFloat(g('vsm-vat'))||0,amount=parseFloat(g('vsm-base'))||0;
+  if(vat<=0){toast('กรุณากรอก VAT','error');return;}
+  const data={kind:'sales',date:g('vsm-date')||todayISO(),docNo:g('vsm-doc'),supplier:g('vsm-name'),supplierTaxId:g('vsm-taxid'),supplierBranch:g('vsm-branch'),amount,vat,note:g('vsm-note'),creditable:false,source:'manual-sales',sourceKey:'',updatedAt:ts()};
+  try{
+    const id=window._vsmId;
+    if(id){await updateFB('vatPurchase',id,data);const i=S.vatPurchase.findIndex(x=>x.id===id);if(i>=0)S.vatPurchase[i]={...S.vatPurchase[i],...data};}
+    else{const nid=await addFB('vatPurchase',{...data,createdAt:ts()});S.vatPurchase.push({id:nid,...data});}
+    S._vatMonth=data.date.slice(0,7);
+    closeModal();renderPage('vat');toast('บันทึกภาษีขายสำเร็จ ✓','success');
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+async function deleteVatSalesManual(id){
+  if(!confirm('ลบรายการภาษีขายที่กรอกเอง? (ลบถาวร)'))return;
+  await deleteFB('vatPurchase',id);
+  S.vatPurchase=S.vatPurchase.filter(x=>x.id!==id);
+  renderPage('vat');toast('ลบแล้ว','info');
 }
 // ---- แก้ไข/ลบ รายการในรายงานภาษีขาย (ไม่กระทบบิลต้นฉบับ) ----
 function _vsDoc(type,id){
@@ -8096,12 +8141,13 @@ function renderVat(){
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin:1.2rem 0 .5rem;flex-wrap:wrap;gap:8px">
     <div class="sec-title" style="margin-bottom:0">📤 รายงานภาษีขาย (${sRows.length} รายการ)</div>
-    <div style="display:flex;gap:6px">${exN?`<button class="btn btn-gray btn-sm" onclick="S._vatShowEx=!S._vatShowEx;renderPage('vat')">${S._vatShowEx?'ซ่อน':'แสดง'}รายการที่ลบออก (${exN})</button>`:''}<button class="btn btn-gray btn-sm" onclick="vatReportPrint('sales')">🖨️ พิมพ์</button><button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="vatReportExcel('sales')">📊 Excel</button></div>
+    <div style="display:flex;gap:6px">${exN?`<button class="btn btn-gray btn-sm" onclick="S._vatShowEx=!S._vatShowEx;renderPage('vat')">${S._vatShowEx?'ซ่อน':'แสดง'}รายการที่ลบออก (${exN})</button>`:''}<button class="btn btn-sm" onclick="openVatSalesManual()">+ เพิ่มภาษีขาย</button><button class="btn btn-gray btn-sm" onclick="vatReportPrint('sales')">🖨️ พิมพ์</button><button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="vatReportExcel('sales')">📊 Excel</button></div>
   </div>
   ${tbl(['วันที่','เลขที่ใบกำกับ','ผู้ซื้อ','เลขผู้เสียภาษี','มูลค่า','VAT','ที่มา',''],
     sShow.map(r=>{const st=r.excluded?'text-decoration:line-through;opacity:.5':'';const w=x=>`<span style="${st}">${x}</span>`;
       return[w(r.date),w(r.docNo||badge('ไม่มีเลขที่','amber')),w(r.name||'-')+(r.edited?' '+badge('แก้ไขแล้ว','blue'):''),w(r.taxId||'-'),w(''+fmt(r.base)),w(''+fmt(r.vat)),r.src,
       r.excluded?`<button class="btn btn-xs" style="background:#16a34a;color:#fff" onclick="restoreVatSalesRow('${r.type}','${r.id}')">คืนค่า</button>`
+      :r.type==='manual'?`<button class="btn btn-primary btn-xs" onclick="openVatSalesManual('${r.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteVatSalesManual('${r.id}')">ลบ</button>`
       :`<button class="btn btn-primary btn-xs" onclick="openVatSalesEdit('${r.type}','${r.id}')">แก้ไข</button> <button class="btn btn-danger btn-xs" onclick="deleteVatSalesRow('${r.type}','${r.id}')">ลบ</button>`];}),'ไม่มีรายการภาษีขายในเดือนนี้')}
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin:1.2rem 0 .5rem;flex-wrap:wrap;gap:8px">
