@@ -11207,6 +11207,9 @@ function openFullReceipt(){
       <div class="fm"><label class="fl">อีเมล</label>
         <input class="fc" id="fr-email" value="${existCust?.email||''}" placeholder="email@example.com">
       </div>
+      <div class="fm"><label class="fl">วันที่ในเอกสาร</label>
+        <input type="date" class="fc" id="fr-date" value="${todayISO()}">
+      </div>
       <div class="fm" style="grid-column:1/-1">
         <label class="fl">ประเภทเอกสาร</label>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -11250,6 +11253,7 @@ async function printFullReceipt(){
   const docType=document.querySelector('input[name="fr-type"]:checked')?.value||'receipt';
   const showBarcode=document.getElementById('fr-barcode')?.checked!==false;
   const saveCust=document.getElementById('fr-save-cust')?.checked;
+  const docDateISO=document.getElementById('fr-date')?.value||todayISO();
   closeModal();
 
   // Save customer if requested
@@ -11297,7 +11301,7 @@ async function printFullReceipt(){
 
   const isTax=docType==='tax'||docType==='both';
   const isReceipt=docType==='receipt'||docType==='both';
-  const docTitle=isTax&&isReceipt?'ใบเสร็จรับเงิน / ใบกำกับภาษีเต็มรูปแบบ':isTax?'ใบกำกับภาษีเต็มรูปแบบ':'ใบเสร็จรับเงิน';
+  const docTitle=isTax&&isReceipt?'ใบเสร็จรับเงิน / ใบกำกับภาษี':isTax?'ใบกำกับภาษีเต็มรูปแบบ':'ใบเสร็จรับเงิน';
   const docTitleEN=isTax&&isReceipt?'TAX INVOICE / RECEIPT':isTax?'TAX INVOICE':'RECEIPT';
 
   const html=`<!DOCTYPE html>
@@ -11361,8 +11365,8 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
         <div class="shop-name">${c.name}</div>
         <div class="shop-detail">
           ${c.address?c.address+'<br>':''}
-          ${c.tel?'โทร: '+c.tel:''}${c.email?' | '+c.email:''}${c.tel||c.email?'<br>':''}
-          ${c.taxId?'เลขประจำตัวผู้เสียภาษี: <b>'+c.taxId+'</b>':''}
+          เลขประจำตัวผู้เสียภาษี: <b>${c.taxId||'0105569191509'}</b><br>
+          ${c.tel?'โทร: '+c.tel:''}${c.email?' | '+c.email:''}
         </div>
       </div>
     </div>
@@ -11370,7 +11374,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
       <div class="doc-title">${docTitle}</div>
       <div class="doc-title-en">${docTitleEN}</div>
       <div class="doc-no">เลขที่: <b>${docNo}</b></div>
-      <div style="font-size:12px;margin-top:3px">วันที่: <b>${new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}</b></div>
+      <div style="font-size:12px;margin-top:3px">วันที่: <b>${new Date(docDateISO+'T00:00:00').toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}</b></div>
     </div>
   </div>
 
@@ -11392,7 +11396,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
       <div class="info-label">รายละเอียดเอกสาร / DOCUMENT INFO</div>
       <div class="info-row">
         <div>เลขที่: <b>${docNo}</b></div>
-        <div>วันที่: <b>${todayISO()}</b></div>
+        <div>วันที่: <b>${docDateISO}</b></div>
         <div>พนักงาน: <b>${currentUser?.displayName||currentUser?.email||'-'}</b></div>
         <div>ชำระด้วย: <b>${(()=>{const _s=window._checkoutSale||{};return _s.split1Method?
           `หลายช่องทาง: ${fmt(_s.split1Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[_s.split1Method]||_s.split1Method }) + ${fmt(_s.split2Amt)} (${ {'cash':'เงินสด','credit':'บัตรเครดิต','shopee_pay':'Shopee Pay'}[_s.split2Method]||_s.split2Method })`
@@ -11459,7 +11463,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:12px}
   ${showBarcode?`<div class="barcode-section">
     <div class="barcode-label">SCAN เพื่อดูเลขที่ใบเสร็จ / Scan to verify receipt</div>
     <svg id="receipt-barcode"></svg>
-    <div style="font-size:11px;color:#888;margin-top:4px">${docNo} | ${todayISO()} | ${fmtM(total)}</div>
+    <div style="font-size:11px;color:#888;margin-top:4px">${docNo} | ${docDateISO} | ${fmtM(total)}</div>
   </div>`:''}
 
   <!-- STAMP & SIGNATURE -->
