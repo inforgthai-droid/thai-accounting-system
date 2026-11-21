@@ -3330,6 +3330,11 @@ function renderSales(){
           <option value="">📅 เลือกเดือน</option>
           ${(()=>{const opts=[];const d=new Date();for(let i=0;i<24;i++){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const val=y+'-'+m;const sel=(df&&df.slice(0,7)===val&&dt&&dt.slice(0,7)===val);opts.push(`<option value="${val}"${sel?' selected':''}>${y}/${m}</option>`);d.setMonth(d.getMonth()-1);}return opts.join('');})()}
         </select>
+        <select onchange="(()=>{const v=this.value;if(!v)return;S._salesDateFrom=S._salesDateTo=v;renderPage('sales');})()"
+          style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text)">
+          <option value="">📆 เลือกวัน</option>
+          ${(()=>{const opts=[];const d=new Date();const wd=['อา','จ','อ','พ','พฤ','ศ','ส'];for(let i=0;i<90;i++){const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const sel=(df===val&&dt===val);opts.push(`<option value="${val}"${sel?' selected':''}>${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} (${wd[d.getDay()]})${i===0?' วันนี้':''}</option>`);d.setDate(d.getDate()-1);}return opts.join('');})()}
+        </select>
         ${df||dt?`<button onclick="S._salesDateFrom=S._salesDateTo='';renderPage('sales')"
           style="padding:4px 10px;border:1px solid var(--danger);border-radius:6px;font-size:11px;cursor:pointer;background:var(--bg);color:var(--danger);font-family:'Sarabun',sans-serif">✕ ล้าง</button>`:''}
       </div>
