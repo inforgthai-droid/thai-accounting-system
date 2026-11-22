@@ -7705,8 +7705,9 @@ function exportSmemoveProducts(){
     const price=r2((p.price||0)/(1+vr/100)); // ราคาในระบบเรา = รวม VAT → แปลงเป็นก่อนภาษี
     if(!(p.price>0))noPrice++; if(!(p.cost>0))noCost++;
     const st=Math.max(0,Math.round(p.stock||0));
-    data.push([code,p.name||'',"stock",(p.description||p.name||'').toString().slice(0,200),p.category||'',p.unit||'ชิ้น',price,vr,r2(p.cost||0),'default','','',p.minStock||'','yes',st>0?dmy:'',st>0?r2(p.cost||0):'',st>0?st:'','','','','','']);
+    data.push([code,p.name||'',"stock",(p.description||p.name||'').toString().replace(/\s*[\r\n]+\s*/g,' ').trim().slice(0,200),p.category||'',p.unit||'ชิ้น',price,vr,r2(p.cost||0),'default','','',p.minStock||'','yes',st>0?dmy:'',st>0?r2(p.cost||0):'',st>0?st:'','','','','','']);
   });
+  for(let r=2;r<data.length;r++)data[r]=data[r].map(v=>v===''?null:v); // ช่องว่างต้องเป็นเซลล์ว่างจริง (SMEMOVE ไม่รับสตริงว่างในช่องวันที่/ตัวเลข)
   const ws=XLSX.utils.aoa_to_sheet(data);
   ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:13}},{s:{r:0,c:14},e:{r:0,c:16}},{s:{r:0,c:17},e:{r:0,c:21}}];
   ws['!cols']=[16,50,10,40,22,8,14,10,14,12,10,10,10,10,12,14,12,10,10,10,10,10].map(w=>({wch:w}));
