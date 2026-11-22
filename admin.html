@@ -5797,6 +5797,7 @@ function renderStock(){
   <button class="btn btn-gray btn-sm" onclick="openStockPrintDialog()">พิมพ์รายงานสต็อก</button>
   <button class="btn btn-sm" style="background:#e85d04;color:#fff" onclick="exportDemonTweeksWord()">📋 Export SKU หมด → Word</button>
   <button class="btn btn-sm" style="background:#10b981;color:#fff" onclick="downloadStockExcel()">📥 Download Stock Excel</button>
+  <button class="btn btn-sm" style="background:#0e7490;color:#fff" onclick="exportSmemoveProducts()" title="สินค้าที่ตั้งค่า 'นับมูลค่าสต็อก' → ไฟล์นำเข้าสินค้า SMEMOVE">📤 Excel นำเข้า SMEMOVE</button>
   <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="orderDemonTweeks()">📧 สั่งสินค้า Demon Tweeks</button>
   </div>
   </div>
@@ -7687,6 +7688,32 @@ function renderInvoice(){
   ${tbl(['เลขที่','วันที่','ลูกค้า','ก่อน VAT','VAT','รวม','สถานะ',''],rows)}`;
 }
 // ── ส่งออกใบแจ้งหนี้เป็น Excel รูปแบบนำเข้า SMEMOVE (FsInvoiceTemplate: คอลัมน์ A–Y, หัวตาราง 2 แถว) ──
+// ── ส่งออกสินค้า (ที่ตั้งค่า "นับมูลค่าสต็อก") เป็นไฟล์นำเข้าสินค้า SMEMOVE (ProductTemplate: คอลัมน์ A–V, หัวตาราง 2 แถว) ──
+function exportSmemoveProducts(){
+  const list=(S.products||[]).filter(p=>p.countStock==1).sort((a,b)=>(a.category||'').localeCompare(b.category||'')||(a.name||'').localeCompare(b.name||''));
+  if(!list.length){toast('ไม่มีสินค้าที่ตั้งค่า "นับมูลค่าสต็อก"','error');return;}
+  const vr=parseFloat(S.company.vatRate)||7;
+  const r2=n=>Math.round((n||0)*100)/100;
+  const d=new Date(),dmy=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+  const head1=['ข้อมูลสินค้า','','','','','','','','','','','','','','ยอดยกมา(กรณีเปิดใช้งาน Stock สินค้า)','','','ผังบัญชี (ใส่หรือไม่ก็ได้)','','','',''];
+  const head2=['รหัสสินค้า*','ชื่อสินค้า*','ประเภทสินค้า*\r\n\r\nstock = สินค้าขาย\r\nservice = งานบริการ \r\nexpense = ค่าใช้จ่าย\r\nmaterial = วัตถุดิบ\r\nconsumable = วัสดุสิ้นเปลือง','รายละเอียด*','หมวดสินค้า','หน่วยนับ*','ราคาขาย(ไม่รวมภาษี)*','รูปแบบภาษีสำหรับขาย*\r\n\r\ndefault = อิงตามตั้งค่าบริษัท\r\n7 = ภาษี7%\r\n0 = ภาษี0%\r\nexemption = ยกเว้นภาษี','ราคาทุน(ไม่รวมภาษี)*','รูปแบบภาษีซื้อสำหรับราคาทุน*\r\n\r\ndefault = อิงตามตั้งค่าบริษัท\r\n7 = ภาษี7%\r\n0 = ภาษี0%\r\nexemption = ยกเว้นภาษี','มาตรฐานบาร์โค้ด\r\n\r\nCode 128\r\nEAN8\r\nEAN13','รหัสบาร์โค้ด\r\n\r\nไม่เกิน 13 ตัว','Safety Stock สินค้าคงคลังขั้นต่ำ','เปิดใช้งาน Stock สินค้า*\r\nyes = เปิดใช้งาน\r\nno = ไม่ใช้งาน','ณ วันที่','ราคาทุน / หน่วย','จำนวนคงเหลือ','บัญชีสินค้า','บัญชีขายสินค้า','บัญชีขายต่างประเทศ','บัญชีต้นทุนขาย','บัญชีค่าใช้จ่าย'];
+  const data=[head1,head2];
+  let noCost=0,noPrice=0;const seen={};
+  list.forEach((p,i)=>{
+    let code=String(p.code||('SKU-'+(i+1))).slice(0,30);
+    if(seen[code]){code=code+'-'+(++seen[code]);}else seen[code]=1;
+    const price=r2((p.price||0)/(1+vr/100)); // ราคาในระบบเรา = รวม VAT → แปลงเป็นก่อนภาษี
+    if(!(p.price>0))noPrice++; if(!(p.cost>0))noCost++;
+    const st=Math.max(0,Math.round(p.stock||0));
+    data.push([code,p.name||'',"stock",(p.description||p.name||'').toString().slice(0,200),p.category||'',p.unit||'ชิ้น',price,vr,r2(p.cost||0),'default','','',p.minStock||'','yes',st>0?dmy:'',st>0?r2(p.cost||0):'',st>0?st:'','','','','','']);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:13}},{s:{r:0,c:14},e:{r:0,c:16}},{s:{r:0,c:17},e:{r:0,c:21}}];
+  ws['!cols']=[16,50,10,40,22,8,14,10,14,12,10,10,10,10,12,14,12,10,10,10,10,10].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+  XLSX.writeFile(wb,'smemove_products_'+todayISO()+'.xlsx');
+  toast('ส่งออก '+list.length+' สินค้า'+(noPrice?' · ไม่มีราคาขาย '+noPrice:'')+(noCost?' · ไม่มีต้นทุน '+noCost:'')+' ✓',(noPrice||noCost)?'info':'success');
+}
 function openSmemoveExport(){
   const d=new Date(),first=new Date(d.getFullYear(),d.getMonth(),1);
   const iso=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
